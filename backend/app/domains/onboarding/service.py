@@ -42,7 +42,7 @@ WORKSPACE_STEPS = [
 DEFAULT_USER_STATE: dict[str, Any] = {
     "appearanceMode": "system",
     "theme": "system",
-    "visualTheme": "classic",
+    "visualTheme": "hikmet",
     "accentColor": "emerald",
     "sidebarCollapsed": False,
     "density": "comfortable",
@@ -70,12 +70,24 @@ DEFAULT_USER_STATE: dict[str, Any] = {
 }
 
 APPEARANCE_VALUES = {"system", "light", "dark"}
-VISUAL_THEME_VALUES = {"classic", "executive_premium", "anatolian_modern", "technical_command"}
+VISUAL_THEME_VALUES = {"hikmet", "bozkir", "esitlik", "tabiat", "atlas", "avangard"}
 LEGACY_VISUAL_THEME_ALIASES = {
-    "classicCurrent": "classic",
-    "executivePremium": "executive_premium",
-    "anatolianModern": "anatolian_modern",
-    "technicalCommand": "technical_command",
+    "classic": "hikmet",
+    "classicCurrent": "hikmet",
+    "executivePremium": "atlas",
+    "executive_premium": "atlas",
+    "art_deco": "atlas",
+    "art_deco_premium": "atlas",
+    "anatolianModern": "bozkir",
+    "anatolian_modern": "bozkir",
+    "anatolian_60s": "bozkir",
+    "technicalCommand": "avangard",
+    "technical_command": "avangard",
+    "command": "avangard",
+    "command_bauhaus": "avangard",
+    "green_atelier": "tabiat",
+    "yesil_atolye": "tabiat",
+    "pop_studio": "avangard",
 }
 
 MODULE_PACKAGES: list[dict[str, Any]] = [
@@ -626,7 +638,7 @@ def _public_user_state(preferences: dict[str, Any]) -> dict[str, Any]:
 def _public_ui_preferences(preferences: dict[str, Any]) -> dict[str, Any]:
     merged = {**DEFAULT_USER_STATE, **preferences}
     appearance_mode = _normalize_appearance(merged.get("appearanceMode") or merged.get("appearance_mode") or merged.get("theme")) or "system"
-    visual_theme = _normalize_visual_theme(merged.get("visualTheme") or merged.get("visual_theme")) or "classic"
+    visual_theme = _normalize_visual_theme(merged.get("visualTheme") or merged.get("visual_theme")) or "hikmet"
     return {
         "appearanceMode": appearance_mode,
         "theme": appearance_mode,

@@ -13,18 +13,33 @@ const themeInitScript = `
     const visualTheme = preferences.visualTheme
       || localStorage.getItem('eden.visualTheme')
       || localStorage.getItem('eden.designLab.activeTheme')
-      || 'classic';
+      || 'hikmet';
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const dark = theme === 'dark' || (theme === 'system' && prefersDark);
     const visualThemeAliases = {
-      classicCurrent: 'classic',
-      executivePremium: 'executive_premium',
-      anatolianModern: 'anatolian_modern',
-      technicalCommand: 'technical_command',
+      classic: 'hikmet',
+      classicCurrent: 'hikmet',
+      executivePremium: 'atlas',
+      executive_premium: 'atlas',
+      art_deco: 'atlas',
+      art_deco_premium: 'atlas',
+      anatolianModern: 'bozkir',
+      anatolian_modern: 'bozkir',
+      anatolian_60s: 'bozkir',
+      technicalCommand: 'avangard',
+      technical_command: 'avangard',
+      command: 'avangard',
+      command_bauhaus: 'avangard',
+      green_atelier: 'tabiat',
+      yesil_atolye: 'tabiat',
+      pop_studio: 'avangard',
     };
+    const normalizedVisualTheme = visualThemeAliases[visualTheme] || visualTheme;
     document.documentElement.classList.toggle('dark', dark);
     document.documentElement.dataset.appearanceMode = dark ? 'dark' : 'light';
-    document.documentElement.dataset.visualTheme = visualThemeAliases[visualTheme] || visualTheme;
+    document.documentElement.dataset.appearance = dark ? 'dark' : 'light';
+    document.documentElement.dataset.visualTheme = normalizedVisualTheme;
+    document.documentElement.dataset.edenTheme = normalizedVisualTheme;
   } catch {
     document.documentElement.classList.remove('dark');
   }

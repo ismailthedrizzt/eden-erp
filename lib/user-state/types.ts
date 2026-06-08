@@ -1,6 +1,6 @@
 export type UiAppearancePreference = 'system' | 'light' | 'dark'
 export type UiThemePreference = UiAppearancePreference
-export type VisualThemePreference = 'classic' | 'executive_premium' | 'anatolian_modern' | 'technical_command'
+export type VisualThemePreference = 'hikmet' | 'bozkir' | 'esitlik' | 'tabiat' | 'atlas' | 'avangard'
 export type UiDensityPreference = 'comfortable' | 'compact'
 
 export interface UserUiPreferences {

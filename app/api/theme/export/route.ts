@@ -8,7 +8,7 @@ const EXPORT_FORMATS = new Set<ThemeExportFormat>(['eden', 'figma', 'css', 'read
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const themeKey = searchParams.get('themeKey') || 'classic'
+  const themeKey = searchParams.get('themeKey') || 'hikmet'
   const format = (searchParams.get('format') || 'eden') as ThemeExportFormat
 
   if (!EXPORT_FORMATS.has(format)) {

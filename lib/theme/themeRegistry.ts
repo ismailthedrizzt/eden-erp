@@ -11,18 +11,19 @@ import {
   type ThemeConceptId,
 } from '@/components/design-lab/themeConcepts'
 
-export type EdenThemeKey = 'classic' | 'art_deco_premium' | 'anatolian_60s' | 'green_atelier' | 'pop_studio'
+export type EdenThemeKey = ThemeConceptId
 export type EdenAppearance = 'light' | 'dark' | 'system'
 export type EdenThemeDefinition = ThemeConcept
 
-export const DEFAULT_EDEN_THEME_KEY: EdenThemeKey = 'classic'
+export const DEFAULT_EDEN_THEME_KEY: EdenThemeKey = DEFAULT_VISUAL_THEME_ID
 
 export const EDEN_THEME_KEY_TO_CONCEPT_ID: Record<EdenThemeKey, ThemeConceptId> = {
-  classic: 'classic',
-  art_deco_premium: 'art_deco',
-  anatolian_60s: 'anatolian_60s',
-  green_atelier: 'command_bauhaus',
-  pop_studio: 'pop_studio',
+  hikmet: 'hikmet',
+  bozkir: 'bozkir',
+  esitlik: 'esitlik',
+  tabiat: 'tabiat',
+  atlas: 'atlas',
+  avangard: 'avangard',
 }
 
 export const EDEN_THEME_REGISTRY = themeConcepts

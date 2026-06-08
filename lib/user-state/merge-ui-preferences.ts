@@ -3,16 +3,30 @@ import type { UiAppearancePreference, UserUiPreferences, VisualThemePreference }
 
 const APPEARANCE_VALUES = new Set<UiAppearancePreference>(['system', 'light', 'dark'])
 const VISUAL_THEME_VALUES = new Set<VisualThemePreference>([
-  'classic',
-  'executive_premium',
-  'anatolian_modern',
-  'technical_command',
+  'hikmet',
+  'bozkir',
+  'esitlik',
+  'tabiat',
+  'atlas',
+  'avangard',
 ])
 const LEGACY_VISUAL_THEME_ALIASES: Record<string, VisualThemePreference> = {
-  classicCurrent: 'classic',
-  executivePremium: 'executive_premium',
-  anatolianModern: 'anatolian_modern',
-  technicalCommand: 'technical_command',
+  classic: 'hikmet',
+  classicCurrent: 'hikmet',
+  executivePremium: 'atlas',
+  executive_premium: 'atlas',
+  art_deco: 'atlas',
+  art_deco_premium: 'atlas',
+  anatolianModern: 'bozkir',
+  anatolian_modern: 'bozkir',
+  anatolian_60s: 'bozkir',
+  technicalCommand: 'avangard',
+  technical_command: 'avangard',
+  command: 'avangard',
+  command_bauhaus: 'avangard',
+  green_atelier: 'tabiat',
+  yesil_atolye: 'tabiat',
+  pop_studio: 'avangard',
 }
 
 const ALLOWED_TOP_LEVEL_KEYS = new Set([

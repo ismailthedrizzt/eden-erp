@@ -2031,3 +2031,1671 @@ html[data-eden-theme] .eden-page-banner::before,
 html[data-visual-theme] .eden-page-banner::before {
   opacity: var(--eden-motif-opacity) !important;
 }
+
+
+/* Six Character Theme Engine - generated canonical theme coverage. */
+
+html[data-eden-theme="hikmet"],
+html[data-visual-theme="hikmet"] {
+  --eden-bg: #F7F1E4;
+  --eden-bg-subtle: #EEE3CF;
+  --eden-surface: #FFFCF4;
+  --eden-surface-muted: #EEE3CF;
+  --eden-surface-raised: #FFFCF4;
+  --eden-surface-inset: #EEE3CF;
+  --eden-border: #D8C9AD;
+  --eden-border-strong: #B99D69;
+  --eden-text: #17212B;
+  --eden-text-muted: #6F6658;
+  --eden-text-soft: #6F6658;
+  --eden-accent: #0F6B55;
+  --eden-accent-hover: #0A4D3D;
+  --eden-accent-soft: #DCEBE4;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #B89045;
+  --eden-accent-secondary: #1F7A68;
+  --eden-success: #1F7A4B;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #B89045;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #A6423A;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #1F7A68;
+  --eden-info-soft: #DCEBE4;
+  --eden-nav-bg: #102A26;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #0F6B55 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FFFCF4;
+  --eden-header-border: #D8C9AD;
+  --eden-page-banner-bg: linear-gradient(135deg, #0A4D3D 0%, #0F6B55 54%, #B89045 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #B89045;
+  --eden-page-banner-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FFFCF4;
+  --eden-card-border: #D8C9AD;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FFFCF4 82%, #DCEBE4);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #B99D69;
+  --eden-input-focus: #0F6B55;
+  --eden-input-placeholder: #6F6658;
+  --eden-input-disabled-bg: #EEE3CF;
+  --eden-table-header-bg: #EEE3CF;
+  --eden-table-header-text: #6F6658;
+  --eden-table-border: #D8C9AD;
+  --eden-table-row-hover: color-mix(in srgb, #FFFCF4 70%, #DCEBE4);
+  --eden-table-row-selected: #DCEBE4;
+  --eden-smart-list-bg: color-mix(in srgb, #FFFCF4 88%, #DCEBE4);
+  --eden-smart-list-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+  --eden-smart-list-hover: color-mix(in srgb, #FFFCF4 62%, #DCEBE4);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FFFCF4 70%, #DCEBE4);
+  --eden-smart-toolbar-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+  --eden-smart-table-bg: color-mix(in srgb, #FFFCF4 92%, #DCEBE4);
+  --eden-smart-table-header-bg: color-mix(in srgb, #EEE3CF 74%, #DCEBE4);
+  --eden-smart-table-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+  --eden-smart-row-bg: color-mix(in srgb, #FFFCF4 86%, #DCEBE4);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FFFCF4 94%, #DCEBE4);
+  --eden-smart-row-hover: color-mix(in srgb, #FFFCF4 62%, #DCEBE4);
+  --eden-smart-control-bg: #EEE3CF;
+  --eden-smart-control-active-bg: #DCEBE4;
+  --eden-smart-control-active-text: #0F6B55;
+  --eden-smart-count-bg: #0F6B55;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #EEE3CF;
+  --eden-badge-neutral-bg: #EEE3CF;
+  --eden-badge-neutral-text: #6F6658;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #1F7A4B;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #B89045;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #A6423A;
+  --eden-badge-info-bg: #DCEBE4;
+  --eden-badge-info-text: #1F7A68;
+  --eden-wizard-bg: #F7F1E4;
+  --eden-wizard-panel-bg: #FFFCF4;
+  --eden-wizard-panel-border: #D8C9AD;
+  --eden-wizard-step-bg: #EEE3CF;
+  --eden-wizard-step-active-bg: #0F6B55;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #D8C9AD;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FFFCF4 74%, #DCEBE4);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FFFCF4 70%, #DCEBE4);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+  --eden-focus-ring: color-mix(in srgb, #0F6B55 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #DCEBE4 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #DCEBE4 72%, #FFFCF4);
+  --eden-radius-sm: 8px;
+  --eden-radius-md: 10px;
+  --eden-radius-lg: 12px;
+  --eden-radius-card: 12px;
+  --eden-radius-button: 10px;
+  --eden-radius-input: 10px;
+  --eden-radius-banner: 14px;
+  --eden-radius-wizard: 14px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #0F6B55 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #DCEBE4;
+  --eden-icon-container-border: #D8C9AD;
+  --eden-module-icon-bg: #0F6B55;
+  --eden-status-icon-bg: #EEE3CF;
+  --eden-motif-primary: #0F6B55;
+  --eden-motif-secondary: #1F7A68;
+  --eden-motif-warm: #B89045;
+  --eden-motif-opacity: 0.14;
+  --eden-motif-line: 1.15px;
+  --eden-corner-art-bg: color-mix(in srgb, #DCEBE4 72%, #FFFCF4);
+  --eden-corner-art-border: color-mix(in srgb, #0F6B55 34%, #D8C9AD);
+}
+
+html.dark[data-eden-theme="hikmet"],
+html.dark[data-visual-theme="hikmet"],
+html[data-appearance="dark"][data-eden-theme="hikmet"],
+html[data-appearance="dark"][data-visual-theme="hikmet"] {
+  --eden-bg: #071A1D;
+  --eden-bg-subtle: #143638;
+  --eden-surface: #0E2A2C;
+  --eden-surface-muted: #143638;
+  --eden-surface-raised: #143638;
+  --eden-surface-inset: #071A1D;
+  --eden-border: #2D4C4B;
+  --eden-border-strong: #5D746B;
+  --eden-text: #F4EBD8;
+  --eden-text-muted: #B9AA91;
+  --eden-text-soft: #B9AA91;
+  --eden-accent: #2BAA82;
+  --eden-accent-hover: #3DC29B;
+  --eden-accent-soft: #123D34;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #C6A15B;
+  --eden-accent-secondary: #64BFA3;
+  --eden-success: #58B883;
+  --eden-success-soft: #173823;
+  --eden-warning: #C6A15B;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #D16A5D;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #64BFA3;
+  --eden-info-soft: #123D34;
+  --eden-nav-bg: #061315;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #B9AA91;
+  --eden-nav-active-bg: color-mix(in srgb, #2BAA82 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #0E2A2C;
+  --eden-header-border: #2D4C4B;
+  --eden-page-banner-bg: linear-gradient(135deg, #3DC29B 0%, #2BAA82 54%, #C6A15B 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #C6A15B;
+  --eden-page-banner-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #0E2A2C;
+  --eden-card-border: #2D4C4B;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #0E2A2C 82%, #123D34);
+  --eden-input-bg: #071A1D;
+  --eden-input-border: #5D746B;
+  --eden-input-focus: #2BAA82;
+  --eden-input-placeholder: #B9AA91;
+  --eden-input-disabled-bg: #143638;
+  --eden-table-header-bg: #143638;
+  --eden-table-header-text: #B9AA91;
+  --eden-table-border: #2D4C4B;
+  --eden-table-row-hover: color-mix(in srgb, #0E2A2C 70%, #123D34);
+  --eden-table-row-selected: #123D34;
+  --eden-smart-list-bg: color-mix(in srgb, #0E2A2C 88%, #123D34);
+  --eden-smart-list-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+  --eden-smart-list-hover: color-mix(in srgb, #0E2A2C 62%, #123D34);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #0E2A2C 70%, #123D34);
+  --eden-smart-toolbar-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+  --eden-smart-table-bg: color-mix(in srgb, #0E2A2C 92%, #123D34);
+  --eden-smart-table-header-bg: color-mix(in srgb, #143638 74%, #123D34);
+  --eden-smart-table-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+  --eden-smart-row-bg: color-mix(in srgb, #0E2A2C 86%, #123D34);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #0E2A2C 94%, #123D34);
+  --eden-smart-row-hover: color-mix(in srgb, #0E2A2C 62%, #123D34);
+  --eden-smart-control-bg: #143638;
+  --eden-smart-control-active-bg: #123D34;
+  --eden-smart-control-active-text: #2BAA82;
+  --eden-smart-count-bg: #2BAA82;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #143638;
+  --eden-badge-neutral-bg: #143638;
+  --eden-badge-neutral-text: #B9AA91;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #58B883;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #C6A15B;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #D16A5D;
+  --eden-badge-info-bg: #123D34;
+  --eden-badge-info-text: #64BFA3;
+  --eden-wizard-bg: #071A1D;
+  --eden-wizard-panel-bg: #0E2A2C;
+  --eden-wizard-panel-border: #2D4C4B;
+  --eden-wizard-step-bg: #143638;
+  --eden-wizard-step-active-bg: #2BAA82;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #2D4C4B;
+  --eden-wizard-summary-bg: color-mix(in srgb, #0E2A2C 74%, #123D34);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #0E2A2C 70%, #123D34);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+  --eden-focus-ring: color-mix(in srgb, #2BAA82 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #123D34 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #123D34 72%, #0E2A2C);
+  --eden-radius-sm: 8px;
+  --eden-radius-md: 10px;
+  --eden-radius-lg: 12px;
+  --eden-radius-card: 12px;
+  --eden-radius-button: 10px;
+  --eden-radius-input: 10px;
+  --eden-radius-banner: 14px;
+  --eden-radius-wizard: 14px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #0F6B55 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #123D34;
+  --eden-icon-container-border: #2D4C4B;
+  --eden-module-icon-bg: #2BAA82;
+  --eden-status-icon-bg: #143638;
+  --eden-motif-primary: #2BAA82;
+  --eden-motif-secondary: #64BFA3;
+  --eden-motif-warm: #C6A15B;
+  --eden-motif-opacity: 0.1;
+  --eden-motif-line: 1.15px;
+  --eden-corner-art-bg: color-mix(in srgb, #123D34 72%, #0E2A2C);
+  --eden-corner-art-border: color-mix(in srgb, #2BAA82 34%, #2D4C4B);
+}
+
+html[data-eden-theme="hikmet"],
+html[data-visual-theme="hikmet"] {
+  --eden-page-motif: radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--eden-motif-warm) 36%, transparent) 0 54px, transparent 55px), repeating-conic-gradient(from 45deg at 82% 22%, color-mix(in srgb, var(--eden-motif-primary) 36%, transparent) 0 10deg, transparent 11deg 22deg);
+  --eden-content-motif: linear-gradient(135deg, color-mix(in srgb, var(--eden-motif-primary) 20%, transparent) 0 1px, transparent 1px 28px), linear-gradient(45deg, color-mix(in srgb, var(--eden-motif-warm) 18%, transparent) 0 1px, transparent 1px 32px);
+}
+
+html[data-eden-theme="bozkir"],
+html[data-visual-theme="bozkir"] {
+  --eden-bg: #F2E7D6;
+  --eden-bg-subtle: #E8D9C2;
+  --eden-surface: #FAF7F2;
+  --eden-surface-muted: #E8D9C2;
+  --eden-surface-raised: #FAF7F2;
+  --eden-surface-inset: #E8D9C2;
+  --eden-border: #D0B996;
+  --eden-border-strong: #A98255;
+  --eden-text: #1E1F23;
+  --eden-text-muted: #6F6250;
+  --eden-text-soft: #6F6250;
+  --eden-accent: #0F1B2D;
+  --eden-accent-hover: #0A1220;
+  --eden-accent-soft: #D8DEE8;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #B87333;
+  --eden-accent-secondary: #C0392B;
+  --eden-success: #3D6B45;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #B87333;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #A43F34;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #C0392B;
+  --eden-info-soft: #D8DEE8;
+  --eden-nav-bg: #111827;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #0F1B2D 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FAF7F2;
+  --eden-header-border: #D0B996;
+  --eden-page-banner-bg: linear-gradient(135deg, #0A1220 0%, #0F1B2D 54%, #B87333 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #B87333;
+  --eden-page-banner-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FAF7F2;
+  --eden-card-border: #D0B996;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FAF7F2 82%, #D8DEE8);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #A98255;
+  --eden-input-focus: #0F1B2D;
+  --eden-input-placeholder: #6F6250;
+  --eden-input-disabled-bg: #E8D9C2;
+  --eden-table-header-bg: #E8D9C2;
+  --eden-table-header-text: #6F6250;
+  --eden-table-border: #D0B996;
+  --eden-table-row-hover: color-mix(in srgb, #FAF7F2 70%, #D8DEE8);
+  --eden-table-row-selected: #D8DEE8;
+  --eden-smart-list-bg: color-mix(in srgb, #FAF7F2 88%, #D8DEE8);
+  --eden-smart-list-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+  --eden-smart-list-hover: color-mix(in srgb, #FAF7F2 62%, #D8DEE8);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FAF7F2 70%, #D8DEE8);
+  --eden-smart-toolbar-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+  --eden-smart-table-bg: color-mix(in srgb, #FAF7F2 92%, #D8DEE8);
+  --eden-smart-table-header-bg: color-mix(in srgb, #E8D9C2 74%, #D8DEE8);
+  --eden-smart-table-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+  --eden-smart-row-bg: color-mix(in srgb, #FAF7F2 86%, #D8DEE8);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FAF7F2 94%, #D8DEE8);
+  --eden-smart-row-hover: color-mix(in srgb, #FAF7F2 62%, #D8DEE8);
+  --eden-smart-control-bg: #E8D9C2;
+  --eden-smart-control-active-bg: #D8DEE8;
+  --eden-smart-control-active-text: #0F1B2D;
+  --eden-smart-count-bg: #0F1B2D;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #E8D9C2;
+  --eden-badge-neutral-bg: #E8D9C2;
+  --eden-badge-neutral-text: #6F6250;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #3D6B45;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #B87333;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #A43F34;
+  --eden-badge-info-bg: #D8DEE8;
+  --eden-badge-info-text: #C0392B;
+  --eden-wizard-bg: #F2E7D6;
+  --eden-wizard-panel-bg: #FAF7F2;
+  --eden-wizard-panel-border: #D0B996;
+  --eden-wizard-step-bg: #E8D9C2;
+  --eden-wizard-step-active-bg: #0F1B2D;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #D0B996;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FAF7F2 74%, #D8DEE8);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FAF7F2 70%, #D8DEE8);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+  --eden-focus-ring: color-mix(in srgb, #0F1B2D 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #D8DEE8 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #D8DEE8 72%, #FAF7F2);
+  --eden-radius-sm: 6px;
+  --eden-radius-md: 8px;
+  --eden-radius-lg: 10px;
+  --eden-radius-card: 8px;
+  --eden-radius-button: 8px;
+  --eden-radius-input: 8px;
+  --eden-radius-banner: 10px;
+  --eden-radius-wizard: 10px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #0F1B2D 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #D8DEE8;
+  --eden-icon-container-border: #D0B996;
+  --eden-module-icon-bg: #0F1B2D;
+  --eden-status-icon-bg: #E8D9C2;
+  --eden-motif-primary: #0F1B2D;
+  --eden-motif-secondary: #C0392B;
+  --eden-motif-warm: #B87333;
+  --eden-motif-opacity: 0.16;
+  --eden-motif-line: 1.2px;
+  --eden-corner-art-bg: color-mix(in srgb, #D8DEE8 72%, #FAF7F2);
+  --eden-corner-art-border: color-mix(in srgb, #0F1B2D 34%, #D0B996);
+}
+
+html.dark[data-eden-theme="bozkir"],
+html.dark[data-visual-theme="bozkir"],
+html[data-appearance="dark"][data-eden-theme="bozkir"],
+html[data-appearance="dark"][data-visual-theme="bozkir"] {
+  --eden-bg: #0E1116;
+  --eden-bg-subtle: #1D2632;
+  --eden-surface: #141B24;
+  --eden-surface-muted: #1D2632;
+  --eden-surface-raised: #1D2632;
+  --eden-surface-inset: #0E1116;
+  --eden-border: #33404D;
+  --eden-border-strong: #5C6874;
+  --eden-text: #EFE7D8;
+  --eden-text-muted: #B5A68F;
+  --eden-text-soft: #B5A68F;
+  --eden-accent: #B87333;
+  --eden-accent-hover: #D08A48;
+  --eden-accent-soft: #332014;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #C48A4A;
+  --eden-accent-secondary: #C94B3B;
+  --eden-success: #78A36D;
+  --eden-success-soft: #173823;
+  --eden-warning: #C48A4A;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #D16A5D;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #C94B3B;
+  --eden-info-soft: #332014;
+  --eden-nav-bg: #090C10;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #B5A68F;
+  --eden-nav-active-bg: color-mix(in srgb, #B87333 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #141B24;
+  --eden-header-border: #33404D;
+  --eden-page-banner-bg: linear-gradient(135deg, #D08A48 0%, #B87333 54%, #C48A4A 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #C48A4A;
+  --eden-page-banner-border: color-mix(in srgb, #B87333 34%, #33404D);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #141B24;
+  --eden-card-border: #33404D;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #141B24 82%, #332014);
+  --eden-input-bg: #0E1116;
+  --eden-input-border: #5C6874;
+  --eden-input-focus: #B87333;
+  --eden-input-placeholder: #B5A68F;
+  --eden-input-disabled-bg: #1D2632;
+  --eden-table-header-bg: #1D2632;
+  --eden-table-header-text: #B5A68F;
+  --eden-table-border: #33404D;
+  --eden-table-row-hover: color-mix(in srgb, #141B24 70%, #332014);
+  --eden-table-row-selected: #332014;
+  --eden-smart-list-bg: color-mix(in srgb, #141B24 88%, #332014);
+  --eden-smart-list-border: color-mix(in srgb, #B87333 34%, #33404D);
+  --eden-smart-list-hover: color-mix(in srgb, #141B24 62%, #332014);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #141B24 70%, #332014);
+  --eden-smart-toolbar-border: color-mix(in srgb, #B87333 34%, #33404D);
+  --eden-smart-table-bg: color-mix(in srgb, #141B24 92%, #332014);
+  --eden-smart-table-header-bg: color-mix(in srgb, #1D2632 74%, #332014);
+  --eden-smart-table-border: color-mix(in srgb, #B87333 34%, #33404D);
+  --eden-smart-row-bg: color-mix(in srgb, #141B24 86%, #332014);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #141B24 94%, #332014);
+  --eden-smart-row-hover: color-mix(in srgb, #141B24 62%, #332014);
+  --eden-smart-control-bg: #1D2632;
+  --eden-smart-control-active-bg: #332014;
+  --eden-smart-control-active-text: #B87333;
+  --eden-smart-count-bg: #B87333;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #1D2632;
+  --eden-badge-neutral-bg: #1D2632;
+  --eden-badge-neutral-text: #B5A68F;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #78A36D;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #C48A4A;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #D16A5D;
+  --eden-badge-info-bg: #332014;
+  --eden-badge-info-text: #C94B3B;
+  --eden-wizard-bg: #0E1116;
+  --eden-wizard-panel-bg: #141B24;
+  --eden-wizard-panel-border: #33404D;
+  --eden-wizard-step-bg: #1D2632;
+  --eden-wizard-step-active-bg: #B87333;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #33404D;
+  --eden-wizard-summary-bg: color-mix(in srgb, #141B24 74%, #332014);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #141B24 70%, #332014);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #B87333 34%, #33404D);
+  --eden-focus-ring: color-mix(in srgb, #B87333 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #332014 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #332014 72%, #141B24);
+  --eden-radius-sm: 6px;
+  --eden-radius-md: 8px;
+  --eden-radius-lg: 10px;
+  --eden-radius-card: 8px;
+  --eden-radius-button: 8px;
+  --eden-radius-input: 8px;
+  --eden-radius-banner: 10px;
+  --eden-radius-wizard: 10px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #0F1B2D 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #332014;
+  --eden-icon-container-border: #33404D;
+  --eden-module-icon-bg: #B87333;
+  --eden-status-icon-bg: #1D2632;
+  --eden-motif-primary: #B87333;
+  --eden-motif-secondary: #C94B3B;
+  --eden-motif-warm: #C48A4A;
+  --eden-motif-opacity: 0.11;
+  --eden-motif-line: 1.2px;
+  --eden-corner-art-bg: color-mix(in srgb, #332014 72%, #141B24);
+  --eden-corner-art-border: color-mix(in srgb, #B87333 34%, #33404D);
+}
+
+html[data-eden-theme="bozkir"],
+html[data-visual-theme="bozkir"] {
+  --eden-page-motif: radial-gradient(circle at 88% 22%, color-mix(in srgb, var(--eden-motif-warm) 42%, transparent) 0 62px, transparent 63px), linear-gradient(170deg, transparent 0 56%, color-mix(in srgb, var(--eden-motif-primary) 28%, transparent) 57% 58%, transparent 59%), repeating-linear-gradient(170deg, transparent 0 18px, color-mix(in srgb, var(--eden-motif-warm) 18%, transparent) 19px 20px);
+  --eden-content-motif: repeating-linear-gradient(170deg, transparent 0 28px, color-mix(in srgb, var(--eden-motif-primary) 16%, transparent) 29px 30px);
+}
+
+html[data-eden-theme="esitlik"],
+html[data-visual-theme="esitlik"] {
+  --eden-bg: #FFF1F5;
+  --eden-bg-subtle: #F8DDE8;
+  --eden-surface: #FFF8FA;
+  --eden-surface-muted: #F8DDE8;
+  --eden-surface-raised: #FFF8FA;
+  --eden-surface-inset: #F8DDE8;
+  --eden-border: #E8BFD0;
+  --eden-border-strong: #C88AA7;
+  --eden-text: #2B1224;
+  --eden-text-muted: #7D536A;
+  --eden-text-soft: #7D536A;
+  --eden-accent: #B83272;
+  --eden-accent-hover: #98295E;
+  --eden-accent-soft: #F7D6E6;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #D85B86;
+  --eden-accent-secondary: #D85B86;
+  --eden-success: #2F7D62;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #D85B86;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #B8304D;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #D85B86;
+  --eden-info-soft: #F7D6E6;
+  --eden-nav-bg: #351729;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #B83272 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FFF8FA;
+  --eden-header-border: #E8BFD0;
+  --eden-page-banner-bg: linear-gradient(135deg, #98295E 0%, #B83272 54%, #D85B86 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #D85B86;
+  --eden-page-banner-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FFF8FA;
+  --eden-card-border: #E8BFD0;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FFF8FA 82%, #F7D6E6);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #C88AA7;
+  --eden-input-focus: #B83272;
+  --eden-input-placeholder: #7D536A;
+  --eden-input-disabled-bg: #F8DDE8;
+  --eden-table-header-bg: #F8DDE8;
+  --eden-table-header-text: #7D536A;
+  --eden-table-border: #E8BFD0;
+  --eden-table-row-hover: color-mix(in srgb, #FFF8FA 70%, #F7D6E6);
+  --eden-table-row-selected: #F7D6E6;
+  --eden-smart-list-bg: color-mix(in srgb, #FFF8FA 88%, #F7D6E6);
+  --eden-smart-list-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+  --eden-smart-list-hover: color-mix(in srgb, #FFF8FA 62%, #F7D6E6);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FFF8FA 70%, #F7D6E6);
+  --eden-smart-toolbar-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+  --eden-smart-table-bg: color-mix(in srgb, #FFF8FA 92%, #F7D6E6);
+  --eden-smart-table-header-bg: color-mix(in srgb, #F8DDE8 74%, #F7D6E6);
+  --eden-smart-table-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+  --eden-smart-row-bg: color-mix(in srgb, #FFF8FA 86%, #F7D6E6);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FFF8FA 94%, #F7D6E6);
+  --eden-smart-row-hover: color-mix(in srgb, #FFF8FA 62%, #F7D6E6);
+  --eden-smart-control-bg: #F8DDE8;
+  --eden-smart-control-active-bg: #F7D6E6;
+  --eden-smart-control-active-text: #B83272;
+  --eden-smart-count-bg: #B83272;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #F8DDE8;
+  --eden-badge-neutral-bg: #F8DDE8;
+  --eden-badge-neutral-text: #7D536A;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #2F7D62;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #D85B86;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #B8304D;
+  --eden-badge-info-bg: #F7D6E6;
+  --eden-badge-info-text: #D85B86;
+  --eden-wizard-bg: #FFF1F5;
+  --eden-wizard-panel-bg: #FFF8FA;
+  --eden-wizard-panel-border: #E8BFD0;
+  --eden-wizard-step-bg: #F8DDE8;
+  --eden-wizard-step-active-bg: #B83272;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #E8BFD0;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FFF8FA 74%, #F7D6E6);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FFF8FA 70%, #F7D6E6);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+  --eden-focus-ring: color-mix(in srgb, #B83272 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #F7D6E6 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #F7D6E6 72%, #FFF8FA);
+  --eden-radius-sm: 12px;
+  --eden-radius-md: 14px;
+  --eden-radius-lg: 18px;
+  --eden-radius-card: 18px;
+  --eden-radius-button: 16px;
+  --eden-radius-input: 14px;
+  --eden-radius-banner: 22px;
+  --eden-radius-wizard: 20px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #B83272 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #F7D6E6;
+  --eden-icon-container-border: #E8BFD0;
+  --eden-module-icon-bg: #B83272;
+  --eden-status-icon-bg: #F8DDE8;
+  --eden-motif-primary: #B83272;
+  --eden-motif-secondary: #D85B86;
+  --eden-motif-warm: #D85B86;
+  --eden-motif-opacity: 0.15;
+  --eden-motif-line: 1.25px;
+  --eden-corner-art-bg: color-mix(in srgb, #F7D6E6 72%, #FFF8FA);
+  --eden-corner-art-border: color-mix(in srgb, #B83272 34%, #E8BFD0);
+}
+
+html.dark[data-eden-theme="esitlik"],
+html.dark[data-visual-theme="esitlik"],
+html[data-appearance="dark"][data-eden-theme="esitlik"],
+html[data-appearance="dark"][data-visual-theme="esitlik"] {
+  --eden-bg: #190B18;
+  --eden-bg-subtle: #34162C;
+  --eden-surface: #261020;
+  --eden-surface-muted: #34162C;
+  --eden-surface-raised: #34162C;
+  --eden-surface-inset: #190B18;
+  --eden-border: #56304A;
+  --eden-border-strong: #85506D;
+  --eden-text: #FFF0F6;
+  --eden-text-muted: #CFAABD;
+  --eden-text-soft: #CFAABD;
+  --eden-accent: #E05297;
+  --eden-accent-hover: #F06AAD;
+  --eden-accent-soft: #4A1730;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #F08CAF;
+  --eden-accent-secondary: #F08CAF;
+  --eden-success: #69C49A;
+  --eden-success-soft: #173823;
+  --eden-warning: #F08CAF;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #FF7A8E;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #F08CAF;
+  --eden-info-soft: #4A1730;
+  --eden-nav-bg: #120711;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #CFAABD;
+  --eden-nav-active-bg: color-mix(in srgb, #E05297 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #261020;
+  --eden-header-border: #56304A;
+  --eden-page-banner-bg: linear-gradient(135deg, #F06AAD 0%, #E05297 54%, #F08CAF 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #F08CAF;
+  --eden-page-banner-border: color-mix(in srgb, #E05297 34%, #56304A);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #261020;
+  --eden-card-border: #56304A;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #261020 82%, #4A1730);
+  --eden-input-bg: #190B18;
+  --eden-input-border: #85506D;
+  --eden-input-focus: #E05297;
+  --eden-input-placeholder: #CFAABD;
+  --eden-input-disabled-bg: #34162C;
+  --eden-table-header-bg: #34162C;
+  --eden-table-header-text: #CFAABD;
+  --eden-table-border: #56304A;
+  --eden-table-row-hover: color-mix(in srgb, #261020 70%, #4A1730);
+  --eden-table-row-selected: #4A1730;
+  --eden-smart-list-bg: color-mix(in srgb, #261020 88%, #4A1730);
+  --eden-smart-list-border: color-mix(in srgb, #E05297 34%, #56304A);
+  --eden-smart-list-hover: color-mix(in srgb, #261020 62%, #4A1730);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #261020 70%, #4A1730);
+  --eden-smart-toolbar-border: color-mix(in srgb, #E05297 34%, #56304A);
+  --eden-smart-table-bg: color-mix(in srgb, #261020 92%, #4A1730);
+  --eden-smart-table-header-bg: color-mix(in srgb, #34162C 74%, #4A1730);
+  --eden-smart-table-border: color-mix(in srgb, #E05297 34%, #56304A);
+  --eden-smart-row-bg: color-mix(in srgb, #261020 86%, #4A1730);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #261020 94%, #4A1730);
+  --eden-smart-row-hover: color-mix(in srgb, #261020 62%, #4A1730);
+  --eden-smart-control-bg: #34162C;
+  --eden-smart-control-active-bg: #4A1730;
+  --eden-smart-control-active-text: #E05297;
+  --eden-smart-count-bg: #E05297;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #34162C;
+  --eden-badge-neutral-bg: #34162C;
+  --eden-badge-neutral-text: #CFAABD;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #69C49A;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #F08CAF;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #FF7A8E;
+  --eden-badge-info-bg: #4A1730;
+  --eden-badge-info-text: #F08CAF;
+  --eden-wizard-bg: #190B18;
+  --eden-wizard-panel-bg: #261020;
+  --eden-wizard-panel-border: #56304A;
+  --eden-wizard-step-bg: #34162C;
+  --eden-wizard-step-active-bg: #E05297;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #56304A;
+  --eden-wizard-summary-bg: color-mix(in srgb, #261020 74%, #4A1730);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #261020 70%, #4A1730);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #E05297 34%, #56304A);
+  --eden-focus-ring: color-mix(in srgb, #E05297 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #4A1730 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #4A1730 72%, #261020);
+  --eden-radius-sm: 12px;
+  --eden-radius-md: 14px;
+  --eden-radius-lg: 18px;
+  --eden-radius-card: 18px;
+  --eden-radius-button: 16px;
+  --eden-radius-input: 14px;
+  --eden-radius-banner: 22px;
+  --eden-radius-wizard: 20px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #B83272 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #4A1730;
+  --eden-icon-container-border: #56304A;
+  --eden-module-icon-bg: #E05297;
+  --eden-status-icon-bg: #34162C;
+  --eden-motif-primary: #E05297;
+  --eden-motif-secondary: #F08CAF;
+  --eden-motif-warm: #F08CAF;
+  --eden-motif-opacity: 0.1;
+  --eden-motif-line: 1.25px;
+  --eden-corner-art-bg: color-mix(in srgb, #4A1730 72%, #261020);
+  --eden-corner-art-border: color-mix(in srgb, #E05297 34%, #56304A);
+}
+
+html[data-eden-theme="esitlik"],
+html[data-visual-theme="esitlik"] {
+  --eden-page-motif: radial-gradient(circle at 82% 20%, transparent 0 44px, color-mix(in srgb, var(--eden-motif-primary) 32%, transparent) 45px 47px, transparent 48px 72px, color-mix(in srgb, var(--eden-motif-warm) 28%, transparent) 73px 75px, transparent 76px), radial-gradient(circle at 62% 64%, transparent 0 28px, color-mix(in srgb, var(--eden-motif-secondary) 24%, transparent) 29px 31px, transparent 32px);
+  --eden-content-motif: radial-gradient(circle at 10% 20%, transparent 0 24px, color-mix(in srgb, var(--eden-motif-primary) 16%, transparent) 25px 26px, transparent 27px), radial-gradient(circle at 90% 70%, transparent 0 36px, color-mix(in srgb, var(--eden-motif-warm) 16%, transparent) 37px 38px, transparent 39px);
+}
+
+html[data-eden-theme="tabiat"],
+html[data-visual-theme="tabiat"] {
+  --eden-bg: #F4F1E6;
+  --eden-bg-subtle: #ECE6D4;
+  --eden-surface: #FFFDF4;
+  --eden-surface-muted: #ECE6D4;
+  --eden-surface-raised: #FFFDF4;
+  --eden-surface-inset: #ECE6D4;
+  --eden-border: #D3CBB7;
+  --eden-border-strong: #AFA58B;
+  --eden-text: #243025;
+  --eden-text-muted: #66725C;
+  --eden-text-soft: #66725C;
+  --eden-accent: #1F5A36;
+  --eden-accent-hover: #17442A;
+  --eden-accent-soft: #DCEBDD;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #A9793C;
+  --eden-accent-secondary: #6C8B5E;
+  --eden-success: #2F7D46;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #A9793C;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #A84638;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #6C8B5E;
+  --eden-info-soft: #DCEBDD;
+  --eden-nav-bg: #163B25;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #1F5A36 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FFFDF4;
+  --eden-header-border: #D3CBB7;
+  --eden-page-banner-bg: linear-gradient(135deg, #17442A 0%, #1F5A36 54%, #A9793C 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #A9793C;
+  --eden-page-banner-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FFFDF4;
+  --eden-card-border: #D3CBB7;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FFFDF4 82%, #DCEBDD);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #AFA58B;
+  --eden-input-focus: #1F5A36;
+  --eden-input-placeholder: #66725C;
+  --eden-input-disabled-bg: #ECE6D4;
+  --eden-table-header-bg: #ECE6D4;
+  --eden-table-header-text: #66725C;
+  --eden-table-border: #D3CBB7;
+  --eden-table-row-hover: color-mix(in srgb, #FFFDF4 70%, #DCEBDD);
+  --eden-table-row-selected: #DCEBDD;
+  --eden-smart-list-bg: color-mix(in srgb, #FFFDF4 88%, #DCEBDD);
+  --eden-smart-list-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+  --eden-smart-list-hover: color-mix(in srgb, #FFFDF4 62%, #DCEBDD);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FFFDF4 70%, #DCEBDD);
+  --eden-smart-toolbar-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+  --eden-smart-table-bg: color-mix(in srgb, #FFFDF4 92%, #DCEBDD);
+  --eden-smart-table-header-bg: color-mix(in srgb, #ECE6D4 74%, #DCEBDD);
+  --eden-smart-table-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+  --eden-smart-row-bg: color-mix(in srgb, #FFFDF4 86%, #DCEBDD);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FFFDF4 94%, #DCEBDD);
+  --eden-smart-row-hover: color-mix(in srgb, #FFFDF4 62%, #DCEBDD);
+  --eden-smart-control-bg: #ECE6D4;
+  --eden-smart-control-active-bg: #DCEBDD;
+  --eden-smart-control-active-text: #1F5A36;
+  --eden-smart-count-bg: #1F5A36;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #ECE6D4;
+  --eden-badge-neutral-bg: #ECE6D4;
+  --eden-badge-neutral-text: #66725C;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #2F7D46;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #A9793C;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #A84638;
+  --eden-badge-info-bg: #DCEBDD;
+  --eden-badge-info-text: #6C8B5E;
+  --eden-wizard-bg: #F4F1E6;
+  --eden-wizard-panel-bg: #FFFDF4;
+  --eden-wizard-panel-border: #D3CBB7;
+  --eden-wizard-step-bg: #ECE6D4;
+  --eden-wizard-step-active-bg: #1F5A36;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #D3CBB7;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FFFDF4 74%, #DCEBDD);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FFFDF4 70%, #DCEBDD);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+  --eden-focus-ring: color-mix(in srgb, #1F5A36 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #DCEBDD 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #DCEBDD 72%, #FFFDF4);
+  --eden-radius-sm: 10px;
+  --eden-radius-md: 12px;
+  --eden-radius-lg: 16px;
+  --eden-radius-card: 16px;
+  --eden-radius-button: 12px;
+  --eden-radius-input: 12px;
+  --eden-radius-banner: 18px;
+  --eden-radius-wizard: 18px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #1F5A36 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #DCEBDD;
+  --eden-icon-container-border: #D3CBB7;
+  --eden-module-icon-bg: #1F5A36;
+  --eden-status-icon-bg: #ECE6D4;
+  --eden-motif-primary: #1F5A36;
+  --eden-motif-secondary: #6C8B5E;
+  --eden-motif-warm: #A9793C;
+  --eden-motif-opacity: 0.15;
+  --eden-motif-line: 1.15px;
+  --eden-corner-art-bg: color-mix(in srgb, #DCEBDD 72%, #FFFDF4);
+  --eden-corner-art-border: color-mix(in srgb, #1F5A36 34%, #D3CBB7);
+}
+
+html.dark[data-eden-theme="tabiat"],
+html.dark[data-visual-theme="tabiat"],
+html[data-appearance="dark"][data-eden-theme="tabiat"],
+html[data-appearance="dark"][data-visual-theme="tabiat"] {
+  --eden-bg: #0F1A13;
+  --eden-bg-subtle: #263B2B;
+  --eden-surface: #1C2F22;
+  --eden-surface-muted: #263B2B;
+  --eden-surface-raised: #263B2B;
+  --eden-surface-inset: #0F1A13;
+  --eden-border: #35513A;
+  --eden-border-strong: #5E7A5B;
+  --eden-text: #EEF4E7;
+  --eden-text-muted: #B2C2A6;
+  --eden-text-soft: #B2C2A6;
+  --eden-accent: #66A96F;
+  --eden-accent-hover: #7FC483;
+  --eden-accent-soft: #203D25;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #C69A56;
+  --eden-accent-secondary: #8EAA78;
+  --eden-success: #7FC489;
+  --eden-success-soft: #173823;
+  --eden-warning: #C69A56;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #D06F5F;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #8EAA78;
+  --eden-info-soft: #203D25;
+  --eden-nav-bg: #09150E;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #B2C2A6;
+  --eden-nav-active-bg: color-mix(in srgb, #66A96F 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #1C2F22;
+  --eden-header-border: #35513A;
+  --eden-page-banner-bg: linear-gradient(135deg, #7FC483 0%, #66A96F 54%, #C69A56 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #C69A56;
+  --eden-page-banner-border: color-mix(in srgb, #66A96F 34%, #35513A);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #1C2F22;
+  --eden-card-border: #35513A;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #1C2F22 82%, #203D25);
+  --eden-input-bg: #0F1A13;
+  --eden-input-border: #5E7A5B;
+  --eden-input-focus: #66A96F;
+  --eden-input-placeholder: #B2C2A6;
+  --eden-input-disabled-bg: #263B2B;
+  --eden-table-header-bg: #263B2B;
+  --eden-table-header-text: #B2C2A6;
+  --eden-table-border: #35513A;
+  --eden-table-row-hover: color-mix(in srgb, #1C2F22 70%, #203D25);
+  --eden-table-row-selected: #203D25;
+  --eden-smart-list-bg: color-mix(in srgb, #1C2F22 88%, #203D25);
+  --eden-smart-list-border: color-mix(in srgb, #66A96F 34%, #35513A);
+  --eden-smart-list-hover: color-mix(in srgb, #1C2F22 62%, #203D25);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #1C2F22 70%, #203D25);
+  --eden-smart-toolbar-border: color-mix(in srgb, #66A96F 34%, #35513A);
+  --eden-smart-table-bg: color-mix(in srgb, #1C2F22 92%, #203D25);
+  --eden-smart-table-header-bg: color-mix(in srgb, #263B2B 74%, #203D25);
+  --eden-smart-table-border: color-mix(in srgb, #66A96F 34%, #35513A);
+  --eden-smart-row-bg: color-mix(in srgb, #1C2F22 86%, #203D25);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #1C2F22 94%, #203D25);
+  --eden-smart-row-hover: color-mix(in srgb, #1C2F22 62%, #203D25);
+  --eden-smart-control-bg: #263B2B;
+  --eden-smart-control-active-bg: #203D25;
+  --eden-smart-control-active-text: #66A96F;
+  --eden-smart-count-bg: #66A96F;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #263B2B;
+  --eden-badge-neutral-bg: #263B2B;
+  --eden-badge-neutral-text: #B2C2A6;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #7FC489;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #C69A56;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #D06F5F;
+  --eden-badge-info-bg: #203D25;
+  --eden-badge-info-text: #8EAA78;
+  --eden-wizard-bg: #0F1A13;
+  --eden-wizard-panel-bg: #1C2F22;
+  --eden-wizard-panel-border: #35513A;
+  --eden-wizard-step-bg: #263B2B;
+  --eden-wizard-step-active-bg: #66A96F;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #35513A;
+  --eden-wizard-summary-bg: color-mix(in srgb, #1C2F22 74%, #203D25);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #1C2F22 70%, #203D25);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #66A96F 34%, #35513A);
+  --eden-focus-ring: color-mix(in srgb, #66A96F 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #203D25 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #203D25 72%, #1C2F22);
+  --eden-radius-sm: 10px;
+  --eden-radius-md: 12px;
+  --eden-radius-lg: 16px;
+  --eden-radius-card: 16px;
+  --eden-radius-button: 12px;
+  --eden-radius-input: 12px;
+  --eden-radius-banner: 18px;
+  --eden-radius-wizard: 18px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #1F5A36 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #203D25;
+  --eden-icon-container-border: #35513A;
+  --eden-module-icon-bg: #66A96F;
+  --eden-status-icon-bg: #263B2B;
+  --eden-motif-primary: #66A96F;
+  --eden-motif-secondary: #8EAA78;
+  --eden-motif-warm: #C69A56;
+  --eden-motif-opacity: 0.1;
+  --eden-motif-line: 1.15px;
+  --eden-corner-art-bg: color-mix(in srgb, #203D25 72%, #1C2F22);
+  --eden-corner-art-border: color-mix(in srgb, #66A96F 34%, #35513A);
+}
+
+html[data-eden-theme="tabiat"],
+html[data-visual-theme="tabiat"] {
+  --eden-page-motif: radial-gradient(ellipse at 88% 22%, color-mix(in srgb, var(--eden-motif-primary) 22%, transparent) 0 82px, transparent 83px), radial-gradient(ellipse at 78% 44%, color-mix(in srgb, var(--eden-motif-secondary) 20%, transparent) 0 42px, transparent 43px), linear-gradient(130deg, transparent 0 64%, color-mix(in srgb, var(--eden-motif-primary) 20%, transparent) 65% 66%, transparent 67%);
+  --eden-content-motif: radial-gradient(ellipse at 94% 12%, color-mix(in srgb, var(--eden-motif-primary) 16%, transparent) 0 48px, transparent 49px), radial-gradient(ellipse at 88% 28%, color-mix(in srgb, var(--eden-motif-secondary) 14%, transparent) 0 28px, transparent 29px);
+}
+
+html[data-eden-theme="atlas"],
+html[data-visual-theme="atlas"] {
+  --eden-bg: #F7F3EB;
+  --eden-bg-subtle: #EAF2FA;
+  --eden-surface: #FFFCF6;
+  --eden-surface-muted: #EAF2FA;
+  --eden-surface-raised: #FFFCF6;
+  --eden-surface-inset: #EAF2FA;
+  --eden-border: #D9CFBF;
+  --eden-border-strong: #B8A77E;
+  --eden-text: #1A2233;
+  --eden-text-muted: #607086;
+  --eden-text-soft: #607086;
+  --eden-accent: #2B5FDE;
+  --eden-accent-hover: #1F49B6;
+  --eden-accent-soft: #DCE8FF;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #C89A44;
+  --eden-accent-secondary: #7FB7E8;
+  --eden-success: #34735A;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #C89A44;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #A6423A;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #7FB7E8;
+  --eden-info-soft: #DCE8FF;
+  --eden-nav-bg: #101A2C;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #2B5FDE 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FFFCF6;
+  --eden-header-border: #D9CFBF;
+  --eden-page-banner-bg: linear-gradient(135deg, #1F49B6 0%, #2B5FDE 54%, #C89A44 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #C89A44;
+  --eden-page-banner-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FFFCF6;
+  --eden-card-border: #D9CFBF;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FFFCF6 82%, #DCE8FF);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #B8A77E;
+  --eden-input-focus: #2B5FDE;
+  --eden-input-placeholder: #607086;
+  --eden-input-disabled-bg: #EAF2FA;
+  --eden-table-header-bg: #EAF2FA;
+  --eden-table-header-text: #607086;
+  --eden-table-border: #D9CFBF;
+  --eden-table-row-hover: color-mix(in srgb, #FFFCF6 70%, #DCE8FF);
+  --eden-table-row-selected: #DCE8FF;
+  --eden-smart-list-bg: color-mix(in srgb, #FFFCF6 88%, #DCE8FF);
+  --eden-smart-list-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+  --eden-smart-list-hover: color-mix(in srgb, #FFFCF6 62%, #DCE8FF);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FFFCF6 70%, #DCE8FF);
+  --eden-smart-toolbar-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+  --eden-smart-table-bg: color-mix(in srgb, #FFFCF6 92%, #DCE8FF);
+  --eden-smart-table-header-bg: color-mix(in srgb, #EAF2FA 74%, #DCE8FF);
+  --eden-smart-table-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+  --eden-smart-row-bg: color-mix(in srgb, #FFFCF6 86%, #DCE8FF);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FFFCF6 94%, #DCE8FF);
+  --eden-smart-row-hover: color-mix(in srgb, #FFFCF6 62%, #DCE8FF);
+  --eden-smart-control-bg: #EAF2FA;
+  --eden-smart-control-active-bg: #DCE8FF;
+  --eden-smart-control-active-text: #2B5FDE;
+  --eden-smart-count-bg: #2B5FDE;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #EAF2FA;
+  --eden-badge-neutral-bg: #EAF2FA;
+  --eden-badge-neutral-text: #607086;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #34735A;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #C89A44;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #A6423A;
+  --eden-badge-info-bg: #DCE8FF;
+  --eden-badge-info-text: #7FB7E8;
+  --eden-wizard-bg: #F7F3EB;
+  --eden-wizard-panel-bg: #FFFCF6;
+  --eden-wizard-panel-border: #D9CFBF;
+  --eden-wizard-step-bg: #EAF2FA;
+  --eden-wizard-step-active-bg: #2B5FDE;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #D9CFBF;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FFFCF6 74%, #DCE8FF);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FFFCF6 70%, #DCE8FF);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+  --eden-focus-ring: color-mix(in srgb, #2B5FDE 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #DCE8FF 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #DCE8FF 72%, #FFFCF6);
+  --eden-radius-sm: 6px;
+  --eden-radius-md: 8px;
+  --eden-radius-lg: 10px;
+  --eden-radius-card: 10px;
+  --eden-radius-button: 8px;
+  --eden-radius-input: 8px;
+  --eden-radius-banner: 10px;
+  --eden-radius-wizard: 10px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #2B5FDE 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #DCE8FF;
+  --eden-icon-container-border: #D9CFBF;
+  --eden-module-icon-bg: #2B5FDE;
+  --eden-status-icon-bg: #EAF2FA;
+  --eden-motif-primary: #2B5FDE;
+  --eden-motif-secondary: #7FB7E8;
+  --eden-motif-warm: #C89A44;
+  --eden-motif-opacity: 0.17;
+  --eden-motif-line: 1.2px;
+  --eden-corner-art-bg: color-mix(in srgb, #DCE8FF 72%, #FFFCF6);
+  --eden-corner-art-border: color-mix(in srgb, #2B5FDE 34%, #D9CFBF);
+}
+
+html.dark[data-eden-theme="atlas"],
+html.dark[data-visual-theme="atlas"],
+html[data-appearance="dark"][data-eden-theme="atlas"],
+html[data-appearance="dark"][data-visual-theme="atlas"] {
+  --eden-bg: #0B1622;
+  --eden-bg-subtle: #193347;
+  --eden-surface: #122131;
+  --eden-surface-muted: #193347;
+  --eden-surface-raised: #193347;
+  --eden-surface-inset: #0B1622;
+  --eden-border: #31475B;
+  --eden-border-strong: #59758D;
+  --eden-text: #F0E8DB;
+  --eden-text-muted: #A9B8C2;
+  --eden-text-soft: #A9B8C2;
+  --eden-accent: #4C8DDA;
+  --eden-accent-hover: #68A7F0;
+  --eden-accent-soft: #13324F;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #C6914A;
+  --eden-accent-secondary: #1F6A73;
+  --eden-success: #6AAE84;
+  --eden-success-soft: #173823;
+  --eden-warning: #C6914A;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #D16A5D;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #1F6A73;
+  --eden-info-soft: #13324F;
+  --eden-nav-bg: #07101A;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #A9B8C2;
+  --eden-nav-active-bg: color-mix(in srgb, #4C8DDA 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #122131;
+  --eden-header-border: #31475B;
+  --eden-page-banner-bg: linear-gradient(135deg, #68A7F0 0%, #4C8DDA 54%, #C6914A 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #C6914A;
+  --eden-page-banner-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #122131;
+  --eden-card-border: #31475B;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #122131 82%, #13324F);
+  --eden-input-bg: #0B1622;
+  --eden-input-border: #59758D;
+  --eden-input-focus: #4C8DDA;
+  --eden-input-placeholder: #A9B8C2;
+  --eden-input-disabled-bg: #193347;
+  --eden-table-header-bg: #193347;
+  --eden-table-header-text: #A9B8C2;
+  --eden-table-border: #31475B;
+  --eden-table-row-hover: color-mix(in srgb, #122131 70%, #13324F);
+  --eden-table-row-selected: #13324F;
+  --eden-smart-list-bg: color-mix(in srgb, #122131 88%, #13324F);
+  --eden-smart-list-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+  --eden-smart-list-hover: color-mix(in srgb, #122131 62%, #13324F);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #122131 70%, #13324F);
+  --eden-smart-toolbar-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+  --eden-smart-table-bg: color-mix(in srgb, #122131 92%, #13324F);
+  --eden-smart-table-header-bg: color-mix(in srgb, #193347 74%, #13324F);
+  --eden-smart-table-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+  --eden-smart-row-bg: color-mix(in srgb, #122131 86%, #13324F);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #122131 94%, #13324F);
+  --eden-smart-row-hover: color-mix(in srgb, #122131 62%, #13324F);
+  --eden-smart-control-bg: #193347;
+  --eden-smart-control-active-bg: #13324F;
+  --eden-smart-control-active-text: #4C8DDA;
+  --eden-smart-count-bg: #4C8DDA;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #193347;
+  --eden-badge-neutral-bg: #193347;
+  --eden-badge-neutral-text: #A9B8C2;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #6AAE84;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #C6914A;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #D16A5D;
+  --eden-badge-info-bg: #13324F;
+  --eden-badge-info-text: #1F6A73;
+  --eden-wizard-bg: #0B1622;
+  --eden-wizard-panel-bg: #122131;
+  --eden-wizard-panel-border: #31475B;
+  --eden-wizard-step-bg: #193347;
+  --eden-wizard-step-active-bg: #4C8DDA;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #31475B;
+  --eden-wizard-summary-bg: color-mix(in srgb, #122131 74%, #13324F);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #122131 70%, #13324F);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+  --eden-focus-ring: color-mix(in srgb, #4C8DDA 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #13324F 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #13324F 72%, #122131);
+  --eden-radius-sm: 6px;
+  --eden-radius-md: 8px;
+  --eden-radius-lg: 10px;
+  --eden-radius-card: 10px;
+  --eden-radius-button: 8px;
+  --eden-radius-input: 8px;
+  --eden-radius-banner: 10px;
+  --eden-radius-wizard: 10px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #2B5FDE 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #13324F;
+  --eden-icon-container-border: #31475B;
+  --eden-module-icon-bg: #4C8DDA;
+  --eden-status-icon-bg: #193347;
+  --eden-motif-primary: #4C8DDA;
+  --eden-motif-secondary: #1F6A73;
+  --eden-motif-warm: #C6914A;
+  --eden-motif-opacity: 0.11;
+  --eden-motif-line: 1.2px;
+  --eden-corner-art-bg: color-mix(in srgb, #13324F 72%, #122131);
+  --eden-corner-art-border: color-mix(in srgb, #4C8DDA 34%, #31475B);
+}
+
+html[data-eden-theme="atlas"],
+html[data-visual-theme="atlas"] {
+  --eden-page-motif: linear-gradient(90deg, transparent 0 70%, color-mix(in srgb, var(--eden-motif-warm) 24%, transparent) 71% 72%, transparent 73%), repeating-linear-gradient(90deg, transparent 0 36px, color-mix(in srgb, var(--eden-motif-primary) 20%, transparent) 37px 38px), radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--eden-motif-warm) 28%, transparent) 0 62px, transparent 63px);
+  --eden-content-motif: repeating-linear-gradient(90deg, transparent 0 42px, color-mix(in srgb, var(--eden-motif-primary) 14%, transparent) 43px 44px), repeating-linear-gradient(0deg, transparent 0 32px, color-mix(in srgb, var(--eden-motif-warm) 12%, transparent) 33px 34px);
+}
+
+html[data-eden-theme="avangard"],
+html[data-visual-theme="avangard"] {
+  --eden-bg: #F7F8FB;
+  --eden-bg-subtle: #EEF1F6;
+  --eden-surface: #FFFFFF;
+  --eden-surface-muted: #EEF1F6;
+  --eden-surface-raised: #FFFFFF;
+  --eden-surface-inset: #EEF1F6;
+  --eden-border: #DDE3EE;
+  --eden-border-strong: #B7C0D2;
+  --eden-text: #10131A;
+  --eden-text-muted: #647084;
+  --eden-text-soft: #647084;
+  --eden-accent: #6D4AFF;
+  --eden-accent-hover: #5636E8;
+  --eden-accent-soft: #E8E2FF;
+  --eden-accent-text: #FFFFFF;
+  --eden-accent-warm: #FF6B6B;
+  --eden-accent-secondary: #00A3D7;
+  --eden-success: #0E8C61;
+  --eden-success-soft: #DCEBDD;
+  --eden-warning: #FF6B6B;
+  --eden-warning-soft: #F3E5C9;
+  --eden-danger: #D9304F;
+  --eden-danger-soft: #F0D8D2;
+  --eden-info: #00A3D7;
+  --eden-info-soft: #E8E2FF;
+  --eden-nav-bg: #111827;
+  --eden-nav-text: #F8FAFC;
+  --eden-nav-muted: #D6CDB9;
+  --eden-nav-active-bg: color-mix(in srgb, #6D4AFF 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #FFFFFF;
+  --eden-header-border: #DDE3EE;
+  --eden-page-banner-bg: linear-gradient(135deg, #5636E8 0%, #6D4AFF 54%, #FF6B6B 100%);
+  --eden-page-banner-text: #FFFFFF;
+  --eden-page-banner-muted: color-mix(in srgb, #FFFFFF 78%, transparent);
+  --eden-page-banner-accent: #FF6B6B;
+  --eden-page-banner-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #FFFFFF;
+  --eden-card-border: #DDE3EE;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #FFFFFF 82%, #E8E2FF);
+  --eden-input-bg: #FFFFFF;
+  --eden-input-border: #B7C0D2;
+  --eden-input-focus: #6D4AFF;
+  --eden-input-placeholder: #647084;
+  --eden-input-disabled-bg: #EEF1F6;
+  --eden-table-header-bg: #EEF1F6;
+  --eden-table-header-text: #647084;
+  --eden-table-border: #DDE3EE;
+  --eden-table-row-hover: color-mix(in srgb, #FFFFFF 70%, #E8E2FF);
+  --eden-table-row-selected: #E8E2FF;
+  --eden-smart-list-bg: color-mix(in srgb, #FFFFFF 88%, #E8E2FF);
+  --eden-smart-list-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+  --eden-smart-list-hover: color-mix(in srgb, #FFFFFF 62%, #E8E2FF);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #FFFFFF 70%, #E8E2FF);
+  --eden-smart-toolbar-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+  --eden-smart-table-bg: color-mix(in srgb, #FFFFFF 92%, #E8E2FF);
+  --eden-smart-table-header-bg: color-mix(in srgb, #EEF1F6 74%, #E8E2FF);
+  --eden-smart-table-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+  --eden-smart-row-bg: color-mix(in srgb, #FFFFFF 86%, #E8E2FF);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #FFFFFF 94%, #E8E2FF);
+  --eden-smart-row-hover: color-mix(in srgb, #FFFFFF 62%, #E8E2FF);
+  --eden-smart-control-bg: #EEF1F6;
+  --eden-smart-control-active-bg: #E8E2FF;
+  --eden-smart-control-active-text: #6D4AFF;
+  --eden-smart-count-bg: #6D4AFF;
+  --eden-smart-count-text: #FFFFFF;
+  --eden-badge-bg: #EEF1F6;
+  --eden-badge-neutral-bg: #EEF1F6;
+  --eden-badge-neutral-text: #647084;
+  --eden-badge-success-bg: #DCEBDD;
+  --eden-badge-success-text: #0E8C61;
+  --eden-badge-warning-bg: #F3E5C9;
+  --eden-badge-warning-text: #FF6B6B;
+  --eden-badge-danger-bg: #F0D8D2;
+  --eden-badge-danger-text: #D9304F;
+  --eden-badge-info-bg: #E8E2FF;
+  --eden-badge-info-text: #00A3D7;
+  --eden-wizard-bg: #F7F8FB;
+  --eden-wizard-panel-bg: #FFFFFF;
+  --eden-wizard-panel-border: #DDE3EE;
+  --eden-wizard-step-bg: #EEF1F6;
+  --eden-wizard-step-active-bg: #6D4AFF;
+  --eden-wizard-step-active-text: #FFFFFF;
+  --eden-wizard-step-complete-bg: #DCEBDD;
+  --eden-wizard-step-line: #DDE3EE;
+  --eden-wizard-summary-bg: color-mix(in srgb, #FFFFFF 74%, #E8E2FF);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #FFFFFF 70%, #E8E2FF);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+  --eden-focus-ring: color-mix(in srgb, #6D4AFF 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #E8E2FF 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #E8E2FF 72%, #FFFFFF);
+  --eden-radius-sm: 4px;
+  --eden-radius-md: 6px;
+  --eden-radius-lg: 8px;
+  --eden-radius-card: 6px;
+  --eden-radius-button: 6px;
+  --eden-radius-input: 6px;
+  --eden-radius-banner: 8px;
+  --eden-radius-wizard: 8px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #6D4AFF 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #E8E2FF;
+  --eden-icon-container-border: #DDE3EE;
+  --eden-module-icon-bg: #6D4AFF;
+  --eden-status-icon-bg: #EEF1F6;
+  --eden-motif-primary: #6D4AFF;
+  --eden-motif-secondary: #00A3D7;
+  --eden-motif-warm: #FF6B6B;
+  --eden-motif-opacity: 0.16;
+  --eden-motif-line: 1.35px;
+  --eden-corner-art-bg: color-mix(in srgb, #E8E2FF 72%, #FFFFFF);
+  --eden-corner-art-border: color-mix(in srgb, #6D4AFF 34%, #DDE3EE);
+}
+
+html.dark[data-eden-theme="avangard"],
+html.dark[data-visual-theme="avangard"],
+html[data-appearance="dark"][data-eden-theme="avangard"],
+html[data-appearance="dark"][data-visual-theme="avangard"] {
+  --eden-bg: #070A10;
+  --eden-bg-subtle: #182232;
+  --eden-surface: #101722;
+  --eden-surface-muted: #182232;
+  --eden-surface-raised: #182232;
+  --eden-surface-inset: #070A10;
+  --eden-border: #2B3547;
+  --eden-border-strong: #4B5870;
+  --eden-text: #F4F7FB;
+  --eden-text-muted: #9BA8BA;
+  --eden-text-soft: #9BA8BA;
+  --eden-accent: #7C5CFF;
+  --eden-accent-hover: #9A82FF;
+  --eden-accent-soft: #241A56;
+  --eden-accent-text: #07110D;
+  --eden-accent-warm: #FF6B6B;
+  --eden-accent-secondary: #46D9FF;
+  --eden-success: #72D985;
+  --eden-success-soft: #173823;
+  --eden-warning: #FF6B6B;
+  --eden-warning-soft: #3A2A13;
+  --eden-danger: #FF6B7E;
+  --eden-danger-soft: #3B1D1A;
+  --eden-info: #46D9FF;
+  --eden-info-soft: #241A56;
+  --eden-nav-bg: #05070B;
+  --eden-nav-text: #F4F7FB;
+  --eden-nav-muted: #9BA8BA;
+  --eden-nav-active-bg: color-mix(in srgb, #7C5CFF 28%, transparent);
+  --eden-nav-active-text: #FFFFFF;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+  --eden-header-bg: #101722;
+  --eden-header-border: #2B3547;
+  --eden-page-banner-bg: linear-gradient(135deg, #9A82FF 0%, #7C5CFF 54%, #FF6B6B 100%);
+  --eden-page-banner-text: #07110D;
+  --eden-page-banner-muted: color-mix(in srgb, #07110D 78%, transparent);
+  --eden-page-banner-accent: #FF6B6B;
+  --eden-page-banner-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-card-bg: #101722;
+  --eden-card-border: #2B3547;
+  --eden-card-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-card-hover-bg: color-mix(in srgb, #101722 82%, #241A56);
+  --eden-input-bg: #070A10;
+  --eden-input-border: #4B5870;
+  --eden-input-focus: #7C5CFF;
+  --eden-input-placeholder: #9BA8BA;
+  --eden-input-disabled-bg: #182232;
+  --eden-table-header-bg: #182232;
+  --eden-table-header-text: #9BA8BA;
+  --eden-table-border: #2B3547;
+  --eden-table-row-hover: color-mix(in srgb, #101722 70%, #241A56);
+  --eden-table-row-selected: #241A56;
+  --eden-smart-list-bg: color-mix(in srgb, #101722 88%, #241A56);
+  --eden-smart-list-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+  --eden-smart-list-hover: color-mix(in srgb, #101722 62%, #241A56);
+  --eden-smart-toolbar-bg: color-mix(in srgb, #101722 70%, #241A56);
+  --eden-smart-toolbar-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+  --eden-smart-table-bg: color-mix(in srgb, #101722 92%, #241A56);
+  --eden-smart-table-header-bg: color-mix(in srgb, #182232 74%, #241A56);
+  --eden-smart-table-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+  --eden-smart-row-bg: color-mix(in srgb, #101722 86%, #241A56);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #101722 94%, #241A56);
+  --eden-smart-row-hover: color-mix(in srgb, #101722 62%, #241A56);
+  --eden-smart-control-bg: #182232;
+  --eden-smart-control-active-bg: #241A56;
+  --eden-smart-control-active-text: #7C5CFF;
+  --eden-smart-count-bg: #7C5CFF;
+  --eden-smart-count-text: #07110D;
+  --eden-badge-bg: #182232;
+  --eden-badge-neutral-bg: #182232;
+  --eden-badge-neutral-text: #9BA8BA;
+  --eden-badge-success-bg: #173823;
+  --eden-badge-success-text: #72D985;
+  --eden-badge-warning-bg: #3A2A13;
+  --eden-badge-warning-text: #FF6B6B;
+  --eden-badge-danger-bg: #3B1D1A;
+  --eden-badge-danger-text: #FF6B7E;
+  --eden-badge-info-bg: #241A56;
+  --eden-badge-info-text: #46D9FF;
+  --eden-wizard-bg: #070A10;
+  --eden-wizard-panel-bg: #101722;
+  --eden-wizard-panel-border: #2B3547;
+  --eden-wizard-step-bg: #182232;
+  --eden-wizard-step-active-bg: #7C5CFF;
+  --eden-wizard-step-active-text: #07110D;
+  --eden-wizard-step-complete-bg: #173823;
+  --eden-wizard-step-line: #2B3547;
+  --eden-wizard-summary-bg: color-mix(in srgb, #101722 74%, #241A56);
+  --eden-wizard-sidebar-bg: color-mix(in srgb, #101722 70%, #241A56);
+  --eden-wizard-sidebar-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+  --eden-focus-ring: color-mix(in srgb, #7C5CFF 28%, transparent);
+  --eden-hover-overlay: color-mix(in srgb, #241A56 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, #241A56 72%, #101722);
+  --eden-radius-sm: 4px;
+  --eden-radius-md: 6px;
+  --eden-radius-lg: 8px;
+  --eden-radius-card: 6px;
+  --eden-radius-button: 6px;
+  --eden-radius-input: 6px;
+  --eden-radius-banner: 8px;
+  --eden-radius-wizard: 8px;
+  --eden-shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --eden-shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-shadow-floating: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --eden-shadow-focus: 0 0 0 3px color-mix(in srgb, #6D4AFF 28%, transparent);
+  --eden-shadow-banner: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --eden-icon-stroke: 1.8;
+  --eden-icon-container-bg: #241A56;
+  --eden-icon-container-border: #2B3547;
+  --eden-module-icon-bg: #7C5CFF;
+  --eden-status-icon-bg: #182232;
+  --eden-motif-primary: #7C5CFF;
+  --eden-motif-secondary: #46D9FF;
+  --eden-motif-warm: #FF6B6B;
+  --eden-motif-opacity: 0.11;
+  --eden-motif-line: 1.35px;
+  --eden-corner-art-bg: color-mix(in srgb, #241A56 72%, #101722);
+  --eden-corner-art-border: color-mix(in srgb, #7C5CFF 34%, #2B3547);
+}
+
+html[data-eden-theme="avangard"],
+html[data-visual-theme="avangard"] {
+  --eden-page-motif: linear-gradient(135deg, transparent 0 58%, color-mix(in srgb, var(--eden-motif-warm) 36%, transparent) 59% 64%, transparent 65%), repeating-linear-gradient(90deg, color-mix(in srgb, var(--eden-motif-primary) 20%, transparent) 0 1px, transparent 1px 24px), repeating-linear-gradient(0deg, color-mix(in srgb, var(--eden-motif-secondary) 14%, transparent) 0 1px, transparent 1px 28px);
+  --eden-content-motif: repeating-linear-gradient(90deg, transparent 0 24px, color-mix(in srgb, var(--eden-motif-primary) 12%, transparent) 25px 26px), linear-gradient(135deg, transparent 0 72%, color-mix(in srgb, var(--eden-motif-warm) 16%, transparent) 73% 78%, transparent 79%);
+}
+
+html[data-eden-theme] body {
+  background:
+    radial-gradient(circle at 100% 8%, color-mix(in srgb, var(--eden-motif-primary) 7%, transparent) 0 180px, transparent 181px),
+    radial-gradient(circle at 12% 96%, color-mix(in srgb, var(--eden-motif-secondary) 6%, transparent) 0 220px, transparent 221px),
+    var(--eden-bg);
+}
+
+html[data-eden-theme] header,
+html[data-eden-theme] [data-app-header] {
+  background-color: var(--eden-header-bg) !important;
+  border-color: var(--eden-header-border) !important;
+}
+
+html[data-eden-theme] .eden-page-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--eden-radius-banner);
+  background: var(--eden-page-banner-bg) !important;
+  border-color: var(--eden-page-banner-border) !important;
+  box-shadow: var(--eden-shadow-banner);
+}
+
+html[data-eden-theme] .eden-page-banner::before,
+html[data-eden-theme] [data-theme-surface="banner"]::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--eden-page-motif);
+  background-size: 360px 220px, 260px 180px, auto;
+  opacity: var(--eden-motif-opacity);
+}
+
+html[data-eden-theme] .eden-page-banner > *,
+html[data-eden-theme] [data-theme-surface="banner"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-eden-theme] .eden-themed-content-surface,
+html[data-eden-theme] .eden-smart-list-toolbar,
+html[data-eden-theme] .eden-smart-list-filter-panel,
+html[data-eden-theme] .eden-smart-list-pagination,
+html[data-eden-theme] .eden-smart-list-table,
+html[data-eden-theme] [data-theme-surface="content"],
+html[data-eden-theme] [data-theme-surface="empty"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--eden-radius-card);
+}
+
+html[data-eden-theme] .eden-themed-content-surface::before,
+html[data-eden-theme] .eden-smart-list-toolbar::before,
+html[data-eden-theme] .eden-smart-list-filter-panel::before,
+html[data-eden-theme] .eden-smart-list-pagination::before,
+html[data-eden-theme] .eden-smart-list-table::before,
+html[data-eden-theme] [data-theme-surface="content"]::before,
+html[data-eden-theme] [data-theme-surface="empty"]::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--eden-content-motif);
+  background-size: 320px 180px, 240px 160px;
+  opacity: calc(var(--eden-motif-opacity) * 0.72);
+}
+
+html[data-eden-theme] .eden-themed-content-surface > *,
+html[data-eden-theme] .eden-smart-list-toolbar > *,
+html[data-eden-theme] .eden-smart-list-filter-panel > *,
+html[data-eden-theme] .eden-smart-list-pagination > *,
+html[data-eden-theme] .eden-smart-list-table > *,
+html[data-eden-theme] [data-theme-surface="content"] > *,
+html[data-eden-theme] [data-theme-surface="empty"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-eden-theme] .eden-smart-list-table {
+  background: var(--eden-smart-table-bg) !important;
+  border-color: var(--eden-smart-table-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table-head {
+  background: var(--eden-smart-table-header-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-row:nth-child(even) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-alt-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-row:hover .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-hover) !important;
+}
+
+html[data-eden-theme] :where(.card, .kpi-card, [class~="rounded-lg"], [class~="rounded-xl"], [class~="rounded-2xl"])[class~="border"] {
+  border-color: var(--eden-card-border) !important;
+  border-radius: var(--eden-radius-card) !important;
+}
+
+html[data-eden-theme] button,
+html[data-eden-theme] [role="button"] {
+  border-radius: var(--eden-radius-button);
+}
+
+html[data-eden-theme] :where(input, select, textarea) {
+  border-radius: var(--eden-radius-input) !important;
+}
+
+html[data-eden-theme] :where(.badge, [class*="badge"], [class*="Badge"]) {
+  background-color: var(--eden-badge-neutral-bg);
+  color: var(--eden-badge-neutral-text);
+}
+
+html[data-eden-theme] :where([class*="wizard"], [class*="Wizard"], [data-wizard]) {
+  --eden-card-bg: var(--eden-wizard-panel-bg);
+  --eden-card-border: var(--eden-wizard-panel-border);
+  border-radius: var(--eden-radius-wizard);
+}
+
+html[data-eden-theme] .eden-theme-motif {
+  background: var(--eden-content-motif);
+  opacity: var(--eden-motif-opacity);
+}
+
+@media (max-width: 640px) {
+  html[data-eden-theme] .eden-page-banner::before,
+  html[data-eden-theme] [data-theme-surface="banner"]::before {
+    background-size: 240px 160px, 180px 120px;
+    opacity: calc(var(--eden-motif-opacity) * 0.68);
+  }
+}

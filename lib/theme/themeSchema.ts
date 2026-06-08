@@ -21,6 +21,11 @@ export type ThemeDecorativeMotifStyle =
   | 'retro_sun'
   | 'botanical_line'
   | 'pop_blocks'
+  | 'medrese_geometry'
+  | 'steppe_horizon'
+  | 'equality_rings'
+  | 'atlas_deco'
+  | 'avant_grid'
 
 export interface ThemeDecorativeMotifMetadata {
   style: ThemeDecorativeMotifStyle
