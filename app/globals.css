@@ -353,7 +353,7 @@ html[data-eden-theme] [class~="bg-muted"] {
 
 html[data-eden-theme] [class~="bg-blue-50"],
 html[data-eden-theme] [class~="bg-sky-50"] {
-  background-color: var(--eden-info-soft) !important;
+  background-color: var(--eden-accent-soft) !important;
 }
 
 html[data-eden-theme] [class~="bg-emerald-50"],
@@ -375,7 +375,7 @@ html[data-eden-theme] [class~="bg-blue-50/60"],
 html[data-eden-theme] [class~="bg-blue-50/70"],
 html[data-eden-theme] [class~="bg-sky-50/60"],
 html[data-eden-theme] [class~="bg-sky-50/70"] {
-  background-color: color-mix(in srgb, var(--eden-info-soft) 78%, var(--eden-card-bg)) !important;
+  background-color: color-mix(in srgb, var(--eden-accent-soft) 78%, var(--eden-card-bg)) !important;
 }
 
 html[data-eden-theme] [class~="bg-emerald-50/60"],
@@ -464,7 +464,7 @@ html[data-eden-theme] [class~="border-border"] {
 html[data-eden-theme] [class~="border-blue-100"],
 html[data-eden-theme] [class~="border-blue-200"],
 html[data-eden-theme] [class~="border-sky-200"] {
-  border-color: color-mix(in srgb, var(--eden-info) 38%, var(--eden-border)) !important;
+  border-color: color-mix(in srgb, var(--eden-accent) 38%, var(--eden-border)) !important;
 }
 
 html[data-eden-theme] [class~="border-emerald-200"],
@@ -512,6 +512,230 @@ html[data-eden-theme] select:focus,
 html[data-eden-theme] textarea:focus {
   border-color: var(--eden-input-focus) !important;
   box-shadow: var(--eden-shadow-focus) !important;
+}
+
+html[data-eden-theme] {
+  --eden-page-banner-bg: linear-gradient(135deg, var(--eden-accent) 0%, var(--eden-accent-hover) 100%);
+  --eden-page-banner-text: var(--eden-accent-text);
+  --eden-page-banner-muted: color-mix(in srgb, var(--eden-accent-text) 82%, transparent);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent) 48%, var(--eden-border));
+  --eden-page-banner-icon-bg: color-mix(in srgb, var(--eden-accent-text) 16%, transparent);
+  --eden-page-banner-action-bg: color-mix(in srgb, var(--eden-accent-text) 15%, transparent);
+  --eden-page-banner-action-hover: color-mix(in srgb, var(--eden-accent-text) 24%, transparent);
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 76%, var(--eden-accent-soft) 24%);
+  --eden-smart-toolbar-border: color-mix(in srgb, var(--eden-accent) 32%, var(--eden-card-border));
+  --eden-smart-table-bg: color-mix(in srgb, var(--eden-card-bg) 94%, var(--eden-accent-soft) 6%);
+  --eden-smart-table-header-bg: color-mix(in srgb, var(--eden-surface-muted) 72%, var(--eden-accent-soft) 28%);
+  --eden-smart-table-border: color-mix(in srgb, var(--eden-accent) 26%, var(--eden-border));
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 84%, var(--eden-accent-soft) 16%);
+  --eden-smart-row-alt-bg: color-mix(in srgb, var(--eden-card-bg) 92%, var(--eden-accent-soft) 8%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 62%, var(--eden-accent-soft) 38%);
+  --eden-smart-control-bg: color-mix(in srgb, var(--eden-surface-muted) 84%, var(--eden-accent-soft) 16%);
+  --eden-smart-control-active-bg: var(--eden-accent-soft);
+  --eden-smart-control-active-text: var(--eden-accent);
+  --eden-smart-count-bg: var(--eden-accent);
+  --eden-smart-count-text: var(--eden-accent-text);
+}
+
+html[data-eden-theme="art_deco"] {
+  --eden-page-banner-bg:
+    linear-gradient(135deg, #08111f 0%, #12213a 58%, #2f2415 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.78);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent-warm) 54%, var(--eden-border));
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 70%, var(--eden-accent-warm) 14%);
+  --eden-smart-toolbar-border: color-mix(in srgb, var(--eden-accent-warm) 42%, var(--eden-card-border));
+  --eden-smart-table-header-bg: color-mix(in srgb, var(--eden-card-bg) 64%, var(--eden-accent-warm) 18%);
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 86%, var(--eden-accent-warm) 8%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 70%, var(--eden-accent-warm) 16%);
+}
+
+html[data-eden-theme="anatolian_60s"] {
+  --eden-page-banner-bg:
+    radial-gradient(circle at 93% 18%, color-mix(in srgb, var(--eden-accent-warm) 62%, transparent) 0 58px, transparent 59px),
+    linear-gradient(135deg, #b94f24 0%, var(--eden-accent-warm) 42%, var(--eden-accent) 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.8);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent-warm) 56%, var(--eden-border));
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 70%, var(--eden-accent-warm) 16%);
+  --eden-smart-toolbar-border: color-mix(in srgb, var(--eden-accent-warm) 46%, var(--eden-card-border));
+  --eden-smart-table-header-bg: color-mix(in srgb, var(--eden-card-bg) 62%, var(--eden-accent-warm) 18%);
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 82%, var(--eden-accent-warm) 10%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 65%, var(--eden-accent-warm) 20%);
+}
+
+html[data-eden-theme="command_bauhaus"] {
+  --eden-page-banner-bg:
+    radial-gradient(ellipse at 92% 16%, color-mix(in srgb, var(--eden-success) 30%, transparent) 0 86px, transparent 87px),
+    linear-gradient(135deg, #123a22 0%, #1f6b3a 58%, #174f2c 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.78);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-success) 52%, var(--eden-border));
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 66%, var(--eden-success-soft) 34%);
+  --eden-smart-toolbar-border: color-mix(in srgb, var(--eden-success) 38%, var(--eden-card-border));
+  --eden-smart-table-header-bg: color-mix(in srgb, var(--eden-card-bg) 58%, var(--eden-success-soft) 42%);
+  --eden-smart-table-border: color-mix(in srgb, var(--eden-success) 32%, var(--eden-border));
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 72%, var(--eden-success-soft) 28%);
+  --eden-smart-row-alt-bg: color-mix(in srgb, var(--eden-card-bg) 86%, var(--eden-success-soft) 14%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 56%, var(--eden-success-soft) 44%);
+  --eden-smart-control-active-bg: color-mix(in srgb, var(--eden-success-soft) 82%, var(--eden-card-bg));
+  --eden-smart-control-active-text: var(--eden-success);
+  --eden-smart-count-bg: var(--eden-success);
+}
+
+html[data-eden-theme="pop_studio"] {
+  --eden-page-banner-bg:
+    linear-gradient(135deg, #e91e63 0%, #7c3aed 52%, #ff6b35 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.8);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent) 55%, var(--eden-accent-warm));
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 66%, var(--eden-accent-soft) 34%);
+  --eden-smart-toolbar-border: color-mix(in srgb, var(--eden-accent) 44%, var(--eden-accent-warm));
+  --eden-smart-table-header-bg: color-mix(in srgb, var(--eden-card-bg) 58%, var(--eden-accent-soft) 42%);
+  --eden-smart-table-border: color-mix(in srgb, var(--eden-accent) 36%, var(--eden-border));
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 74%, var(--eden-accent-soft) 26%);
+  --eden-smart-row-alt-bg: color-mix(in srgb, var(--eden-card-bg) 86%, var(--eden-accent-soft) 14%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 58%, var(--eden-accent-soft) 42%);
+}
+
+html[data-eden-theme].dark {
+  --eden-page-banner-muted: color-mix(in srgb, var(--eden-accent-text) 76%, var(--eden-text) 24%);
+  --eden-smart-toolbar-bg: color-mix(in srgb, var(--eden-card-bg) 74%, var(--eden-accent-soft) 26%);
+  --eden-smart-table-bg: color-mix(in srgb, var(--eden-card-bg) 90%, var(--eden-accent-soft) 10%);
+  --eden-smart-row-bg: color-mix(in srgb, var(--eden-card-bg) 80%, var(--eden-accent-soft) 20%);
+  --eden-smart-row-alt-bg: color-mix(in srgb, var(--eden-card-bg) 90%, var(--eden-accent-soft) 10%);
+  --eden-smart-row-hover: color-mix(in srgb, var(--eden-card-bg) 64%, var(--eden-accent-soft) 36%);
+}
+
+html[data-eden-theme="art_deco"].dark,
+html[data-eden-theme="anatolian_60s"].dark,
+html[data-eden-theme="command_bauhaus"].dark,
+html[data-eden-theme="pop_studio"].dark {
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.72);
+}
+
+html[data-eden-theme="pop_studio"].dark {
+  --eden-page-banner-bg:
+    linear-gradient(135deg, #3a0f28 0%, #241646 52%, #552817 100%);
+}
+
+html[data-eden-theme] .eden-page-banner {
+  background: var(--eden-page-banner-bg) !important;
+  border: 1px solid var(--eden-page-banner-border);
+  color: var(--eden-page-banner-text);
+  box-shadow: var(--eden-card-shadow);
+}
+
+html[data-eden-theme] .eden-page-banner h1,
+html[data-eden-theme] .eden-page-banner svg {
+  color: var(--eden-page-banner-text);
+}
+
+html[data-eden-theme] .eden-page-banner-subtitle {
+  color: var(--eden-page-banner-muted) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-icon,
+html[data-eden-theme] .eden-page-banner-action {
+  background-color: var(--eden-page-banner-action-bg) !important;
+  color: var(--eden-page-banner-text);
+  border: 1px solid color-mix(in srgb, var(--eden-page-banner-text) 16%, transparent);
+}
+
+html[data-eden-theme] .eden-page-banner-icon {
+  background-color: var(--eden-page-banner-icon-bg) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-action:hover {
+  background-color: var(--eden-page-banner-action-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-toolbar,
+html[data-eden-theme] .eden-smart-list-filter-panel,
+html[data-eden-theme] .eden-smart-list-pagination {
+  background: var(--eden-smart-toolbar-bg) !important;
+  border-color: var(--eden-smart-toolbar-border) !important;
+  box-shadow: var(--eden-shadow-subtle);
+}
+
+html[data-eden-theme] .eden-smart-list-search {
+  background-color: var(--eden-input-bg) !important;
+  border-color: var(--eden-input-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-chip,
+html[data-eden-theme] .eden-smart-list-view-toggle {
+  background-color: var(--eden-smart-control-bg) !important;
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-chip.is-accent,
+html[data-eden-theme] .eden-smart-list-icon-button.is-active,
+html[data-eden-theme] .eden-smart-list-view-button.is-active {
+  background-color: var(--eden-smart-control-active-bg) !important;
+  color: var(--eden-smart-control-active-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-icon-button:hover,
+html[data-eden-theme] .eden-smart-list-view-button:hover {
+  background-color: var(--eden-smart-row-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-count {
+  background-color: var(--eden-smart-count-bg) !important;
+  color: var(--eden-smart-count-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table {
+  background: var(--eden-smart-table-bg) !important;
+  border-color: var(--eden-smart-table-border) !important;
+  box-shadow: var(--eden-card-shadow);
+}
+
+html[data-eden-theme] .eden-smart-list-table-head {
+  background: var(--eden-smart-table-header-bg) !important;
+  border-color: var(--eden-smart-table-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-th {
+  background: transparent !important;
+  border-color: var(--eden-smart-table-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-sort {
+  color: var(--eden-accent) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body {
+  border-color: var(--eden-smart-table-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(even) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-alt-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-cell {
+  border-color: color-mix(in srgb, var(--eden-smart-table-border) 72%, transparent) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-row:hover .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-card {
+  background: var(--eden-smart-table-bg) !important;
+  border-color: var(--eden-smart-table-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-card-media,
+html[data-eden-theme] .eden-smart-list .card-fallback {
+  background: linear-gradient(135deg, var(--eden-accent-soft), color-mix(in srgb, var(--eden-accent-soft) 62%, var(--eden-card-bg))) !important;
 }
 
 html[data-eden-theme] table thead,
@@ -679,7 +903,7 @@ html[data-eden-theme].dark [class*="dark:hover:bg-white/"] {
 
 html[data-eden-theme].dark [class*="dark:bg-blue-"],
 html[data-eden-theme].dark [class*="dark:bg-sky-"] {
-  background-color: var(--eden-info-soft) !important;
+  background-color: var(--eden-accent-soft) !important;
 }
 
 html[data-eden-theme].dark [class*="dark:bg-emerald-"],
@@ -721,7 +945,7 @@ html[data-eden-theme].dark [class*="dark:border-eden-navy"] {
 
 html[data-eden-theme].dark [class*="dark:border-blue-"],
 html[data-eden-theme].dark [class*="dark:border-sky-"] {
-  border-color: color-mix(in srgb, var(--eden-info) 42%, var(--eden-border)) !important;
+  border-color: color-mix(in srgb, var(--eden-accent) 42%, var(--eden-border)) !important;
 }
 
 html[data-eden-theme].dark [class*="dark:border-emerald-"],
@@ -760,7 +984,7 @@ html[data-eden-theme].dark [class*="dark:text-zinc-"] {
 
 html[data-eden-theme].dark [class*="dark:text-blue-"],
 html[data-eden-theme].dark [class*="dark:text-sky-"] {
-  color: var(--eden-info) !important;
+  color: var(--eden-accent) !important;
 }
 
 html[data-eden-theme].dark [class*="dark:text-emerald-"],
@@ -777,4 +1001,719 @@ html[data-eden-theme].dark [class*="dark:text-orange-"] {
 html[data-eden-theme].dark [class*="dark:text-red-"],
 html[data-eden-theme].dark [class*="dark:text-rose-"] {
   color: var(--eden-danger) !important;
+}
+
+/* Central theme engine coverage layer.
+   Supports both the canonical data-eden-theme attribute and the older
+   data-visual-theme first-render cache so screens do not fall back to blue. */
+html[data-visual-theme="art_deco_premium"],
+html[data-visual-theme="art_deco"],
+html[data-eden-theme="art_deco_premium"],
+html[data-eden-theme="art_deco"] {
+  --eden-bg: #f6f1e8;
+  --eden-bg-subtle: #efe7d8;
+  --eden-surface: #fffcf5;
+  --eden-surface-muted: #f1e8d7;
+  --eden-surface-raised: #ffffff;
+  --eden-surface-inset: #e8ddcb;
+  --eden-border: #d9cfbb;
+  --eden-border-strong: #bdaf92;
+  --eden-text: #172033;
+  --eden-text-muted: #5f6470;
+  --eden-text-soft: #7b7280;
+  --eden-accent: #1d3557;
+  --eden-accent-hover: #14243b;
+  --eden-accent-soft: #dde7f2;
+  --eden-accent-text: #ffffff;
+  --eden-accent-warm: #b88746;
+  --eden-success: #34735a;
+  --eden-success-soft: #ddece4;
+  --eden-warning: #b88746;
+  --eden-warning-soft: #f3e5c9;
+  --eden-danger: #a6423a;
+  --eden-danger-soft: #f0d8d2;
+  --eden-info: #2f5f88;
+  --eden-info-soft: #dde7f2;
+  --eden-nav-bg: #101a2c;
+  --eden-nav-text: #f7efe1;
+  --eden-nav-muted: #c8bca8;
+  --eden-nav-active-bg: rgba(184, 135, 70, 0.24);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(255, 252, 245, 0.08);
+  --eden-header-bg: #fffcf5;
+  --eden-header-border: #d9cfbb;
+  --eden-card-bg: #fffcf5;
+  --eden-card-border: #d9cfbb;
+  --eden-input-bg: #ffffff;
+  --eden-input-border: #bdaf92;
+  --eden-input-focus: #b88746;
+  --eden-table-header-bg: #f1e8d7;
+  --eden-table-row-hover: #f7eddc;
+  --eden-table-row-selected: #dde7f2;
+  --eden-badge-bg: #f1e8d7;
+  --eden-focus-ring: rgba(184, 135, 70, 0.24);
+  --eden-page-banner-bg: linear-gradient(135deg, #08111f 0%, #12213a 58%, #2f2415 100%);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent-warm) 54%, var(--eden-border));
+  --eden-motif-primary: #1d3557;
+  --eden-motif-secondary: #2f5f88;
+  --eden-motif-warm: #b88746;
+  --eden-motif-opacity: 0.24;
+}
+
+html.dark[data-visual-theme="art_deco_premium"],
+html.dark[data-visual-theme="art_deco"],
+html.dark[data-eden-theme="art_deco_premium"],
+html.dark[data-eden-theme="art_deco"],
+html[data-appearance="dark"][data-visual-theme="art_deco_premium"],
+html[data-appearance="dark"][data-visual-theme="art_deco"],
+html[data-appearance="dark"][data-eden-theme="art_deco_premium"],
+html[data-appearance="dark"][data-eden-theme="art_deco"] {
+  --eden-bg: #0b1020;
+  --eden-bg-subtle: #111827;
+  --eden-surface: #151c2c;
+  --eden-surface-muted: #1e293b;
+  --eden-surface-raised: #202a3d;
+  --eden-surface-inset: #0a0f1d;
+  --eden-border: #34415a;
+  --eden-border-strong: #5c6a86;
+  --eden-text: #f4efe6;
+  --eden-text-muted: #cfc2ad;
+  --eden-text-soft: #afa38f;
+  --eden-accent: #d6a85c;
+  --eden-accent-hover: #e8be75;
+  --eden-accent-soft: #3a2d18;
+  --eden-accent-text: #10131d;
+  --eden-accent-warm: #c7964a;
+  --eden-success: #5aa87d;
+  --eden-success-soft: #173629;
+  --eden-warning: #d6a85c;
+  --eden-warning-soft: #3a2d18;
+  --eden-danger: #d16a5d;
+  --eden-danger-soft: #3e1f1e;
+  --eden-info: #7ca7d9;
+  --eden-info-soft: #172b45;
+  --eden-nav-bg: #080d19;
+  --eden-nav-text: #f4efe6;
+  --eden-nav-muted: #b7ac9a;
+  --eden-nav-active-bg: rgba(214, 168, 92, 0.20);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(244, 239, 230, 0.07);
+  --eden-header-bg: #151c2c;
+  --eden-header-border: #34415a;
+  --eden-card-bg: #151c2c;
+  --eden-card-border: #34415a;
+  --eden-input-bg: #0f1626;
+  --eden-input-border: #34415a;
+  --eden-input-focus: #d6a85c;
+  --eden-table-header-bg: #1e293b;
+  --eden-table-row-hover: #202a3d;
+  --eden-table-row-selected: #3a2d18;
+  --eden-badge-bg: #1e293b;
+  --eden-focus-ring: rgba(214, 168, 92, 0.25);
+  --eden-page-banner-bg: linear-gradient(135deg, #080d19 0%, #202a3d 58%, #3a2d18 100%);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent-warm) 54%, var(--eden-border));
+  --eden-motif-opacity: 0.18;
+}
+
+html[data-visual-theme="anatolian_60s"],
+html[data-eden-theme="anatolian_60s"] {
+  --eden-bg: #f4efe6;
+  --eden-bg-subtle: #ede3d4;
+  --eden-surface: #fff9ef;
+  --eden-surface-muted: #efe5d6;
+  --eden-surface-raised: #ffffff;
+  --eden-surface-inset: #e4d8c6;
+  --eden-border: #d8cbb8;
+  --eden-border-strong: #bdae96;
+  --eden-text: #2f2a24;
+  --eden-text-muted: #675d50;
+  --eden-text-soft: #7a6f62;
+  --eden-accent: #1f5e64;
+  --eden-accent-hover: #17484d;
+  --eden-accent-soft: #d8ecea;
+  --eden-accent-text: #ffffff;
+  --eden-accent-warm: #b66a3c;
+  --eden-success: #526f3f;
+  --eden-success-soft: #e0e8d6;
+  --eden-warning: #c7863d;
+  --eden-warning-soft: #f2dfbd;
+  --eden-danger: #a94e3b;
+  --eden-danger-soft: #ecd6cf;
+  --eden-info: #2d6f7a;
+  --eden-info-soft: #d8ecea;
+  --eden-nav-bg: #142a2c;
+  --eden-nav-text: #f2e8d8;
+  --eden-nav-muted: #b8aa96;
+  --eden-nav-active-bg: rgba(182, 106, 60, 0.24);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(242, 232, 216, 0.08);
+  --eden-header-bg: #fff9ef;
+  --eden-header-border: #d8cbb8;
+  --eden-card-bg: #fff9ef;
+  --eden-card-border: #d8cbb8;
+  --eden-input-bg: #ffffff;
+  --eden-input-border: #bdae96;
+  --eden-input-focus: #b66a3c;
+  --eden-table-header-bg: #efe5d6;
+  --eden-table-row-hover: #f8ecdd;
+  --eden-table-row-selected: #d8ecea;
+  --eden-badge-bg: #efe5d6;
+  --eden-focus-ring: rgba(182, 106, 60, 0.24);
+  --eden-page-banner-bg: radial-gradient(circle at 93% 18%, color-mix(in srgb, var(--eden-accent-warm) 62%, transparent) 0 58px, transparent 59px), linear-gradient(135deg, #b66a3c 0%, #c7863d 42%, #1f5e64 100%);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent-warm) 56%, var(--eden-border));
+  --eden-motif-primary: #1f5e64;
+  --eden-motif-secondary: #526f3f;
+  --eden-motif-warm: #b66a3c;
+  --eden-motif-opacity: 0.28;
+}
+
+html.dark[data-visual-theme="anatolian_60s"],
+html.dark[data-eden-theme="anatolian_60s"],
+html[data-appearance="dark"][data-visual-theme="anatolian_60s"],
+html[data-appearance="dark"][data-eden-theme="anatolian_60s"] {
+  --eden-bg: #101c1e;
+  --eden-bg-subtle: #172728;
+  --eden-surface: #1e2f2f;
+  --eden-surface-muted: #263a37;
+  --eden-surface-raised: #243635;
+  --eden-surface-inset: #0c1718;
+  --eden-border: #3a4e49;
+  --eden-border-strong: #5d746c;
+  --eden-text: #f2e8d8;
+  --eden-text-muted: #d4c4ae;
+  --eden-text-soft: #b8aa96;
+  --eden-accent: #5ea4a7;
+  --eden-accent-hover: #75bcbf;
+  --eden-accent-soft: #173f42;
+  --eden-accent-text: #0b1a1b;
+  --eden-accent-warm: #d18a57;
+  --eden-success: #8baa6b;
+  --eden-success-soft: #233725;
+  --eden-warning: #d89a4e;
+  --eden-warning-soft: #3d2b18;
+  --eden-danger: #d07461;
+  --eden-danger-soft: #3d211f;
+  --eden-info: #6cbac2;
+  --eden-info-soft: #173f42;
+  --eden-nav-bg: #0c1718;
+  --eden-nav-text: #f2e8d8;
+  --eden-nav-muted: #b8aa96;
+  --eden-nav-active-bg: rgba(209, 138, 87, 0.22);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(242, 232, 216, 0.08);
+  --eden-header-bg: #1e2f2f;
+  --eden-header-border: #3a4e49;
+  --eden-card-bg: #1e2f2f;
+  --eden-card-border: #3a4e49;
+  --eden-input-bg: #172728;
+  --eden-input-border: #3a4e49;
+  --eden-input-focus: #d18a57;
+  --eden-table-header-bg: #263a37;
+  --eden-table-row-hover: #243635;
+  --eden-table-row-selected: #173f42;
+  --eden-badge-bg: #263a37;
+  --eden-focus-ring: rgba(209, 138, 87, 0.25);
+  --eden-page-banner-bg: radial-gradient(circle at 93% 18%, color-mix(in srgb, var(--eden-accent-warm) 42%, transparent) 0 58px, transparent 59px), linear-gradient(135deg, #101c1e 0%, #173f42 58%, #3d2b18 100%);
+  --eden-motif-opacity: 0.16;
+}
+
+html[data-visual-theme="green_atelier"],
+html[data-visual-theme="command_bauhaus"],
+html[data-eden-theme="green_atelier"],
+html[data-eden-theme="command_bauhaus"] {
+  --eden-bg: #f3f1e6;
+  --eden-bg-subtle: #e7e1cf;
+  --eden-surface: #fffdf4;
+  --eden-surface-muted: #ede7d5;
+  --eden-surface-raised: #ffffff;
+  --eden-surface-inset: #ddd4be;
+  --eden-border: #d1c8b2;
+  --eden-border-strong: #afa287;
+  --eden-text: #173225;
+  --eden-text-muted: #48614e;
+  --eden-text-soft: #6d7d68;
+  --eden-accent: #1f6b3a;
+  --eden-accent-hover: #174f2c;
+  --eden-accent-soft: #dceadb;
+  --eden-accent-text: #ffffff;
+  --eden-accent-warm: #a36f2c;
+  --eden-success: #2f7d46;
+  --eden-success-soft: #dceedc;
+  --eden-warning: #b8862d;
+  --eden-warning-soft: #f3e4bf;
+  --eden-danger: #a84638;
+  --eden-danger-soft: #ebd5cd;
+  --eden-info: #2c6e58;
+  --eden-info-soft: #ddece5;
+  --eden-nav-bg: #163b25;
+  --eden-nav-text: #f4f1e6;
+  --eden-nav-muted: #c8d2be;
+  --eden-nav-active-bg: rgba(47, 125, 70, 0.26);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(244, 241, 230, 0.09);
+  --eden-header-bg: #fffdf4;
+  --eden-header-border: #d1c8b2;
+  --eden-card-bg: #fffdf4;
+  --eden-card-border: #d1c8b2;
+  --eden-input-bg: #ffffff;
+  --eden-input-border: #afa287;
+  --eden-input-focus: #2f7d46;
+  --eden-table-header-bg: #ede7d5;
+  --eden-table-row-hover: #eef5e8;
+  --eden-table-row-selected: #dceadb;
+  --eden-badge-bg: #ede7d5;
+  --eden-focus-ring: rgba(47, 125, 70, 0.24);
+  --eden-page-banner-bg: radial-gradient(ellipse at 92% 16%, color-mix(in srgb, var(--eden-success) 30%, transparent) 0 86px, transparent 87px), linear-gradient(135deg, #163b25 0%, #1f6b3a 58%, #174f2c 100%);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-success) 52%, var(--eden-border));
+  --eden-motif-primary: #1f6b3a;
+  --eden-motif-secondary: #2f7d46;
+  --eden-motif-warm: #a36f2c;
+  --eden-motif-opacity: 0.24;
+}
+
+html.dark[data-visual-theme="green_atelier"],
+html.dark[data-visual-theme="command_bauhaus"],
+html.dark[data-eden-theme="green_atelier"],
+html.dark[data-eden-theme="command_bauhaus"],
+html[data-appearance="dark"][data-visual-theme="green_atelier"],
+html[data-appearance="dark"][data-visual-theme="command_bauhaus"],
+html[data-appearance="dark"][data-eden-theme="green_atelier"],
+html[data-appearance="dark"][data-eden-theme="command_bauhaus"] {
+  --eden-bg: #0f1e16;
+  --eden-bg-subtle: #13261b;
+  --eden-surface: #182d20;
+  --eden-surface-muted: #203a29;
+  --eden-surface-raised: #1e3527;
+  --eden-surface-inset: #0a1710;
+  --eden-border: #33543d;
+  --eden-border-strong: #5d7b61;
+  --eden-text: #eef4e8;
+  --eden-text-muted: #cad8c2;
+  --eden-text-soft: #a8ba9c;
+  --eden-accent: #7fc489;
+  --eden-accent-hover: #9ad69f;
+  --eden-accent-soft: #193a24;
+  --eden-accent-text: #07140b;
+  --eden-accent-warm: #d2a25c;
+  --eden-success: #7fc489;
+  --eden-success-soft: #173823;
+  --eden-warning: #d2a25c;
+  --eden-warning-soft: #3a2a13;
+  --eden-danger: #d06f5f;
+  --eden-danger-soft: #3b1d1a;
+  --eden-info: #7cc0a1;
+  --eden-info-soft: #153829;
+  --eden-nav-bg: #09150e;
+  --eden-nav-text: #eef4e8;
+  --eden-nav-muted: #a8ba9c;
+  --eden-nav-active-bg: rgba(127, 196, 137, 0.19);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(238, 244, 232, 0.07);
+  --eden-header-bg: #182d20;
+  --eden-header-border: #33543d;
+  --eden-card-bg: #182d20;
+  --eden-card-border: #33543d;
+  --eden-input-bg: #13261b;
+  --eden-input-border: #33543d;
+  --eden-input-focus: #7fc489;
+  --eden-table-header-bg: #203a29;
+  --eden-table-row-hover: #1e3527;
+  --eden-table-row-selected: #193a24;
+  --eden-badge-bg: #203a29;
+  --eden-focus-ring: rgba(127, 196, 137, 0.24);
+  --eden-page-banner-bg: radial-gradient(ellipse at 92% 16%, color-mix(in srgb, var(--eden-success) 22%, transparent) 0 86px, transparent 87px), linear-gradient(135deg, #09150e 0%, #182d20 58%, #193a24 100%);
+  --eden-motif-opacity: 0.15;
+}
+
+html[data-visual-theme="pop_studio"],
+html[data-eden-theme="pop_studio"] {
+  --eden-bg: #fff8e8;
+  --eden-bg-subtle: #f5eedc;
+  --eden-surface: #ffffff;
+  --eden-surface-muted: #fff1c7;
+  --eden-surface-raised: #ffffff;
+  --eden-surface-inset: #f1e4c6;
+  --eden-border: #e7d9be;
+  --eden-border-strong: #cdbb95;
+  --eden-text: #171717;
+  --eden-text-muted: #4f463d;
+  --eden-text-soft: #6b5f52;
+  --eden-accent: #e91e63;
+  --eden-accent-hover: #be185d;
+  --eden-accent-soft: #ffe1f0;
+  --eden-accent-text: #ffffff;
+  --eden-accent-warm: #ff6b35;
+  --eden-success: #2a9d8f;
+  --eden-success-soft: #d8f3ee;
+  --eden-warning: #f9a620;
+  --eden-warning-soft: #fff1c7;
+  --eden-danger: #e63946;
+  --eden-danger-soft: #ffe1e5;
+  --eden-info: #277da1;
+  --eden-info-soft: #dceff8;
+  --eden-nav-bg: #e91e63;
+  --eden-nav-text: #ffffff;
+  --eden-nav-muted: #ffe1f0;
+  --eden-nav-active-bg: rgba(255, 255, 255, 0.22);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(255, 255, 255, 0.14);
+  --eden-header-bg: #ffffff;
+  --eden-header-border: #e7d9be;
+  --eden-card-bg: #ffffff;
+  --eden-card-border: #e7d9be;
+  --eden-input-bg: #ffffff;
+  --eden-input-border: #cdbb95;
+  --eden-input-focus: #ff6b35;
+  --eden-table-header-bg: #fff1c7;
+  --eden-table-row-hover: #fff5d8;
+  --eden-table-row-selected: #ffe1f0;
+  --eden-badge-bg: #fff1c7;
+  --eden-focus-ring: rgba(255, 107, 53, 0.24);
+  --eden-page-banner-bg: linear-gradient(135deg, #e91e63 0%, #277da1 52%, #ff6b35 100%);
+  --eden-page-banner-border: color-mix(in srgb, var(--eden-accent) 55%, var(--eden-accent-warm));
+  --eden-motif-primary: #e91e63;
+  --eden-motif-secondary: #277da1;
+  --eden-motif-warm: #ff6b35;
+  --eden-motif-opacity: 0.30;
+}
+
+html.dark[data-visual-theme="pop_studio"],
+html.dark[data-eden-theme="pop_studio"],
+html[data-appearance="dark"][data-visual-theme="pop_studio"],
+html[data-appearance="dark"][data-eden-theme="pop_studio"] {
+  --eden-bg: #111111;
+  --eden-bg-subtle: #1a1a1a;
+  --eden-surface: #1f1f1f;
+  --eden-surface-muted: #2a2520;
+  --eden-surface-raised: #292929;
+  --eden-surface-inset: #0c0c0c;
+  --eden-border: #3a332b;
+  --eden-border-strong: #5c5142;
+  --eden-text: #faf3e3;
+  --eden-text-muted: #d6cbbb;
+  --eden-text-soft: #bdb1a1;
+  --eden-accent: #ff4fa3;
+  --eden-accent-hover: #ff7ab8;
+  --eden-accent-soft: #461333;
+  --eden-accent-text: #160714;
+  --eden-accent-warm: #ff8a4c;
+  --eden-success: #42d6a4;
+  --eden-success-soft: #103a30;
+  --eden-warning: #ffd166;
+  --eden-warning-soft: #3f3216;
+  --eden-danger: #ff5a66;
+  --eden-danger-soft: #421c22;
+  --eden-info: #4cc9f0;
+  --eden-info-soft: #0b3346;
+  --eden-nav-bg: #191124;
+  --eden-nav-text: #ffeaf5;
+  --eden-nav-muted: #d8afc5;
+  --eden-nav-active-bg: rgba(255, 79, 163, 0.24);
+  --eden-nav-active-text: #ffffff;
+  --eden-nav-hover-bg: rgba(255, 234, 245, 0.09);
+  --eden-header-bg: #1f1f1f;
+  --eden-header-border: #3a332b;
+  --eden-card-bg: #1f1f1f;
+  --eden-card-border: #3a332b;
+  --eden-input-bg: #171717;
+  --eden-input-border: #3a332b;
+  --eden-input-focus: #ff8a4c;
+  --eden-table-header-bg: #2a2520;
+  --eden-table-row-hover: #292929;
+  --eden-table-row-selected: #461333;
+  --eden-badge-bg: #2a2520;
+  --eden-focus-ring: rgba(255, 138, 76, 0.25);
+  --eden-page-banner-bg: linear-gradient(135deg, #191124 0%, #461333 52%, #552817 100%);
+  --eden-motif-opacity: 0.18;
+}
+
+html[data-eden-theme],
+html[data-visual-theme] {
+  --eden-accent-secondary: var(--eden-info);
+  --eden-card-hover-bg: color-mix(in srgb, var(--eden-card-bg) 82%, var(--eden-accent-soft));
+  --eden-input-placeholder: var(--eden-text-soft);
+  --eden-input-disabled-bg: var(--eden-surface-muted);
+  --eden-table-header-text: var(--eden-text-muted);
+  --eden-table-border: var(--eden-border);
+  --eden-smart-list-bg: color-mix(in srgb, var(--eden-card-bg) 92%, var(--eden-accent-soft));
+  --eden-smart-list-border: color-mix(in srgb, var(--eden-accent) 30%, var(--eden-card-border));
+  --eden-smart-list-hover: color-mix(in srgb, var(--eden-card-bg) 64%, var(--eden-accent-soft));
+  --eden-badge-neutral-bg: var(--eden-badge-bg);
+  --eden-badge-neutral-text: var(--eden-text-muted);
+  --eden-badge-success-bg: var(--eden-success-soft);
+  --eden-badge-success-text: var(--eden-success);
+  --eden-badge-warning-bg: var(--eden-warning-soft);
+  --eden-badge-warning-text: var(--eden-warning);
+  --eden-badge-danger-bg: var(--eden-danger-soft);
+  --eden-badge-danger-text: var(--eden-danger);
+  --eden-badge-info-bg: var(--eden-info-soft);
+  --eden-badge-info-text: var(--eden-info);
+  --eden-hover-overlay: color-mix(in srgb, var(--eden-accent-soft) 52%, transparent);
+  --eden-selected-overlay: color-mix(in srgb, var(--eden-accent-soft) 72%, var(--eden-card-bg));
+  --eden-page-banner-text: var(--eden-accent-text);
+  --eden-page-banner-muted: color-mix(in srgb, var(--eden-accent-text) 80%, transparent);
+  --eden-page-banner-accent: var(--eden-accent-warm);
+  --eden-page-banner-shadow: var(--eden-shadow-card);
+  --eden-page-banner-icon-bg: color-mix(in srgb, var(--eden-accent-text) 16%, transparent);
+  --eden-page-banner-action-bg: color-mix(in srgb, var(--eden-accent-text) 14%, transparent);
+  --eden-page-banner-action-hover: color-mix(in srgb, var(--eden-accent-text) 24%, transparent);
+  --eden-status-success-border: color-mix(in srgb, var(--eden-success) 34%, var(--eden-card-border));
+  --eden-status-warning-border: color-mix(in srgb, var(--eden-warning) 38%, var(--eden-card-border));
+  --eden-status-danger-border: color-mix(in srgb, var(--eden-danger) 34%, var(--eden-card-border));
+  --eden-status-info-border: color-mix(in srgb, var(--eden-info) 34%, var(--eden-card-border));
+  --eden-motif-primary: var(--eden-accent);
+  --eden-motif-secondary: var(--eden-success);
+  --eden-motif-warm: var(--eden-accent-warm);
+  --eden-motif-line: var(--eden-motif-line-width, 1.25px);
+  --eden-corner-art-bg: color-mix(in srgb, var(--eden-accent) 18%, var(--eden-card-bg));
+  --eden-corner-art-border: color-mix(in srgb, var(--eden-accent) 30%, var(--eden-card-border));
+}
+
+html[data-eden-theme] body,
+html[data-visual-theme] body,
+html[data-eden-theme] main,
+html[data-visual-theme] main {
+  background-color: var(--eden-bg) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] main,
+html[data-visual-theme] main {
+  background-image:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--eden-motif-primary) 12%, transparent) 0 128px, transparent 129px),
+    radial-gradient(circle at 8% 94%, color-mix(in srgb, var(--eden-motif-secondary) 11%, transparent) 0 170px, transparent 171px),
+    linear-gradient(135deg, var(--eden-bg), color-mix(in srgb, var(--eden-bg) 84%, var(--eden-accent-soft) 16%)) !important;
+}
+
+html[data-eden-theme="classic"] main,
+html[data-visual-theme="classic"] main {
+  background-image: linear-gradient(135deg, var(--eden-bg), var(--eden-bg-subtle)) !important;
+}
+
+html[data-eden-theme] [data-tour-id="app-header"],
+html[data-visual-theme] [data-tour-id="app-header"] {
+  background: color-mix(in srgb, var(--eden-header-bg) 92%, var(--eden-accent-soft)) !important;
+  border-color: var(--eden-header-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] [data-tour-id="app-header"] button,
+html[data-visual-theme] [data-tour-id="app-header"] button,
+html[data-eden-theme] [data-tour-id="workspace-switcher"] button,
+html[data-visual-theme] [data-tour-id="workspace-switcher"] button,
+html[data-eden-theme] [data-tour-id="user-settings"] button,
+html[data-visual-theme] [data-tour-id="user-settings"] button {
+  border-color: var(--eden-border) !important;
+  background-color: var(--eden-surface) !important;
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] [data-tour-id="app-header"] button:hover,
+html[data-visual-theme] [data-tour-id="app-header"] button:hover,
+html[data-eden-theme] [data-tour-id="workspace-switcher"] button:hover,
+html[data-visual-theme] [data-tour-id="workspace-switcher"] button:hover,
+html[data-eden-theme] [data-tour-id="user-settings"] button:hover,
+html[data-visual-theme] [data-tour-id="user-settings"] button:hover {
+  background-color: var(--eden-card-hover-bg) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] .eden-page-banner,
+html[data-visual-theme] .eden-page-banner {
+  background: var(--eden-page-banner-bg) !important;
+  border-color: var(--eden-page-banner-border) !important;
+  color: var(--eden-page-banner-text) !important;
+  box-shadow: var(--eden-page-banner-shadow) !important;
+}
+
+html[data-eden-theme] .eden-page-banner::after,
+html[data-visual-theme] .eden-page-banner::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 10px;
+  border-radius: calc(var(--eden-radius-card) - 2px);
+  border: 1px solid color-mix(in srgb, var(--eden-page-banner-text) 14%, transparent);
+  opacity: 0.55;
+}
+
+html[data-eden-theme] .eden-page-banner h1,
+html[data-visual-theme] .eden-page-banner h1,
+html[data-eden-theme] .eden-page-banner svg,
+html[data-visual-theme] .eden-page-banner svg {
+  color: var(--eden-page-banner-text) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-subtitle,
+html[data-visual-theme] .eden-page-banner-subtitle {
+  color: var(--eden-page-banner-muted) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-icon,
+html[data-visual-theme] .eden-page-banner-icon,
+html[data-eden-theme] .eden-page-banner-action,
+html[data-visual-theme] .eden-page-banner-action {
+  background-color: var(--eden-page-banner-action-bg) !important;
+  border-color: color-mix(in srgb, var(--eden-page-banner-text) 18%, transparent) !important;
+  color: var(--eden-page-banner-text) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-icon,
+html[data-visual-theme] .eden-page-banner-icon {
+  background-color: var(--eden-page-banner-icon-bg) !important;
+}
+
+html[data-eden-theme] .eden-page-banner-action:hover,
+html[data-visual-theme] .eden-page-banner-action:hover {
+  background-color: var(--eden-page-banner-action-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-toolbar,
+html[data-visual-theme] .eden-smart-list-toolbar,
+html[data-eden-theme] .eden-smart-list-filter-panel,
+html[data-visual-theme] .eden-smart-list-filter-panel,
+html[data-eden-theme] .eden-smart-list-pagination,
+html[data-visual-theme] .eden-smart-list-pagination {
+  background: color-mix(in srgb, var(--eden-card-bg) 74%, var(--eden-accent-soft) 26%) !important;
+  border-color: var(--eden-smart-list-border) !important;
+  color: var(--eden-text) !important;
+  box-shadow: var(--eden-shadow-subtle) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table,
+html[data-visual-theme] .eden-smart-list-table,
+html[data-eden-theme] .eden-smart-list-card,
+html[data-visual-theme] .eden-smart-list-card {
+  background: var(--eden-smart-list-bg) !important;
+  border-color: var(--eden-smart-list-border) !important;
+  box-shadow: var(--eden-shadow-card) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table-head,
+html[data-visual-theme] .eden-smart-list-table-head,
+html[data-eden-theme] table thead,
+html[data-visual-theme] table thead {
+  background: color-mix(in srgb, var(--eden-table-header-bg) 78%, var(--eden-accent-soft) 22%) !important;
+  color: var(--eden-table-header-text) !important;
+  border-color: var(--eden-smart-list-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-row:hover .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-row:hover .eden-smart-list-cell {
+  background: var(--eden-smart-list-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-search,
+html[data-visual-theme] .eden-smart-list-search,
+html[data-eden-theme] input,
+html[data-visual-theme] input,
+html[data-eden-theme] select,
+html[data-visual-theme] select,
+html[data-eden-theme] textarea,
+html[data-visual-theme] textarea {
+  background-color: var(--eden-input-bg) !important;
+  border-color: var(--eden-input-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] input::placeholder,
+html[data-visual-theme] input::placeholder,
+html[data-eden-theme] textarea::placeholder,
+html[data-visual-theme] textarea::placeholder {
+  color: var(--eden-input-placeholder) !important;
+}
+
+html[data-eden-theme] input:focus,
+html[data-visual-theme] input:focus,
+html[data-eden-theme] select:focus,
+html[data-visual-theme] select:focus,
+html[data-eden-theme] textarea:focus,
+html[data-visual-theme] textarea:focus,
+html[data-eden-theme] button:focus-visible,
+html[data-visual-theme] button:focus-visible,
+html[data-eden-theme] a:focus-visible,
+html[data-visual-theme] a:focus-visible {
+  border-color: var(--eden-input-focus) !important;
+  box-shadow: var(--eden-shadow-focus) !important;
+  outline: none !important;
+}
+
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-visual-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-visual-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"],
+html[data-visual-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  background-color: var(--eden-card-bg) !important;
+  border-color: var(--eden-card-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] [class~="border-dashed"],
+html[data-visual-theme] [class~="border-dashed"] {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--eden-card-bg) 82%, var(--eden-accent-soft)), var(--eden-card-bg)) !important;
+  border-color: color-mix(in srgb, var(--eden-accent) 34%, var(--eden-border)) !important;
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] .badge-green,
+html[data-visual-theme] .badge-green,
+html[data-eden-theme] [class*="bg-green-100"],
+html[data-visual-theme] [class*="bg-green-100"],
+html[data-eden-theme] [class*="bg-emerald-100"],
+html[data-visual-theme] [class*="bg-emerald-100"] {
+  background-color: var(--eden-badge-success-bg) !important;
+  color: var(--eden-badge-success-text) !important;
+  border-color: var(--eden-status-success-border) !important;
+}
+
+html[data-eden-theme] .badge-gold,
+html[data-visual-theme] .badge-gold,
+html[data-eden-theme] [class*="bg-yellow-100"],
+html[data-visual-theme] [class*="bg-yellow-100"],
+html[data-eden-theme] [class*="bg-amber-100"],
+html[data-visual-theme] [class*="bg-amber-100"] {
+  background-color: var(--eden-badge-warning-bg) !important;
+  color: var(--eden-badge-warning-text) !important;
+  border-color: var(--eden-status-warning-border) !important;
+}
+
+html[data-eden-theme] .badge-red,
+html[data-visual-theme] .badge-red,
+html[data-eden-theme] [class*="bg-red-100"],
+html[data-visual-theme] [class*="bg-red-100"],
+html[data-eden-theme] [class*="bg-rose-100"],
+html[data-visual-theme] [class*="bg-rose-100"] {
+  background-color: var(--eden-badge-danger-bg) !important;
+  color: var(--eden-badge-danger-text) !important;
+  border-color: var(--eden-status-danger-border) !important;
+}
+
+html[data-eden-theme] .badge-blue,
+html[data-visual-theme] .badge-blue,
+html[data-eden-theme] [class*="bg-blue-100"],
+html[data-visual-theme] [class*="bg-blue-100"],
+html[data-eden-theme] [class*="bg-sky-100"],
+html[data-visual-theme] [class*="bg-sky-100"] {
+  background-color: var(--eden-badge-info-bg) !important;
+  color: var(--eden-badge-info-text) !important;
+  border-color: var(--eden-status-info-border) !important;
+}
+
+html[data-eden-theme] .eden-decorative-surface::before,
+html[data-visual-theme] .eden-decorative-surface::before {
+  border-color: var(--eden-corner-art-border) !important;
+  opacity: var(--eden-motif-opacity) !important;
+}
+
+html[data-eden-theme="green_atelier"] .eden-decorative-surface::before,
+html[data-visual-theme="green_atelier"] .eden-decorative-surface::before,
+html[data-eden-theme="command_bauhaus"] .eden-decorative-surface::before,
+html[data-visual-theme="command_bauhaus"] .eden-decorative-surface::before {
+  border-radius: 64% 0 0 0;
+  background:
+    radial-gradient(ellipse at 70% 70%, color-mix(in srgb, var(--eden-motif-secondary) 24%, transparent) 0 16%, transparent 17%),
+    radial-gradient(ellipse at 45% 45%, color-mix(in srgb, var(--eden-motif-primary) 18%, transparent) 0 14%, transparent 15%),
+    linear-gradient(135deg, transparent 0 62%, color-mix(in srgb, var(--eden-motif-primary) 28%, transparent) 63% 64%, transparent 65%) !important;
 }

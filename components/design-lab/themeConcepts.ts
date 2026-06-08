@@ -4,6 +4,9 @@ export type LegacyThemeConceptId =
   | 'executivePremium'
   | 'anatolianModern'
   | 'technicalCommand'
+  | 'executive'
+  | 'art_deco_premium'
+  | 'green_atelier'
   | 'executive_premium'
   | 'anatolian_modern'
   | 'technical_command'
@@ -27,7 +30,7 @@ export const DESIGN_LAB_THEME_STORAGE_KEY = VISUAL_THEME_STORAGE_KEY
 export const VISUAL_THEME_LABELS: Record<ThemeConceptId, string> = {
   classic: 'Klasik',
   art_deco: 'Art Deco Premium',
-  anatolian_60s: 'Anadolu Modern',
+  anatolian_60s: "Anadolu 60'lar",
   command_bauhaus: 'Yeşil Atölye',
   pop_studio: 'Pop Studio',
 }
@@ -37,9 +40,20 @@ const LEGACY_THEME_ID_MAP: Record<LegacyThemeConceptId, ThemeConceptId> = {
   executivePremium: 'art_deco',
   anatolianModern: 'anatolian_60s',
   technicalCommand: 'command_bauhaus',
+  executive: 'art_deco',
+  art_deco_premium: 'art_deco',
+  green_atelier: 'command_bauhaus',
   executive_premium: 'art_deco',
   anatolian_modern: 'anatolian_60s',
   technical_command: 'command_bauhaus',
+}
+
+export const CANONICAL_THEME_KEYS: Record<ThemeConceptId, string> = {
+  classic: 'classic',
+  art_deco: 'art_deco_premium',
+  anatolian_60s: 'anatolian_60s',
+  command_bauhaus: 'green_atelier',
+  pop_studio: 'pop_studio',
 }
 
 export interface ThemeConceptColors {
@@ -884,9 +898,9 @@ export const themeConcepts: ThemeConcept[] = [
         text: '#171717',
         textMuted: '#4F463D',
         textSoft: '#6B5F52',
-        accent: '#2563EB',
-        accentHover: '#1D4ED8',
-        accentSoft: '#DBEAFE',
+        accent: '#E91E63',
+        accentHover: '#BE185D',
+        accentSoft: '#FFE1F0',
         accentText: '#FFFFFF',
         accentWarm: '#FF6B35',
         success: '#2A9D8F',
@@ -897,12 +911,12 @@ export const themeConcepts: ThemeConcept[] = [
         dangerSoft: '#FFE1E5',
         info: '#277DA1',
         infoSoft: '#DCEFF8',
-        navBg: '#171717',
-        navText: '#FAF3E3',
-        navMuted: '#BDB1A1',
-        navActiveBg: 'rgba(255, 107, 53, 0.24)',
+        navBg: '#E91E63',
+        navText: '#FFFFFF',
+        navMuted: '#FFE1F0',
+        navActiveBg: 'rgba(255, 255, 255, 0.22)',
         navActiveText: '#FFFFFF',
-        navHoverBg: 'rgba(250, 243, 227, 0.08)',
+        navHoverBg: 'rgba(255, 255, 255, 0.14)',
         headerBg: '#FFFFFF',
         headerBorder: '#E7D9BE',
         cardBg: '#FFFFFF',
@@ -912,14 +926,14 @@ export const themeConcepts: ThemeConcept[] = [
         inputFocus: '#FF6B35',
         tableHeaderBg: '#FFF1C7',
         tableRowHover: '#FFF5D8',
-        tableRowSelected: '#DBEAFE',
+        tableRowSelected: '#FFE1F0',
         badgeBg: '#FFF1C7',
         focusRing: 'rgba(255, 107, 53, 0.24)',
         alertBg: '#FFF1C7',
         alertBorder: '#F9A620',
-        iconContainerBg: '#DBEAFE',
-        iconContainerBorder: '#93C5FD',
-        moduleIconBg: '#FF6B35',
+        iconContainerBg: '#FFE1F0',
+        iconContainerBorder: '#F9A8D4',
+        moduleIconBg: '#E91E63',
         statusIconBg: '#FFF1C7',
       },
       dark: {
@@ -934,10 +948,10 @@ export const themeConcepts: ThemeConcept[] = [
         text: '#FAF3E3',
         textMuted: '#D6CBBB',
         textSoft: '#BDB1A1',
-        accent: '#60A5FA',
-        accentHover: '#93C5FD',
-        accentSoft: '#1E3A8A',
-        accentText: '#07111F',
+        accent: '#FF4FA3',
+        accentHover: '#FF7AB8',
+        accentSoft: '#461333',
+        accentText: '#160714',
         accentWarm: '#FF8A4C',
         success: '#42D6A4',
         successSoft: '#103A30',
@@ -947,12 +961,12 @@ export const themeConcepts: ThemeConcept[] = [
         dangerSoft: '#421C22',
         info: '#4CC9F0',
         infoSoft: '#0B3346',
-        navBg: '#0C0C0C',
-        navText: '#FAF3E3',
-        navMuted: '#BDB1A1',
-        navActiveBg: 'rgba(255, 138, 76, 0.22)',
+        navBg: '#191124',
+        navText: '#FFEAF5',
+        navMuted: '#D8AFC5',
+        navActiveBg: 'rgba(255, 79, 163, 0.24)',
         navActiveText: '#FFFFFF',
-        navHoverBg: 'rgba(250, 243, 227, 0.08)',
+        navHoverBg: 'rgba(255, 234, 245, 0.09)',
         headerBg: '#1F1F1F',
         headerBorder: '#3A332B',
         cardBg: '#1F1F1F',
@@ -962,14 +976,14 @@ export const themeConcepts: ThemeConcept[] = [
         inputFocus: '#FF8A4C',
         tableHeaderBg: '#2A2520',
         tableRowHover: '#292929',
-        tableRowSelected: '#1E3A8A',
+        tableRowSelected: '#461333',
         badgeBg: '#2A2520',
         focusRing: 'rgba(255, 138, 76, 0.25)',
         alertBg: '#3F3216',
         alertBorder: '#FFD166',
-        iconContainerBg: '#1E3A8A',
-        iconContainerBorder: '#315AA7',
-        moduleIconBg: '#FF8A4C',
+        iconContainerBg: '#461333',
+        iconContainerBorder: '#7C2D52',
+        moduleIconBg: '#FF4FA3',
         statusIconBg: '#2A2520',
       },
     },
@@ -1088,6 +1102,14 @@ export function getThemeCssVars(
 
 export function getEdenThemeCssVars(theme: ThemeConcept, appearance: ThemeAppearanceMode): Record<`--${string}`, string> {
   const mode = theme.modes[appearance]
+  const motifSize = theme.motif.style === 'minimal_grid' ? '92px' : '132px'
+  const warmMix = `color-mix(in srgb, ${mode.accentWarm} 22%, ${mode.cardBg})`
+  const accentMix = `color-mix(in srgb, ${mode.accent} 18%, ${mode.cardBg})`
+  const borderAccentMix = `color-mix(in srgb, ${mode.accent} 30%, ${mode.cardBorder})`
+  const successBorderMix = `color-mix(in srgb, ${mode.success} 34%, ${mode.cardBorder})`
+  const warningBorderMix = `color-mix(in srgb, ${mode.warning} 38%, ${mode.cardBorder})`
+  const dangerBorderMix = `color-mix(in srgb, ${mode.danger} 34%, ${mode.cardBorder})`
+  const infoBorderMix = `color-mix(in srgb, ${mode.info} 34%, ${mode.cardBorder})`
   return {
     '--eden-blue': mode.accent,
     '--eden-blue-dk': mode.accentHover,
@@ -1117,6 +1139,7 @@ export function getEdenThemeCssVars(theme: ThemeConcept, appearance: ThemeAppear
     '--eden-accent-soft': mode.accentSoft,
     '--eden-accent-text': mode.accentText,
     '--eden-accent-warm': mode.accentWarm,
+    '--eden-accent-secondary': mode.info,
     '--eden-success': mode.success,
     '--eden-success-soft': mode.successSoft,
     '--eden-warning': mode.warning,
@@ -1136,14 +1159,34 @@ export function getEdenThemeCssVars(theme: ThemeConcept, appearance: ThemeAppear
     '--eden-card-bg': mode.cardBg,
     '--eden-card-border': mode.cardBorder,
     '--eden-card-shadow': theme.shadows.shadowCard,
+    '--eden-card-hover-bg': `color-mix(in srgb, ${mode.cardBg} 82%, ${mode.accentSoft})`,
     '--eden-input-bg': mode.inputBg,
     '--eden-input-border': mode.inputBorder,
     '--eden-input-focus': mode.inputFocus,
+    '--eden-input-placeholder': mode.textSoft,
+    '--eden-input-disabled-bg': mode.surfaceMuted,
     '--eden-table-header-bg': mode.tableHeaderBg,
+    '--eden-table-header-text': mode.textMuted,
+    '--eden-table-border': mode.border,
     '--eden-table-row-hover': mode.tableRowHover,
     '--eden-table-row-selected': mode.tableRowSelected,
+    '--eden-smart-list-bg': `color-mix(in srgb, ${mode.cardBg} 92%, ${mode.accentSoft})`,
+    '--eden-smart-list-border': borderAccentMix,
+    '--eden-smart-list-hover': `color-mix(in srgb, ${mode.cardBg} 64%, ${mode.accentSoft})`,
     '--eden-badge-bg': mode.badgeBg,
+    '--eden-badge-neutral-bg': mode.badgeBg,
+    '--eden-badge-neutral-text': mode.textMuted,
+    '--eden-badge-success-bg': mode.successSoft,
+    '--eden-badge-success-text': mode.success,
+    '--eden-badge-warning-bg': mode.warningSoft,
+    '--eden-badge-warning-text': mode.warning,
+    '--eden-badge-danger-bg': mode.dangerSoft,
+    '--eden-badge-danger-text': mode.danger,
+    '--eden-badge-info-bg': mode.infoSoft,
+    '--eden-badge-info-text': mode.info,
     '--eden-focus-ring': mode.focusRing,
+    '--eden-hover-overlay': `color-mix(in srgb, ${mode.accentSoft} 52%, transparent)`,
+    '--eden-selected-overlay': `color-mix(in srgb, ${mode.accentSoft} 72%, ${mode.cardBg})`,
     '--eden-alert-bg': mode.alertBg,
     '--eden-alert-border': mode.alertBorder,
     '--eden-radius-sm': theme.radius.radiusSmall,
@@ -1165,10 +1208,51 @@ export function getEdenThemeCssVars(theme: ThemeConcept, appearance: ThemeAppear
     '--eden-icon-container-border': mode.iconContainerBorder,
     '--eden-module-icon-bg': mode.moduleIconBg,
     '--eden-status-icon-bg': mode.statusIconBg,
+    '--eden-page-banner-bg': bannerBackground(theme.id, mode, appearance),
+    '--eden-page-banner-text': mode.accentText,
+    '--eden-page-banner-muted': `color-mix(in srgb, ${mode.accentText} 78%, transparent)`,
+    '--eden-page-banner-accent': mode.accentWarm,
+    '--eden-page-banner-border': borderAccentMix,
+    '--eden-page-banner-shadow': theme.shadows.shadowCard,
+    '--eden-page-banner-icon-bg': `color-mix(in srgb, ${mode.accentText} 16%, transparent)`,
+    '--eden-page-banner-action-bg': `color-mix(in srgb, ${mode.accentText} 14%, transparent)`,
+    '--eden-page-banner-action-hover': `color-mix(in srgb, ${mode.accentText} 24%, transparent)`,
+    '--eden-status-success-border': successBorderMix,
+    '--eden-status-warning-border': warningBorderMix,
+    '--eden-status-danger-border': dangerBorderMix,
+    '--eden-status-info-border': infoBorderMix,
+    '--eden-motif-primary': mode.accent,
+    '--eden-motif-secondary': mode.success,
+    '--eden-motif-warm': mode.accentWarm,
     '--eden-motif-opacity': String(theme.motif.opacity[appearance]),
+    '--eden-motif-line': `${theme.motif.lineWeight}px`,
     '--eden-motif-line-width': `${theme.motif.lineWeight}px`,
-    '--eden-motif-corner-size': theme.motif.style === 'minimal_grid' ? '92px' : '132px',
+    '--eden-motif-corner-size': motifSize,
+    '--eden-corner-art-bg': theme.motif.style === 'retro_sun' ? warmMix : accentMix,
+    '--eden-corner-art-border': borderAccentMix,
   }
+}
+
+function bannerBackground(themeId: ThemeConceptId, mode: ThemeModeVisualTokens, appearance: ThemeAppearanceMode) {
+  if (themeId === 'art_deco') {
+    return appearance === 'dark'
+      ? `linear-gradient(135deg, ${mode.navBg} 0%, ${mode.surfaceRaised} 58%, ${mode.warningSoft} 100%)`
+      : `linear-gradient(135deg, ${mode.accentHover} 0%, ${mode.accent} 58%, ${mode.accentWarm} 100%)`
+  }
+  if (themeId === 'anatolian_60s') {
+    return `radial-gradient(circle at 93% 18%, color-mix(in srgb, ${mode.accentWarm} 62%, transparent) 0 58px, transparent 59px),
+      linear-gradient(135deg, ${mode.accentWarm} 0%, ${mode.warning} 42%, ${mode.accent} 100%)`
+  }
+  if (themeId === 'command_bauhaus') {
+    return `radial-gradient(ellipse at 92% 16%, color-mix(in srgb, ${mode.success} 30%, transparent) 0 86px, transparent 87px),
+      linear-gradient(135deg, ${mode.navBg} 0%, ${mode.accent} 58%, ${mode.accentHover} 100%)`
+  }
+  if (themeId === 'pop_studio') {
+    return appearance === 'dark'
+      ? `linear-gradient(135deg, ${mode.navBg} 0%, ${mode.accentSoft} 52%, ${mode.accentWarm} 100%)`
+      : `linear-gradient(135deg, ${mode.accent} 0%, ${mode.info} 52%, ${mode.accentWarm} 100%)`
+  }
+  return `linear-gradient(135deg, ${mode.accent} 0%, ${mode.accentHover} 100%)`
 }
 
 function rowHeight(density: ThemeDensity) {

@@ -11,6 +11,7 @@ import { Bell, Building2, Check, ChevronDown, ChevronLeft, Home, LayoutDashboard
 import { cn } from '@/lib/utils'
 import {
   DEFAULT_VISUAL_THEME_ID,
+  CANONICAL_THEME_KEYS,
   LEGACY_DESIGN_LAB_THEME_STORAGE_KEY,
   VISUAL_THEME_CHANGE_EVENT,
   VISUAL_THEME_LABELS,
@@ -1264,7 +1265,8 @@ function applyVisualThemePreference(themeId: ThemeConceptId, appearance: 'light'
 
   root.dataset.visualTheme = theme.id
   root.dataset.appearanceMode = appearance
-  root.dataset.edenTheme = theme.id
+  root.dataset.edenTheme = CANONICAL_THEME_KEYS[theme.id] || theme.id
+  root.dataset.edenThemeInternal = theme.id
   root.dataset.appearance = appearance
   for (const [key, value] of Object.entries(vars)) {
     root.style.setProperty(key, value)

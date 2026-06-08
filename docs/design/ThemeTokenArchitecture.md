@@ -71,6 +71,41 @@ Components:
 - `--eden-focus-ring`
 - `--eden-alert-bg`
 - `--eden-alert-border`
+- `--eden-page-banner-bg`
+- `--eden-page-banner-text`
+- `--eden-page-banner-muted`
+- `--eden-page-banner-accent`
+- `--eden-page-banner-border`
+- `--eden-page-banner-shadow`
+- `--eden-card-hover-bg`
+- `--eden-input-placeholder`
+- `--eden-input-disabled-bg`
+- `--eden-table-header-text`
+- `--eden-table-border`
+- `--eden-smart-list-bg`
+- `--eden-smart-list-border`
+- `--eden-smart-list-hover`
+- `--eden-badge-neutral-bg`
+- `--eden-badge-neutral-text`
+- `--eden-badge-success-bg`
+- `--eden-badge-success-text`
+- `--eden-badge-warning-bg`
+- `--eden-badge-warning-text`
+- `--eden-badge-danger-bg`
+- `--eden-badge-danger-text`
+- `--eden-badge-info-bg`
+- `--eden-badge-info-text`
+- `--eden-hover-overlay`
+- `--eden-selected-overlay`
+- `--eden-motif-primary`
+- `--eden-motif-secondary`
+- `--eden-motif-warm`
+- `--eden-motif-opacity`
+- `--eden-motif-line`
+- `--eden-corner-art-bg`
+- `--eden-corner-art-border`
+
+The executable token list lives in `lib/theme/themeTokens.ts`.
 
 Shape, density and icon:
 
