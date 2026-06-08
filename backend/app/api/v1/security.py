@@ -433,9 +433,25 @@ async def _list_workspace_options(
     person_ids = await _related_person_ids(session, context.user_id, claim_email, claim_phone)
     if not person_ids:
         return []
-    result = await session.execute(
-        text(
-            """
+    has_workspace_settings = await _table_exists(session, "public.workspace_settings")
+    query = """
+        select
+          ei.id,
+          ei.name as name,
+          tm.role_key,
+          tm.is_default,
+          null::jsonb as workspace_metadata,
+          ei.metadata_json as instance_metadata,
+          tm.user_id,
+          tm.created_at
+        from public.tenant_memberships tm
+        join public.erp_instances ei on ei.id = tm.tenant_id and ei.status = 'active'
+        where tm.status = 'active'
+          and tm.user_id in :person_ids
+        order by tm.is_default desc, tm.created_at asc
+    """
+    if has_workspace_settings:
+        query = """
             select
               ei.id,
               coalesce(ws.workspace_name, ei.name) as name,
@@ -451,8 +467,9 @@ async def _list_workspace_options(
             where tm.status = 'active'
               and tm.user_id in :person_ids
             order by tm.is_default desc, tm.created_at asc
-            """
-        ).bindparams(bindparam("person_ids", expanding=True)),
+        """
+    result = await session.execute(
+        text(query).bindparams(bindparam("person_ids", expanding=True)),
         {"person_ids": person_ids},
     )
     by_tenant: dict[str, dict[str, Any]] = {}
