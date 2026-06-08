@@ -91,7 +91,7 @@ CONDITION_ENTITIES: dict[str, ConditionEntity] = {
     "representative_authority": ConditionEntity(
         key="representative_authority",
         label="Temsil Yetkisi",
-        table="public.representative_authority_transactions",
+        table="public.company_representative_authority_transactions",
         fields={"id", "company_id", "effective_date", "end_date", "status", "created_at", "updated_at"},
         module_key="representatives",
         required_permission="representatives.view",

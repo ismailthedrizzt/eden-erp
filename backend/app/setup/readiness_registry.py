@@ -25,7 +25,7 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
         module_key="representatives",
         required_tables=[
             "company_representatives",
-            "representative_authority_transactions",
+            "company_representative_authority_transactions",
         ],
         optional_views=["v_current_representative_authorities"],
         required_dependencies=["companies"],

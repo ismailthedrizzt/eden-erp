@@ -151,13 +151,13 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         version="1.0",
         source_name="v_current_representative_authorities",
         source_type="view",
-        source_tables=["company_representatives", "representative_authority_transactions"],
+        source_tables=["company_representatives", "company_representative_authority_transactions"],
         company_scoped=True,
-        fallback_strategy="representative_authority_transactions_latest",
+        fallback_strategy="company_representative_authority_transactions_latest",
         performance_budget_ms=500,
         max_page_size=100,
         requires_index_hint=(
-            "representative_authority_transactions(tenant_id, company_id, effective_date)"
+            "company_representative_authority_transactions(tenant_id, company_id, effective_date)"
         ),
     ),
 }

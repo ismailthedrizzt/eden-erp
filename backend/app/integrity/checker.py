@@ -298,7 +298,7 @@ async def _branch_has_active_authorities(
                 """
                 select exists(
                   select 1
-                  from representative_authority_transactions
+                  from company_representative_authority_transactions
                   where tenant_id = :tenant_id
                     and branch_id = :branch_id
                     and lower(coalesce(authority_status, status, 'active')) = 'active'
