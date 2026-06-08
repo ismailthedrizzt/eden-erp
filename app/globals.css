@@ -1717,3 +1717,12 @@ html[data-visual-theme="command_bauhaus"] .eden-decorative-surface::before {
     radial-gradient(ellipse at 45% 45%, color-mix(in srgb, var(--eden-motif-primary) 18%, transparent) 0 14%, transparent 15%),
     linear-gradient(135deg, transparent 0 62%, color-mix(in srgb, var(--eden-motif-primary) 28%, transparent) 63% 64%, transparent 65%) !important;
 }
+
+html[data-eden-theme] .eden-login-card,
+html[data-visual-theme] .eden-login-card {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}

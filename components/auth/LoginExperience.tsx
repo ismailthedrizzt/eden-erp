@@ -770,7 +770,7 @@ export function LoginExperience({
       </div>
 
       <div className="flex w-full items-center justify-center bg-[#0b1724] p-6 sm:p-10 lg:w-[440px] lg:border-l lg:border-[#28445c]">
-        <div className="w-full max-w-sm rounded-2xl border border-[#28445c] bg-[#0f2233]/92 p-6 shadow-2xl shadow-black/25 sm:p-8 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+        <div className="eden-login-card w-full max-w-sm rounded-2xl border border-transparent bg-transparent p-6 shadow-none sm:p-8 lg:border-0 lg:p-0">
           <div className="mb-10">
             <div className="inline-flex">
               <Image
