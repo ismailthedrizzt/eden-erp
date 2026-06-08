@@ -328,7 +328,7 @@ function StatusDotFilter({
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen(previous => !previous)}
-        className="flex h-10 max-w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+        className="eden-smart-list-chip flex h-10 max-w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
       >
         <span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
           {(activeOptions.length ? activeOptions : options.slice(0, 1)).slice(0, 5).map(option => (
@@ -341,7 +341,7 @@ function StatusDotFilter({
             />
           ))}
         </span>
-        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+        <span className="eden-smart-list-count rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
           {activeOptions.length}/{options.length}
         </span>
         <ChevronDown size={15} className={cn('shrink-0 text-gray-500 transition-transform dark:text-gray-400', open && 'rotate-180')} />
@@ -350,7 +350,7 @@ function StatusDotFilter({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-950"
+          className="eden-smart-list-filter-panel absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-950"
         >
           {options.map(option => {
             const tone = statusFilterToneClasses[option.tone || 'neutral']
@@ -1319,7 +1319,7 @@ export function SmartDataTable<T extends { id: string }>({
   const hasQuickLookContent = widgets.length > 0 || dashboardWidgets.length > 0
   const hasSelectedQuickLookContent = selectedSummaryWidgets.length > 0 || selectedDashboardWidgets.length > 0
   const quickLookPanel = (showWidgets && hasQuickLookContent) ? (
-    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <div className="eden-smart-list-filter-panel rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
           <Eye size={16} />
@@ -1329,7 +1329,7 @@ export function SmartDataTable<T extends { id: string }>({
           <button
             type="button"
             onClick={() => setShowWidgetPicker(true)}
-            className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:text-blue-300 dark:hover:bg-blue-950/40"
+            className="eden-smart-list-chip is-accent inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:text-blue-300 dark:hover:bg-blue-950/40"
             title="Widget ekle veya cikar"
           >
             <Plus size={14} />
@@ -1410,7 +1410,7 @@ export function SmartDataTable<T extends { id: string }>({
   ) : null
 
   return (
-    <div data-tour-id="smart-list" className="w-full space-y-4">
+    <div data-tour-id="smart-list" className="eden-smart-list w-full space-y-4">
       <WidgetPickerModal
         open={showWidgetPicker}
         title="Widget Ekle"
@@ -1424,7 +1424,7 @@ export function SmartDataTable<T extends { id: string }>({
       {quickLookPanel}
 
       {/* Header Toolbar */}
-      <div className="flex flex-col gap-3 bg-white p-3 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-visible">
+      <div className="eden-smart-list-toolbar flex flex-col gap-3 bg-white p-3 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-visible">
         {/* Left: Title and Search */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
           {title && <h2 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">{title}</h2>}
@@ -1435,7 +1435,7 @@ export function SmartDataTable<T extends { id: string }>({
               type="text"
               placeholder="Ara..."
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+              className="eden-smart-list-search w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -1456,7 +1456,7 @@ export function SmartDataTable<T extends { id: string }>({
           className="flex w-full flex-wrap items-center justify-end gap-1 overflow-visible scrollbar-hide sm:w-auto sm:flex-shrink-0 sm:gap-2"
         >
           {/* Screen Size Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="eden-smart-list-chip hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <Monitor size={14} className="text-gray-500 dark:text-gray-400" />
             <span className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
               {screenSize}
@@ -1483,16 +1483,16 @@ export function SmartDataTable<T extends { id: string }>({
           <button
             onClick={() => setQuickLookOpen(!showWidgets)}
             className={cn(
-              "p-2 rounded-lg transition-colors relative",
+              "eden-smart-list-icon-button p-2 rounded-lg transition-colors relative",
               showWidgets 
-                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
+                ? "is-active bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                 : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             )}
             title="Hızlı Bakış"
           >
             <Eye size={18} />
             {hasQuickLookContent && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center">
+              <span className="eden-smart-list-count absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center">
                 {selectedDashboardWidgets.length + selectedSummaryWidgets.length}
               </span>
             )}
@@ -1502,9 +1502,9 @@ export function SmartDataTable<T extends { id: string }>({
           <button
             onClick={() => setShowFilterPanel(!showFilterPanel)}
             className={cn(
-              "p-2 rounded-lg transition-colors flex items-center gap-2",
+              "eden-smart-list-icon-button p-2 rounded-lg transition-colors flex items-center gap-2",
               showFilterPanel || filters.length > 0
-                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
+                ? "is-active bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                 : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             )}
           >
@@ -1513,14 +1513,14 @@ export function SmartDataTable<T extends { id: string }>({
           </button>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1" title={isMobileViewport ? 'Mobil ekranda kart gorunumu kullanilir.' : undefined}>
+          <div className="eden-smart-list-view-toggle flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1" title={isMobileViewport ? 'Mobil ekranda kart gorunumu kullanilir.' : undefined}>
             <button
               onClick={() => setViewMode('list')}
               disabled={isMobileViewport}
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "eden-smart-list-view-button p-2 rounded-md transition-colors",
                 effectiveViewMode === 'list'
-                  ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
+                  ? "is-active bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white",
                 isMobileViewport && "cursor-not-allowed opacity-40"
               )}
@@ -1531,9 +1531,9 @@ export function SmartDataTable<T extends { id: string }>({
             <button
               onClick={() => setViewMode('card')}
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "eden-smart-list-view-button p-2 rounded-md transition-colors",
                 effectiveViewMode === 'card'
-                  ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
+                  ? "is-active bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
               title="Kart görünümü"
@@ -1542,7 +1542,7 @@ export function SmartDataTable<T extends { id: string }>({
             </button>
           </div>
           {isMobileViewport && (
-            <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-200">
+            <span className="eden-smart-list-chip is-accent rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-200">
               Mobil kart
             </span>
           )}
@@ -1561,9 +1561,9 @@ export function SmartDataTable<T extends { id: string }>({
             <button
               onClick={() => setShowColumnSelector(!showColumnSelector)}
               className={cn(
-                "p-2 rounded-lg transition-colors",
+                "eden-smart-list-icon-button p-2 rounded-lg transition-colors",
                 showColumnSelector
-                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                  ? "is-active bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                   : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
               )}
               title="Sütun ayarları"
@@ -1572,7 +1572,7 @@ export function SmartDataTable<T extends { id: string }>({
             </button>
 
             {showColumnSelector && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+              <div className="eden-smart-list-filter-panel absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
                 <div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-gray-900 dark:text-white">Sütunlar</h3>
@@ -1743,7 +1743,7 @@ export function SmartDataTable<T extends { id: string }>({
 
       {/* Column Filter Panel */}
       {showFilterPanel && (
-        <div className="fixed inset-x-0 bottom-0 z-40 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-gray-200 bg-gray-50 p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:static sm:max-h-none sm:rounded-lg sm:bg-gray-50 sm:shadow-none dark:sm:bg-gray-800/50 space-y-3">
+        <div className="eden-smart-list-filter-panel fixed inset-x-0 bottom-0 z-40 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-gray-200 bg-gray-50 p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:static sm:max-h-none sm:rounded-lg sm:bg-gray-50 sm:shadow-none dark:sm:bg-gray-800/50 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
               <Filter size={16} />
@@ -1817,10 +1817,10 @@ export function SmartDataTable<T extends { id: string }>({
         /* List View */
         <div 
           ref={tableContainerRef}
-          className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+          className="eden-smart-list-table overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
         >
           <table className="w-full table-fixed text-sm" style={{ minWidth: visibleTableWidth }}>
-            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+            <thead className="eden-smart-list-table-head bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {visibleColumns.map(col => {
                   const sort = sortConfigs.find(s => s.key === col.key)
@@ -1834,7 +1834,7 @@ export function SmartDataTable<T extends { id: string }>({
                       onDrop={(e) => handleDrop(e, col.key)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        "px-2 sm:px-3 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
+                        "eden-smart-list-th px-2 sm:px-3 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
                         col.sortable !== false && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 select-none",
                         dropTarget === col.key && "bg-blue-50 dark:bg-blue-900/30",
                         draggedColumn === col.key && "opacity-50"
@@ -1857,7 +1857,7 @@ export function SmartDataTable<T extends { id: string }>({
                           <span className="sr-only">{col.label}</span>
                         )}
                         {sort && (
-                          <span className="flex items-center gap-1 text-blue-600">
+                          <span className="eden-smart-list-sort flex items-center gap-1 text-blue-600">
                             {sort.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                             <span className="text-[10px] font-bold">{sort.priority}</span>
                           </span>
@@ -1868,7 +1868,7 @@ export function SmartDataTable<T extends { id: string }>({
                 })}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="eden-smart-list-body divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedData.map((row, rowIndex) => {
                 const firstRowClickColumnKey = visibleColumns[0]?.key
 
@@ -1876,7 +1876,7 @@ export function SmartDataTable<T extends { id: string }>({
                   <tr
                     key={row.id}
                     className={cn(
-                      "group/row transition-colors duration-150",
+                      "eden-smart-list-row group/row transition-colors duration-150",
                       onRowClick && "cursor-pointer"
                     )}
                     onClick={() => onRowClick?.(row)}
@@ -1889,7 +1889,7 @@ export function SmartDataTable<T extends { id: string }>({
                           key={col.key}
                           title={getCellTitle(getNestedValue(row, col.key))}
                           className={cn(
-                            "px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden transition-[background-color,box-shadow] duration-150",
+                            "eden-smart-list-cell px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden transition-[background-color,box-shadow] duration-150",
                             onRowClick && "group-hover/row:bg-sky-50/80 group-hover/row:shadow-[inset_0_1px_0_rgba(14,165,233,0.16),inset_0_-1px_0_rgba(14,165,233,0.16)] dark:group-hover/row:bg-sky-950/25",
                             onRowClick && col.key === firstRowClickColumnKey && "relative before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:origin-center before:scale-y-50 before:rounded-full before:bg-sky-500 before:opacity-0 before:transition-all before:duration-150 group-hover/row:before:scale-y-100 group-hover/row:before:opacity-100",
                             isLeftAlignedColumn(col) ? "text-left" : "text-center",
@@ -1951,11 +1951,11 @@ export function SmartDataTable<T extends { id: string }>({
                     onRowClick(row)
                   }
                 }}
-                className="relative min-h-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-gray-800"
+                className="eden-smart-list-card relative min-h-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-gray-800"
               >
                 <div className="flex min-h-0 flex-col sm:min-h-44 sm:flex-row">
                   <div className={cn(
-                    'relative flex h-28 w-full shrink-0 self-stretch overflow-hidden sm:h-auto sm:w-36 xl:w-40',
+                    'eden-smart-list-card-media relative flex h-28 w-full shrink-0 self-stretch overflow-hidden sm:h-auto sm:w-36 xl:w-40',
                     imageFit === 'contain'
                       ? 'bg-transparent'
                       : 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30'
@@ -2010,7 +2010,7 @@ export function SmartDataTable<T extends { id: string }>({
       )}
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="eden-smart-list-pagination flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 dark:text-gray-400">
             Toplam {totalRows} kayıt
@@ -2022,7 +2022,7 @@ export function SmartDataTable<T extends { id: string }>({
               onChange={(e) => {
                 handlePageSizeChange(Number(e.target.value))
               }}
-              className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="eden-smart-list-search border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             >
               {resolvedPageSizeOptions.map(opt => (
                 <option key={opt} value={opt}>{opt}</option>

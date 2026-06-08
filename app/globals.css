@@ -1726,3 +1726,78 @@ html[data-visual-theme] .eden-login-card {
   box-shadow: none !important;
   color: #ffffff !important;
 }
+
+html[data-eden-theme] .eden-smart-list-chip,
+html[data-visual-theme] .eden-smart-list-chip,
+html[data-eden-theme] .eden-smart-list-view-toggle,
+html[data-visual-theme] .eden-smart-list-view-toggle {
+  background-color: var(--eden-smart-control-bg) !important;
+  color: var(--eden-text-muted) !important;
+  border-color: var(--eden-smart-list-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-chip.is-accent,
+html[data-visual-theme] .eden-smart-list-chip.is-accent,
+html[data-eden-theme] .eden-smart-list-icon-button.is-active,
+html[data-visual-theme] .eden-smart-list-icon-button.is-active,
+html[data-eden-theme] .eden-smart-list-view-button.is-active,
+html[data-visual-theme] .eden-smart-list-view-button.is-active {
+  background-color: var(--eden-smart-control-active-bg) !important;
+  color: var(--eden-smart-control-active-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-icon-button,
+html[data-visual-theme] .eden-smart-list-icon-button,
+html[data-eden-theme] .eden-smart-list-view-button,
+html[data-visual-theme] .eden-smart-list-view-button {
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-icon-button:hover,
+html[data-visual-theme] .eden-smart-list-icon-button:hover,
+html[data-eden-theme] .eden-smart-list-view-button:hover,
+html[data-visual-theme] .eden-smart-list-view-button:hover {
+  background-color: var(--eden-smart-list-hover) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-count,
+html[data-visual-theme] .eden-smart-list-count {
+  background-color: var(--eden-smart-count-bg) !important;
+  color: var(--eden-smart-count-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-th,
+html[data-visual-theme] .eden-smart-list-th {
+  background: transparent !important;
+  border-color: var(--eden-smart-list-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-sort,
+html[data-visual-theme] .eden-smart-list-sort {
+  color: var(--eden-accent) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body,
+html[data-visual-theme] .eden-smart-list-body,
+html[data-eden-theme] .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-cell {
+  border-color: color-mix(in srgb, var(--eden-smart-list-border) 72%, transparent) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(even) .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(even) .eden-smart-list-cell {
+  background-color: var(--eden-smart-row-alt-bg) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-card-media,
+html[data-visual-theme] .eden-smart-list-card-media,
+html[data-eden-theme] .eden-smart-list .card-fallback,
+html[data-visual-theme] .eden-smart-list .card-fallback {
+  background: linear-gradient(135deg, var(--eden-accent-soft), color-mix(in srgb, var(--eden-accent-soft) 62%, var(--eden-card-bg))) !important;
+}
