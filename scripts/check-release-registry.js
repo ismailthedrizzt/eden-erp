@@ -26,14 +26,22 @@ const validStatuses = new Set([
   'broken_do_not_show',
 ])
 
-for (const required of [
+const releasePromotedRoutes = [
   '/login',
   '/offline',
   '/app',
+  '/app/aboneligim',
+  '/app/profil',
   '/app/sirket/companies',
-  '/app/sirket/companies/branches',
   '/app/sirket/companies/partners',
   '/app/sirket/companies/representatives',
+  '/app/ik/calisanlar',
+  '/app/sistem/kurulum',
+]
+
+const developmentTenantOnlyRoutes = [
+  '/app/design-lab',
+  '/app/sirket/companies/branches',
   '/app/sirket/tesisler',
   '/app/sirket/teskilat',
   '/app/muhasebe/cari-kartlar',
@@ -42,11 +50,18 @@ for (const required of [
   '/app/muhasebe/banka-hesaplari-ve-kartlari',
   '/app/muhasebe/banka-kart-hareketleri',
   '/app/muhasebe/hesap-ve-kart-hareketleri',
-  '/app/ik/calisanlar',
-]) {
+]
+
+for (const required of releasePromotedRoutes) {
   const item = registry.find(row => row.route === required)
   if (!item) failures.push(`Missing required release route: ${required}`)
   else if (item.status !== 'release') failures.push(`${required} must have release status.`)
+}
+
+for (const tenantOnly of developmentTenantOnlyRoutes) {
+  const item = registry.find(row => row.route === tenantOnly)
+  if (!item) failures.push(`Missing required development tenant route: ${tenantOnly}`)
+  else if (item.status === 'release') failures.push(`${tenantOnly} must stay tenant-development gated, not release.`)
 }
 
 for (const pageRoute of pageRoutes) {
@@ -135,8 +150,11 @@ function checkVisibilityContracts() {
   const commandPaletteText = fs.readFileSync(commandPalettePath, 'utf8')
   const actionGuideText = fs.readFileSync(actionGuidePath, 'utf8')
 
-  if (!/env\s*===\s*'release'[\s\S]*status\s*===\s*'release'/.test(visibilityText)) {
-    failures.push('releaseVisibility must restrict release env direct visibility to release routes only.')
+  if (!/canSeeDevelopmentSurface/.test(visibilityText) || !/tenantEntitlements/.test(visibilityText)) {
+    failures.push('releaseVisibility must evaluate tenant entitlements for development surfaces.')
+  }
+  if (!/env\s*===\s*'release'[\s\S]*status\s*!==\s*'release'[\s\S]*!canSeeInternalSurface/.test(visibilityText)) {
+    failures.push('releaseVisibility must restrict normal release tenants to release routes only.')
   }
   if (!/status\s*===\s*'hidden'[\s\S]*blocked/.test(visibilityText)) {
     failures.push('releaseVisibility must block hidden routes.')
@@ -156,8 +174,11 @@ function checkVisibilityContracts() {
   if (!/surface\s*===\s*'commandPalette'[\s\S]*showInCommandPalette/.test(visibilityText)) {
     failures.push('releaseVisibility must enforce command palette surface flags.')
   }
-  if (!/getRouteReleaseDecision\(pathname,\s*undefined,\s*'direct'\)/.test(middlewareText)) {
-    failures.push('middleware must evaluate direct route release visibility.')
+  if (!/getRouteReleaseDecision\(pathname,\s*undefined,\s*'direct',\s*\{\s*tenantEntitlements\s*\}\)/.test(middlewareText)) {
+    failures.push('middleware must evaluate direct route release visibility with tenant entitlements.')
+  }
+  if (!/getTenantEntitlementsForRouteGuard/.test(middlewareText)) {
+    failures.push('middleware must load tenant entitlements before applying the direct route guard.')
   }
   if (!/!decision\.visible\s*\|\|\s*!decision\.enabled/.test(middlewareText)) {
     failures.push('middleware must block disabled direct routes, including coming soon routes.')

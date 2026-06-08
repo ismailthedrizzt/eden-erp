@@ -30,6 +30,7 @@ export interface ReleaseVisibilityDecision {
 
 const RELEASE_BLOCK_MESSAGE = 'Bu ozellik yakinda kullanima acilacaktir.'
 const DEVELOPMENT_BLOCK_MESSAGE = 'Bu sayfa bu ortamda yayina alinmamis.'
+const DEVELOPMENT_STATUSES = new Set<ReleaseStatus>(['development', 'development_demo', 'development_internal'])
 
 export {
   getCurrentReleaseEnvironment,
@@ -78,14 +79,16 @@ export function getRouteReleaseDecision(
   const config = getRouteReleaseConfig(route)
   const status = config?.releaseStatus || 'development'
   const badgeLabel = getReleaseBadgeLabel(status, env)
+  const isDevelopmentSurface = DEVELOPMENT_STATUSES.has(status)
+  const canSeeInternalSurface = canSeeDevelopmentSurface(userContext.tenantEntitlements)
 
   if (!config) {
     return {
-      visible: env !== 'release',
-      enabled: env !== 'release',
+      visible: env !== 'release' || canSeeInternalSurface,
+      enabled: env !== 'release' || canSeeInternalSurface,
       status,
       badgeLabel,
-      reason: env === 'release' ? RELEASE_BLOCK_MESSAGE : DEVELOPMENT_BLOCK_MESSAGE,
+      reason: env === 'release' && !canSeeInternalSurface ? RELEASE_BLOCK_MESSAGE : DEVELOPMENT_BLOCK_MESSAGE,
       releaseReason: 'not_registered',
     }
   }
@@ -130,27 +133,24 @@ export function getRouteReleaseDecision(
     }
   }
 
-  if (env === 'release') {
-    const visible = status === 'release'
-    return {
-      visible,
-      enabled: visible,
-      status,
-      badgeLabel,
-      reason: visible ? null : RELEASE_BLOCK_MESSAGE,
-      releaseReason: visible ? null : 'not_promoted',
-    }
-  }
-
-  if ((status === 'development' || status === 'development_demo' || status === 'development_internal')
-    && userContext.tenantEntitlements
-    && !canSeeDevelopmentSurface(userContext.tenantEntitlements)) {
+  if (isDevelopmentSurface && userContext.tenantEntitlements && !canSeeInternalSurface) {
     return {
       visible: false,
       enabled: false,
       status,
       badgeLabel,
       reason: 'Bu sayfa development lisansli tenantlar icin ayrilmistir.',
+      releaseReason: 'not_promoted',
+    }
+  }
+
+  if (env === 'release' && status !== 'release' && !canSeeInternalSurface) {
+    return {
+      visible: false,
+      enabled: false,
+      status,
+      badgeLabel,
+      reason: RELEASE_BLOCK_MESSAGE,
       releaseReason: 'not_promoted',
     }
   }

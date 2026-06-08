@@ -32,6 +32,7 @@ import { CopilotPanel } from '@/components/ai/CopilotPanel'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import { apiClient } from '@/lib/api/apiClient'
+import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 import { canShowRouteInNavigation } from '@/lib/release/releaseVisibility'
 import type { SessionBootstrapResponse, UiAppearancePreference } from '@/lib/user-state/types'
@@ -235,6 +236,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [workspaceName, setWorkspaceName] = useState('Çalışma Alanı')
   const [workspaceLogo, setWorkspaceLogo] = useState<ThemedLogoSource>({})
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null)
+  const [tenantEntitlements, setTenantEntitlements] = useState<TenantEntitlements | null>(null)
   const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
   const [workspaceOptions, setWorkspaceOptions] = useState<TenantWorkspaceOption[]>([])
   const [bootstrapModules, setBootstrapModules] = useState<ClientModuleRuntime[]>([])
@@ -360,6 +362,22 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       })
       .finally(() => {
         if (!cancelled) setSessionBootstrapLoading(false)
+      })
+
+    fetch('/api/licensing/current', {
+      cache: 'no-store',
+      headers: tenantRequestHeaders(),
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Tenant lisansi yuklenemedi.')
+        return (payload.data || payload) as TenantEntitlements
+      })
+      .then(entitlements => {
+        if (!cancelled) setTenantEntitlements(entitlements)
+      })
+      .catch(() => {
+        if (!cancelled) setTenantEntitlements(null)
       })
 
     fetch('/api/tenants/options', {
@@ -593,6 +611,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
       const workspace = payload.data?.workspace || option
       setStoredTenantId(option.id)
+      setTenantEntitlements(null)
       setWorkspaceId(option.id)
       setWorkspaceName(workspace.name || option.name || 'Calisma Alani')
       setWorkspaceLogo(workspace)
@@ -610,6 +629,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       ))
       setWorkspaceMenuOpen(false)
       apiClient.invalidate()
+
+      try {
+        const entitlementsResponse = await fetch('/api/licensing/current', {
+          cache: 'no-store',
+          headers: tenantRequestHeaders(option.id),
+        })
+        const entitlementsPayload = await entitlementsResponse.json().catch(() => ({}))
+        if (entitlementsResponse.ok) {
+          setTenantEntitlements((entitlementsPayload.data || entitlementsPayload) as TenantEntitlements)
+        }
+      } catch {
+        setTenantEntitlements(null)
+      }
 
       try {
         const bootstrapResponse = await fetch('/api/session/bootstrap', {
@@ -710,6 +742,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               <Sidebar
                 collapsed={collapsed}
                 mobileOpen={false}
+                tenantEntitlements={tenantEntitlements}
                 onMobileClose={() => {}}
                 onExpand={() => {
                   setCollapsed(false)
@@ -728,7 +761,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 />
                 {/* Mobile Sidebar */}
                 <div className="fixed left-0 top-0 h-full z-50 lg:hidden">
-                  <Sidebar collapsed={false} mobileOpen={true} onMobileClose={() => setMobileMenuOpen(false)} />
+                  <Sidebar collapsed={false} mobileOpen={true} tenantEntitlements={tenantEntitlements} onMobileClose={() => setMobileMenuOpen(false)} />
                 </div>
               </>
             )}
@@ -918,7 +951,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           >
             {children}
           </main>
-          <MobileBottomNavigation pathname={pathname} onOpenMenu={() => setMobileMenuOpen(true)} />
+          <MobileBottomNavigation pathname={pathname} tenantEntitlements={tenantEntitlements} onOpenMenu={() => setMobileMenuOpen(true)} />
             </div>
             <GuidedSystemTour
               open={!workspacesLoading && tourOpen}
@@ -1259,8 +1292,17 @@ function UserProfileMenu({
   )
 }
 
-function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
+function MobileBottomNavigation({
+  pathname,
+  tenantEntitlements,
+  onOpenMenu,
+}: {
+  pathname: string
+  tenantEntitlements?: TenantEntitlements | null
+  onOpenMenu: () => void
+}) {
   const releaseEnv = getCurrentReleaseEnvironment()
+  const releaseUserContext = { tenantEntitlements }
   const items = [
     { label: 'Ana', href: '/app', icon: Home },
     { label: 'Sirket', href: '/app/sirket/companies', icon: Building2 },
@@ -1268,7 +1310,7 @@ function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; on
     { label: 'IK', href: '/app/ik/calisanlar', icon: Users },
     { label: 'Panel', href: '/app/dashboard', icon: LayoutDashboard },
     { label: 'Gorev', href: '/app/gorev-ve-proje-yonetimi/gorevler', icon: ListChecks },
-  ].filter(item => canShowRouteInNavigation(item.href, releaseEnv))
+  ].filter(item => canShowRouteInNavigation(item.href, releaseEnv, releaseUserContext))
 
   return (
     <nav

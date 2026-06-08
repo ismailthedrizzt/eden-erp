@@ -11,6 +11,7 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { findNavigationItemByPath } from '@/lib/navigation/navigationRegistry'
 import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 import { getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
+import { canSeeDevelopmentSurface, type TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 import { resolveMenuItemVisibility } from '@/lib/visibility/runtimeVisibilityResolver'
 import type { RuntimeVisibilityContext, VisibilityDecision } from '@/lib/visibility/visibility.types'
 import {
@@ -321,8 +322,6 @@ function runtimeRedirectFor(status: string) {
 type SidebarVersionInfo = ModuleVersionInfo | PageVersionInfo
 
 function SidebarVersionBadge({ info, compact = false }: { info: SidebarVersionInfo; compact?: boolean }) {
-  if (getCurrentReleaseEnvironment() === 'release') return null
-
   return (
     <span
       title={getVersionTitle(info.label, info)}
@@ -393,11 +392,12 @@ function titleWithDecision(title: string, decision: VisibilityDecision) {
 interface SidebarProps {
   collapsed?: boolean
   mobileOpen?: boolean
+  tenantEntitlements?: TenantEntitlements | null
   onMobileClose?: () => void
   onExpand?: () => void
 }
 
-export default function Sidebar({ collapsed = false, mobileOpen = false, onMobileClose, onExpand }: SidebarProps) {
+export default function Sidebar({ collapsed = false, mobileOpen = false, tenantEntitlements = null, onMobileClose, onExpand }: SidebarProps) {
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const moduleRuntime = useModules()
@@ -408,7 +408,9 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     currentPage: pathname,
     permissions: Array.from(permissionRuntime.permissions),
     modules: moduleRuntime.runtimeModules,
-  }), [moduleRuntime.runtimeModules, pathname, permissionRuntime.permissions])
+    tenantEntitlements,
+  }), [moduleRuntime.runtimeModules, pathname, permissionRuntime.permissions, tenantEntitlements])
+  const showTenantDevelopmentSurfaces = canSeeDevelopmentSurface(tenantEntitlements)
 
   useEffect(() => {
     const activeModule = NAV.find(item => item.children?.some(child => pathname.startsWith(child.href)))?.id
@@ -432,7 +434,10 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
   // Auto-open active module on mount
   const renderItem = (item: NavItem) => {
-    const releaseUserContext = { permissions: visibilityContext.permissions }
+    const releaseUserContext = {
+      permissions: visibilityContext.permissions,
+      tenantEntitlements,
+    }
     const itemReleaseDecision = item.href
       ? getRouteReleaseDecision(item.href, releaseEnv, 'navigation', releaseUserContext)
       : null
@@ -446,7 +451,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     const isActive = isModActive(item)
     const isOpen = openMods.includes(item.id)
     const hasChildren = visibleChildren.length > 0
-    const showMenuVersionInfo = releaseEnv !== 'release'
+    const showMenuVersionInfo = showTenantDevelopmentSurfaces
     const moduleVersionInfo = showMenuVersionInfo ? getModuleVersionInfo(item.moduleKey) : undefined
     const itemTitle = getVersionTitle(item.label, moduleVersionInfo)
     const contractModuleKey = resolveSidebarContractModuleKey(item)

@@ -3,6 +3,7 @@ import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSe
 import { getReleaseEnvSafetyViolations } from '@/lib/env/releaseSafety'
 import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
 import { getRouteNotAvailableHref, getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
+import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 
 const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -45,17 +46,6 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  if (shouldApplyReleaseRouteGuard(pathname, isApiRoute, isPwaAsset)) {
-    const decision = getRouteReleaseDecision(pathname, undefined, 'direct')
-    if (!decision.visible || !decision.enabled) {
-      const target = new URL(getRouteNotAvailableHref(pathname, decision.releaseReason), request.nextUrl.origin)
-      const rewriteUrl = request.nextUrl.clone()
-      rewriteUrl.pathname = target.pathname
-      rewriteUrl.search = target.search
-      return withSecurityHeaders(NextResponse.rewrite(rewriteUrl), request)
-    }
-  }
-
   if (isApiRoute && UNSAFE_METHODS.has(request.method.toUpperCase()) && !isAllowedRequestOrigin(request)) {
     return withSecurityHeaders(
       NextResponse.json({ error: 'Request origin rejected', code: 'ORIGIN_REJECTED' }, { status: 403 }),
@@ -76,6 +66,47 @@ export async function middleware(request: NextRequest) {
   const isPublic = isAuthPage || isPublicApiRoute || isPwaAsset || isSetupWizardPage || isReleaseUnavailablePage
   const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
 
+  if (!isPublic && !appSession) {
+    if (process.env.EDEN_ENABLE_LEGACY_SUPABASE_AUTH === 'true') {
+      return withSecurityHeaders(
+        NextResponse.json(
+          {
+            error: 'Legacy Supabase auth fallback is disabled in the remote server/local DB deployment.',
+            code: 'LEGACY_SUPABASE_AUTH_DISABLED',
+          },
+          { status: 500 }
+        ),
+        request
+      )
+    }
+
+    if (isApiRoute) {
+      const response = NextResponse.json({ error: 'Authentication required', code: 'AUTH_REQUIRED' }, { status: 401 })
+      response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+      response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
+      return withSecurityHeaders(response, request)
+    }
+
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    const response = NextResponse.redirect(url)
+    response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+    response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
+    return withSecurityHeaders(response, request)
+  }
+
+  if (shouldApplyReleaseRouteGuard(pathname, isApiRoute, isPwaAsset)) {
+    const tenantEntitlements = await getTenantEntitlementsForRouteGuard(request, appSession)
+    const decision = getRouteReleaseDecision(pathname, undefined, 'direct', { tenantEntitlements })
+    if (!decision.visible || !decision.enabled) {
+      const target = new URL(getRouteNotAvailableHref(pathname, decision.releaseReason), request.nextUrl.origin)
+      const rewriteUrl = request.nextUrl.clone()
+      rewriteUrl.pathname = target.pathname
+      rewriteUrl.search = target.search
+      return withSecurityHeaders(NextResponse.rewrite(rewriteUrl), request)
+    }
+  }
+
   if (isPublic || appSession) {
     if (appSession?.tenantId) setRequestTenantCookies(request, appSession.tenantId)
 
@@ -84,32 +115,44 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  if (process.env.EDEN_ENABLE_LEGACY_SUPABASE_AUTH === 'true') {
-    return withSecurityHeaders(
-      NextResponse.json(
-        {
-          error: 'Legacy Supabase auth fallback is disabled in the remote server/local DB deployment.',
-          code: 'LEGACY_SUPABASE_AUTH_DISABLED',
-        },
-        { status: 500 }
-      ),
-      request
-    )
-  }
+  return withSecurityHeaders(NextResponse.next({ request }), request)
+}
 
-  if (isApiRoute) {
-    const response = NextResponse.json({ error: 'Authentication required', code: 'AUTH_REQUIRED' }, { status: 401 })
-    response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
-    response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
-    return withSecurityHeaders(response, request)
-  }
+async function getTenantEntitlementsForRouteGuard(
+  request: NextRequest,
+  appSession: Awaited<ReturnType<typeof verifyAppSessionToken>>
+): Promise<TenantEntitlements | null> {
+  const tenantId = appSession?.tenantId || request.cookies.get(TENANT_ID_COOKIE)?.value
+  const baseUrl = process.env.FASTAPI_BASE_URL?.replace(/\/+$/, '')
+  if (!tenantId || !baseUrl) return null
 
-  const url = request.nextUrl.clone()
-  url.pathname = '/login'
-  const response = NextResponse.redirect(url)
-  response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
-  response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
-  return withSecurityHeaders(response, request)
+  try {
+    const headers = new Headers()
+    headers.set('accept', 'application/json')
+    headers.set('x-tenant-id', tenantId)
+    headers.set('x-request-id', request.headers.get('x-request-id') || crypto.randomUUID())
+    headers.set('x-forwarded-user-agent', request.headers.get('user-agent') || '')
+    if (appSession?.userId) headers.set('x-user-id', appSession.userId)
+    if (appSession?.email) headers.set('x-user-email', appSession.email)
+    if (appSession?.phone) headers.set('x-user-phone', appSession.phone)
+    if (process.env.INTERNAL_BACKEND_TOKEN) {
+      headers.set('authorization', `Bearer ${process.env.INTERNAL_BACKEND_TOKEN}`)
+    }
+    if (process.env.TRUSTED_PROXY_SECRET) {
+      headers.set('x-proxy-secret', process.env.TRUSTED_PROXY_SECRET)
+    }
+
+    const response = await fetch(`${baseUrl}/api/v1/licensing/current`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    })
+    if (!response.ok) return null
+    const payload = await response.json().catch(() => null)
+    return (payload?.data || payload) as TenantEntitlements | null
+  } catch {
+    return null
+  }
 }
 
 function shouldApplyReleaseRouteGuard(pathname: string, isApiRoute: boolean, isPwaAsset: boolean) {
