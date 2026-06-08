@@ -176,6 +176,7 @@ async def load_user_roles(session: AsyncSession, tenant_id: str, user_id: str) -
                 "PERMISSION_INFRA_MISSING",
                 status.HTTP_409_CONFLICT,
             ) from exc
+        await session.rollback()
 
     try:
         result = await session.execute(
@@ -241,6 +242,7 @@ async def load_user_permissions(session: AsyncSession, tenant_id: str, user_id: 
                 "PERMISSION_INFRA_MISSING",
                 status.HTTP_409_CONFLICT,
             ) from exc
+        await session.rollback()
 
     try:
         result = await session.execute(
@@ -338,6 +340,7 @@ async def load_company_scope(
                 "COMPANY_SCOPE_INFRA_MISSING",
                 status.HTTP_409_CONFLICT,
             ) from exc
+        await session.rollback()
 
     try:
         result = await session.execute(
@@ -395,6 +398,7 @@ async def load_branch_scope(
         return [str(row["branch_id"]) for row in result.mappings().all() if row.get("branch_id")]
     except (ProgrammingError, DBAPIError) as exc:
         if _is_missing_infra_error(exc):
+            await session.rollback()
             return []
         raise DomainError(
             "Sube erisim kapsami altyapisi hazir degil.",
