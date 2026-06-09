@@ -3882,6 +3882,8 @@ html[data-appearance="dark"][data-visual-theme="esitlik"] {
   --eden-page-banner-bg:
     radial-gradient(circle at 88% 12%, rgba(226, 85, 142, 0.16) 0 72px, transparent 73px),
     linear-gradient(135deg, #210a1e 0%, #551d3e 58%, #160515 100%);
+  --eden-page-banner-text: #fff5fb;
+  --eden-page-banner-muted: rgba(255, 245, 251, 0.76);
 }
 
 html[data-eden-theme="atlas"],
@@ -3898,6 +3900,8 @@ html[data-visual-theme="atlas"] {
   --eden-nav-text: #10213a;
   --eden-page-banner-bg:
     linear-gradient(145deg, rgba(45, 108, 223, 0.96) 0%, rgba(14, 135, 150, 0.88) 54%, rgba(199, 152, 90, 0.88) 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.78);
   --eden-content-motif:
     repeating-linear-gradient(90deg, transparent 0 42px, rgba(45, 108, 223, 0.12) 43px 44px),
     repeating-linear-gradient(0deg, transparent 0 32px, rgba(199, 152, 90, 0.12) 33px 34px);
@@ -3917,6 +3921,8 @@ html[data-appearance="dark"][data-visual-theme="atlas"] {
   --eden-accent-soft: #0a4350;
   --eden-page-banner-bg:
     linear-gradient(145deg, #031119 0%, #064559 58%, #0a3042 100%);
+  --eden-page-banner-text: #f5fbff;
+  --eden-page-banner-muted: rgba(245, 251, 255, 0.76);
 }
 
 html[data-eden-theme="avangard"],
@@ -3934,6 +3940,8 @@ html[data-visual-theme="avangard"] {
   --eden-nav-active-text: #6125d0;
   --eden-page-banner-bg:
     linear-gradient(135deg, #7c3aed 0%, #2f37d4 55%, #22d3ee 100%);
+  --eden-page-banner-text: #ffffff;
+  --eden-page-banner-muted: rgba(255, 255, 255, 0.78);
   --eden-content-motif:
     repeating-linear-gradient(90deg, transparent 0 24px, rgba(124, 58, 237, 0.11) 25px 26px),
     linear-gradient(135deg, transparent 0 72%, rgba(199, 240, 0, 0.18) 73% 78%, transparent 79%);
@@ -3953,6 +3961,22 @@ html[data-appearance="dark"][data-visual-theme="avangard"] {
   --eden-accent-soft: #24194a;
   --eden-page-banner-bg:
     linear-gradient(135deg, #12102a 0%, #4a248e 54%, #0c7888 100%);
+  --eden-page-banner-text: #f8f5ff;
+  --eden-page-banner-muted: rgba(248, 245, 255, 0.76);
+}
+
+html[data-eden-theme] .eden-page-banner :where(h1, h2, h3),
+html[data-visual-theme] .eden-page-banner :where(h1, h2, h3),
+html[data-eden-theme] [data-theme-surface="banner"] :where(h1, h2, h3),
+html[data-visual-theme] [data-theme-surface="banner"] :where(h1, h2, h3) {
+  color: var(--eden-page-banner-text) !important;
+}
+
+html[data-eden-theme] .eden-page-banner :where(p, small),
+html[data-visual-theme] .eden-page-banner :where(p, small),
+html[data-eden-theme] [data-theme-surface="banner"] :where(p, small),
+html[data-visual-theme] [data-theme-surface="banner"] :where(p, small) {
+  color: var(--eden-page-banner-muted) !important;
 }
 
 html[data-eden-theme] .eden-document-slot-card,
