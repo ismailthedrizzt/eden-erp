@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
   AlertTriangle,
@@ -41,15 +40,15 @@ import type { EdenThemePackage, ThemeAppearance, ThemeModeTokens, ThemeValidatio
 import { cn } from '@/lib/utils'
 
 type ToastState = { type: ToastType; title?: string; message: string }
-type ThemeTab = 'general' | 'light' | 'dark' | 'components' | 'motif' | 'preview' | 'validation' | 'importExport' | 'usage' | 'audit'
+type ThemeTab = 'general' | 'surface' | 'colors' | 'background' | 'illustrations' | 'typography' | 'components' | 'states' | 'metrics' | 'preview' | 'importExport'
 type ThemeFilter = 'all' | 'active' | 'draft' | 'preview' | 'imported' | 'system' | 'invalid' | 'contrast'
 
 const STATUS_LABELS: Record<ManagedThemeStatus, string> = {
   draft: 'Taslak',
-  preview: 'Önizleme',
-  active: 'Kullanımda',
-  inactive: 'Pasif',
-  archived: 'Arşivli',
+  preview: 'İncelemede',
+  active: 'Aktif',
+  inactive: 'Onaylandı',
+  archived: 'Arşivlendi',
   rejected: 'Reddedildi',
 }
 
@@ -62,9 +61,9 @@ const SOURCE_LABELS: Record<string, string> = {
 
 const FILTERS: { id: ThemeFilter; label: string }[] = [
   { id: 'all', label: 'Tümü' },
-  { id: 'active', label: 'Kullanımda' },
+  { id: 'active', label: 'Aktif' },
   { id: 'draft', label: 'Taslaklar' },
-  { id: 'preview', label: 'Önizleme' },
+  { id: 'preview', label: 'İncelemede' },
   { id: 'imported', label: 'Import edilenler' },
   { id: 'system', label: 'Sistem temaları' },
   { id: 'invalid', label: 'Validation hatalı' },
@@ -73,15 +72,16 @@ const FILTERS: { id: ThemeFilter; label: string }[] = [
 
 const TABS: { id: ThemeTab; label: string }[] = [
   { id: 'general', label: 'Genel Bilgiler' },
-  { id: 'light', label: 'Light Tokenları' },
-  { id: 'dark', label: 'Dark Tokenları' },
-  { id: 'components', label: 'Bileşen Tokenları' },
-  { id: 'motif', label: 'Motif / Banner / Corner Art' },
-  { id: 'preview', label: 'Önizleme' },
-  { id: 'validation', label: 'Validation / Kontrast' },
-  { id: 'importExport', label: 'Import / Export' },
-  { id: 'usage', label: 'Kullanım / Atamalar' },
-  { id: 'audit', label: 'Audit' },
+  { id: 'surface', label: 'Ana Ekran / Uygulama Yüzeyi' },
+  { id: 'colors', label: 'Renkler' },
+  { id: 'background', label: 'Arka Plan / Pattern' },
+  { id: 'illustrations', label: 'Görseller / İllüstrasyonlar' },
+  { id: 'typography', label: 'Tipografi' },
+  { id: 'components', label: 'Bileşen Kuralları' },
+  { id: 'states', label: 'Kurallar / State’ler' },
+  { id: 'metrics', label: 'Ölçüler / Spacing / Radius / Shadow' },
+  { id: 'preview', label: 'Preview' },
+  { id: 'importExport', label: 'Export / Import' },
 ]
 
 const COLOR_GROUPS = [
@@ -201,6 +201,55 @@ export default function DevelopmentThemesPage() {
     notify('success', 'Yeni tema taslak olarak oluşturuldu.')
   }
 
+  function createBlankDraft() {
+    const suffix = Date.now().toString(36)
+    const themeKey = `tema_${suffix}`
+    const draft = createDraftThemeRecord({
+      displayName: 'Yeni Tema',
+      themeKey,
+      description: 'Eden ERP sistem teması taslağı.',
+      artDirection: 'Kurumsal sistem teması',
+      inspiration: 'Tema JSON, token ve görsel varlıkları bu formdan yönetilir.',
+      category: 'system',
+      baseThemeId: 'hikmet',
+      createdBy: 'development_admin',
+    })
+    upsertManagedThemeRecord(draft)
+    setSelectedId(draft.id)
+    setActiveTab('general')
+    setShowCreate(false)
+    notify('success', 'Yeni tema formu taslak olarak açıldı.')
+  }
+
+  function duplicateTheme(record: ManagedThemeRecord) {
+    const suffix = Date.now().toString(36)
+    const themeKey = `${record.themeKey}_copy_${suffix}`.slice(0, 64)
+    const now = new Date().toISOString()
+    const duplicate = validateManagedTheme({
+      ...record,
+      id: `draft_${themeKey}`,
+      themeKey,
+      displayName: `${record.displayName} Kopya`,
+      status: 'draft',
+      source: 'user_created',
+      canBeDefault: false,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: 'development_admin',
+      package: {
+        ...record.package,
+        themeKey,
+        displayName: `${record.displayName} Kopya`,
+        version: '0.1.0',
+      },
+      audit: [{ eventType: 'theme_duplicated', timestamp: now, summary: `${record.themeKey} kopyalanarak yeni taslak oluşturuldu.` }],
+    })
+    upsertManagedThemeRecord(duplicate)
+    setSelectedId(duplicate.id)
+    setActiveTab('general')
+    notify('success', 'Tema taslak olarak çoğaltıldı.')
+  }
+
   function activateTheme(record: ManagedThemeRecord) {
     if (record.source === 'system') {
       notify('warning', 'Sistem temaları zaten kullanımda.')
@@ -216,7 +265,7 @@ export default function DevelopmentThemesPage() {
     if (!validation?.valid || validation.activationBlocked) {
       saveRecord(validated, 'Validation sonucu kaydedildi.')
       notify('error', 'Fail veya kritik kontrast hatası olan tema kullanıma açılamaz.', 'Aktivasyon engellendi')
-      setActiveTab('validation')
+      setActiveTab('importExport')
       return
     }
     const warningCount = validation.warnings.length + contrastIssues.filter(item => item.severity === 'warning').length
@@ -271,35 +320,13 @@ export default function DevelopmentThemesPage() {
       <PageBanner
         mode={listMode ? 'list' : 'form'}
         title="Temalarımız"
-        subtitle="Eden ERP arayüzünde kullanılacak tema, renk, yüzey, ikon, motif ve light/dark tokenlarını yönetin."
+        subtitle="Eden ERP sistem temasını, tasarım tokenlarını ve arayüz görünüm kurallarını yönetin."
         icon={<Palette size={24} />}
-        onAddClick={listMode ? () => setShowCreate(true) : undefined}
+        onAddClick={listMode ? createBlankDraft : undefined}
         onBackClick={!listMode ? () => setSelectedId(null) : undefined}
         addButtonText="Ekle"
         backButtonText="Listeye Dön"
       />
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex h-9 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100">
-          <ShieldCheck size={14} /> Development
-        </span>
-        <button type="button" onClick={() => { setShowCreate(true); setSelectedId(null) }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-3 text-sm font-semibold text-[var(--eden-text)] hover:bg-[var(--eden-surface-muted)]">
-          <Palette size={15} /> Import dosyasından oluştur
-        </button>
-        {selected && (
-          <>
-            <button type="button" onClick={() => exportRecord(selected, 'eden')} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-3 text-sm font-semibold text-[var(--eden-text)] hover:bg-[var(--eden-surface-muted)]">
-              <Download size={15} /> Export
-            </button>
-            <button type="button" onClick={() => setActiveTab('preview')} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-3 text-sm font-semibold text-[var(--eden-text)] hover:bg-[var(--eden-surface-muted)]">
-              <Eye size={15} /> Önizleme
-            </button>
-          </>
-        )}
-        <Link href="/app/design-lab" className="inline-flex h-9 items-center gap-2 rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-3 text-sm font-semibold text-[var(--eden-text)] hover:bg-[var(--eden-surface-muted)]">
-          <Layers size={15} /> Design Lab Preview
-        </Link>
-      </div>
 
       {showCreate && (
         <CreateThemePanel
@@ -308,7 +335,7 @@ export default function DevelopmentThemesPage() {
           onImported={record => {
             upsertManagedThemeRecord(record)
             setSelectedId(record.id)
-            setActiveTab('validation')
+            setActiveTab('importExport')
             setShowCreate(false)
             notify(record.status === 'preview' ? 'success' : 'error', record.status === 'preview' ? 'Tema preview olarak import edildi.' : 'Tema validation nedeniyle reddedildi.')
           }}
@@ -316,20 +343,18 @@ export default function DevelopmentThemesPage() {
       )}
 
       {selected ? (
-        <ThemeDetail
+        <ThemeDetailV2
           record={selected}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onSave={saveRecord}
           onActivate={activateTheme}
-          onDeactivate={deactivateTheme}
           onArchive={archiveTheme}
-          onDelete={removeTheme}
-          onApply={applyTheme}
+          onDuplicate={duplicateTheme}
           notify={notify}
         />
       ) : (
-        <ThemeList
+        <ThemeListV2
           records={filteredRecords}
           filter={filter}
           onFilterChange={setFilter}
@@ -337,11 +362,6 @@ export default function DevelopmentThemesPage() {
             setSelectedId(record.id)
             setActiveTab('general')
           }}
-          onExport={exportRecord}
-          onActivate={activateTheme}
-          onArchive={archiveTheme}
-          onDelete={removeTheme}
-          onApply={applyTheme}
         />
       )}
     </main>
@@ -443,6 +463,238 @@ function CreateThemePanel({
   )
 }
 
+function ThemeDetailV2({
+  record,
+  activeTab,
+  onTabChange,
+  onSave,
+  onActivate,
+  onArchive,
+  onDuplicate,
+  notify,
+}: {
+  record: ManagedThemeRecord
+  activeTab: ThemeTab
+  onTabChange: (tab: ThemeTab) => void
+  onSave: (record: ManagedThemeRecord, message?: string) => void
+  onActivate: (record: ManagedThemeRecord) => void
+  onArchive: (record: ManagedThemeRecord) => void
+  onDuplicate: (record: ManagedThemeRecord) => void
+  notify: (type: ToastType, message: string, title?: string) => void
+}) {
+  const [draft, setDraft] = useState(record)
+  const locked = draft.source === 'system' || draft.status === 'active'
+  const validation = draft.validation || validateEdenThemePackage(draft.package).validation
+  const activeColor = draft.package.tokens.light.color.accent.primary
+
+  useEffect(() => setDraft(record), [record])
+
+  function update(next: ManagedThemeRecord) {
+    setDraft(validateManagedTheme({ ...next, updatedAt: new Date().toISOString() }))
+  }
+
+  function saveLifecycle(status: ManagedThemeStatus, summary: string, message: string) {
+    const next = withThemeLifecycle(draft, status, summary)
+    setDraft(next)
+    onSave(next, message)
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="relative overflow-hidden rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4 shadow-[var(--eden-shadow-card)]">
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 opacity-25" style={{ background: `radial-gradient(circle at top right, ${activeColor}, transparent 66%)` }} />
+        <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <StatusBadge status={draft.status} />
+              <span className="rounded-full bg-[var(--eden-surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--eden-text-muted)]">scope: system</span>
+              <span className="rounded-full bg-[var(--eden-surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--eden-text-muted)]">{draft.status === 'active' ? 'Aktif sistem teması' : 'Aktif değil'}</span>
+            </div>
+            <h2 className="truncate text-2xl font-semibold text-[var(--eden-text)]">{draft.displayName}</h2>
+            <p className="mt-1 max-w-3xl text-sm text-[var(--eden-text-muted)]">{draft.description || 'Tema açıklaması girilmedi.'}</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <Metric label="Slug" value={draft.themeKey} />
+              <Metric label="Versiyon" value={draft.version} />
+              <Metric label="Son güncelleme" value={formatDate(draft.updatedAt)} />
+              <Metric label="Validation" value={validation.valid ? 'Geçerli' : 'Uyarı var'} />
+            </div>
+          </div>
+          <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-3">
+            <div className="mb-3 flex gap-2">
+              {[draft.package.tokens.light.color.accent.primary, draft.package.tokens.light.color.accent.secondary, draft.package.tokens.light.color.background, draft.package.tokens.light.color.surface, draft.package.tokens.light.color.border].map(color => (
+                <span key={color} className="h-8 flex-1 rounded-lg border border-[var(--eden-border)]" style={{ backgroundColor: color }} />
+              ))}
+            </div>
+            <div className="h-24 rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-3" style={{ background: previewBannerBackground(draft, 'light') }}>
+              <div className="h-4 w-28 rounded-full bg-white/60" />
+              <div className="mt-3 h-8 rounded-lg bg-white/40" />
+            </div>
+          </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap gap-2">
+          {!locked && <button type="button" onClick={() => onSave(draft)} className={DETAIL_PRIMARY_ACTION_CLASS}><Save size={15} /> Kaydet</button>}
+          <button type="button" onClick={() => exportRecord(draft, 'eden')} className={DETAIL_ACTION_CLASS}><Download size={15} /> JSON Export</button>
+          <button type="button" onClick={() => onTabChange('importExport')} className={DETAIL_ACTION_CLASS}><Upload size={15} /> JSON Import</button>
+          <button type="button" onClick={() => exportRecord(draft, 'figma')} className={DETAIL_ACTION_CLASS}><Download size={15} /> Figma Token Export</button>
+          <button type="button" onClick={() => onDuplicate(draft)} className={DETAIL_ACTION_CLASS}><Palette size={15} /> Çoğalt</button>
+        </div>
+      </div>
+
+      <LifecyclePanel
+        record={draft}
+        locked={draft.source === 'system'}
+        onReview={() => saveLifecycle('preview', 'Theme sent to review.', 'Tema incelemeye gönderildi.')}
+        onApprove={() => saveLifecycle('inactive', 'Theme approved for activation.', 'Tema onaylandı.')}
+        onActivate={() => onActivate(draft)}
+        onArchive={() => onArchive(draft)}
+      />
+
+      <div className="overflow-x-auto rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-2">
+        <div className="flex min-w-max gap-1">
+          {TABS.map(tab => (
+            <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)} className={cn('h-9 rounded-lg px-3 text-xs font-semibold transition', activeTab === tab.id ? 'bg-[var(--eden-accent)] text-[var(--eden-accent-text)]' : 'text-[var(--eden-text-muted)] hover:bg-[var(--eden-surface-muted)] hover:text-[var(--eden-text)]')}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4 shadow-[var(--eden-shadow-card)]">
+        {activeTab === 'general' && <GeneralTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'surface' && <SurfaceTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'colors' && <ColorsTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'background' && <BackgroundPatternTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'illustrations' && <IllustrationsTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'typography' && <TypographyTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'components' && <ComponentTokenEditor record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'states' && <StatesTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'metrics' && <MetricsTab record={draft} locked={locked} onChange={update} />}
+        {activeTab === 'preview' && <ThemePreview record={draft} />}
+        {activeTab === 'importExport' && <ImportExportTab record={draft} locked={locked} onChange={update} notify={notify} />}
+      </div>
+    </section>
+  )
+}
+
+function LifecyclePanel({ record, locked, onReview, onApprove, onActivate, onArchive }: { record: ManagedThemeRecord; locked: boolean; onReview: () => void; onApprove: () => void; onActivate: () => void; onArchive: () => void }) {
+  return (
+    <section className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--eden-text)]">Aktivasyon lifecycle</h3>
+          <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Aktif tema yapma işlemi liste aksiyonu değil; inceleme, onay ve aktivasyon geçişleriyle yönetilir.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" disabled={locked || record.status !== 'draft'} onClick={onReview} className={DETAIL_ACTION_CLASS}>İncelemeye Gönder</button>
+          <button type="button" disabled={locked || record.status !== 'preview'} onClick={onApprove} className={DETAIL_ACTION_CLASS}>Onayla</button>
+          <button type="button" disabled={locked || !['inactive', 'preview'].includes(record.status)} onClick={onActivate} className={DETAIL_ACTION_CLASS}>Aktifleştir</button>
+          <button type="button" disabled={locked || record.status === 'active' || record.status === 'archived'} onClick={onArchive} className={DETAIL_ACTION_CLASS}>Arşivle</button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ThemeListV2({
+  records,
+  filter,
+  onFilterChange,
+  onSelect,
+}: {
+  records: ManagedThemeRecord[]
+  filter: ThemeFilter
+  onFilterChange: (filter: ThemeFilter) => void
+  onSelect: (record: ManagedThemeRecord) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState<'updatedAt' | 'displayName' | 'status'>('updatedAt')
+  const visibleRecords = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('tr-TR')
+    return records
+      .filter(record => {
+        if (!needle) return true
+        return [record.displayName, record.themeKey, record.status, record.version]
+          .join(' ')
+          .toLocaleLowerCase('tr-TR')
+          .includes(needle)
+      })
+      .sort((a, b) => {
+        if (sortKey === 'displayName') return a.displayName.localeCompare(b.displayName, 'tr')
+        if (sortKey === 'status') return STATUS_LABELS[a.status].localeCompare(STATUS_LABELS[b.status], 'tr')
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      })
+  }, [query, records, sortKey])
+
+  return (
+    <section className="theme-list-surface relative overflow-hidden rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] shadow-[var(--eden-shadow-card)]">
+      <div className="pointer-events-none absolute right-0 top-0 h-24 w-64 opacity-20" style={{ background: 'radial-gradient(circle at top right, var(--eden-accent-soft), transparent 68%)' }} />
+      <div className="relative flex flex-col gap-3 border-b border-[var(--eden-border)] bg-[var(--eden-surface-muted)]/70 p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.slice(0, 6).map(item => (
+            <button key={item.id} type="button" onClick={() => onFilterChange(item.id)} className={cn('h-8 rounded-lg px-3 text-xs font-semibold transition', filter === item.id ? 'bg-[var(--eden-accent)] text-[var(--eden-accent-text)]' : 'bg-[var(--eden-surface)] text-[var(--eden-text-muted)] hover:text-[var(--eden-text)]')}>
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Tema ara..."
+            className="h-9 min-w-[220px] rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-3 text-sm text-[var(--eden-text)] outline-none focus:border-[var(--eden-input-focus)]"
+          />
+          <select value={sortKey} onChange={event => setSortKey(event.target.value as typeof sortKey)} className="h-9 rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-3 text-sm text-[var(--eden-text)]">
+            <option value="updatedAt">Son güncelleme</option>
+            <option value="displayName">Tema adı</option>
+            <option value="status">Durum</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[860px] grid-cols-[1.35fr_1fr_0.75fr_0.65fr_0.7fr_1fr] border-b border-[var(--eden-border)] bg-[var(--eden-table-header-bg)] px-4 py-3 text-xs font-semibold text-[var(--eden-text-muted)]">
+          <span>Tema adı</span>
+          <span>Tema kodu / slug</span>
+          <span>Durum</span>
+          <span>Versiyon</span>
+          <span>Aktif tema mı?</span>
+          <span>Son güncelleme tarihi</span>
+        </div>
+        {visibleRecords.map(record => (
+          <button
+            key={record.id}
+            type="button"
+            onClick={() => onSelect(record)}
+            className="grid min-w-[860px] grid-cols-[1.35fr_1fr_0.75fr_0.65fr_0.7fr_1fr] items-center border-b border-[var(--eden-border)] px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-[var(--eden-table-row-hover)]"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="h-9 w-9 shrink-0 rounded-lg border border-[var(--eden-border)] shadow-sm" style={{ background: `linear-gradient(135deg, ${record.package.tokens.light.color.accent.primary}, ${record.package.tokens.light.color.accent.secondary})` }} />
+              <span className="min-w-0">
+                <span className="block truncate font-semibold text-[var(--eden-text)]">{record.displayName}</span>
+                <span className="block truncate text-xs text-[var(--eden-text-muted)]">Sistem teması</span>
+              </span>
+            </span>
+            <code className="truncate text-xs text-[var(--eden-text-muted)]">{record.themeKey}</code>
+            <StatusBadge status={record.status} />
+            <span className="text-xs font-semibold text-[var(--eden-text-muted)]">{record.version}</span>
+            <span className={cn('text-xs font-semibold', record.status === 'active' ? 'text-emerald-600' : 'text-[var(--eden-text-muted)]')}>{record.status === 'active' ? 'Evet' : 'Hayır'}</span>
+            <span className="text-xs text-[var(--eden-text-muted)]">{formatDate(record.updatedAt)}</span>
+          </button>
+        ))}
+        {visibleRecords.length === 0 && (
+          <div className="flex min-h-[220px] items-center justify-center p-8 text-center">
+            <div>
+              <div className="mx-auto mb-3 h-16 w-16 rounded-2xl border border-dashed border-[var(--eden-border)] bg-[var(--eden-surface-muted)]" />
+              <p className="font-semibold text-[var(--eden-text)]">Tema kaydı bulunamadı</p>
+              <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Arama veya filtreyi değiştirerek tekrar deneyin.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function ThemeList({
   records,
   filter,
@@ -535,7 +787,7 @@ function ThemeDetail({
   notify,
 }: {
   record: ManagedThemeRecord
-  activeTab: ThemeTab
+  activeTab: string
   onTabChange: (tab: ThemeTab) => void
   onSave: (record: ManagedThemeRecord, message?: string) => void
   onActivate: (record: ManagedThemeRecord) => void
@@ -628,6 +880,228 @@ function GeneralTab({ record, locked, onChange }: { record: ManagedThemeRecord; 
       <div>
         <span className="mb-1 block text-xs font-semibold text-[var(--eden-text-muted)]">Durum</span>
         <div className="flex h-10 items-center"><StatusBadge status={record.status} /></div>
+      </div>
+    </div>
+  )
+}
+
+function SurfaceTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  const fields = [
+    ['Sayfa arka planı', 'surface.pageBackground'],
+    ['Ana içerik arka planı', 'surface.mainBackground'],
+    ['Kart arka planı', 'surface.cardBackground'],
+    ['Sidebar arka planı', 'surface.sidebarBackground'],
+    ['Topbar arka planı', 'surface.topbarBackground'],
+    ['Login ekranı arka planı', 'surface.loginBackground'],
+    ['Dashboard yüzeyi', 'surface.dashboardSurface'],
+    ['Form yüzeyi', 'surface.formSurface'],
+    ['Liste yüzeyi', 'surface.listSurface'],
+    ['Modal yüzeyi', 'surface.modalSurface'],
+    ['Drawer yüzeyi', 'surface.drawerSurface'],
+  ] as const
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {fields.map(([label, path]) => (
+          <ManagedMetadataField key={path} record={record} locked={locked} label={label} path={path} fallback={defaultSurfaceValue(record, path)} onChange={onChange} />
+        ))}
+      </div>
+      <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-muted)] p-4">
+        <PreviewMiniShell record={record} />
+      </div>
+    </div>
+  )
+}
+
+function ColorsTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-muted)] p-4">
+        <h3 className="text-sm font-semibold text-[var(--eden-text)]">Light renk tokenları</h3>
+        <div className="mt-3">
+          <ModeTokenEditor mode="light" record={record} locked={locked} onChange={onChange} />
+        </div>
+      </div>
+      <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-muted)] p-4">
+        <h3 className="text-sm font-semibold text-[var(--eden-text)]">Dark renk tokenları</h3>
+        <div className="mt-3">
+          <ModeTokenEditor mode="dark" record={record} locked={locked} onChange={onChange} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BackgroundPatternTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <ManagedMetadataSelect record={record} locked={locked} label="Background type" path="background.type" options={['solid', 'gradient', 'svg-pattern', 'image', 'mixed']} fallback="gradient" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Gradient yönü" path="background.gradientDirection" fallback="135deg" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Gradient başlangıç rengi" path="background.gradientFrom" fallback={record.package.tokens.light.color.background} onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Gradient bitiş rengi" path="background.gradientTo" fallback={record.package.tokens.light.color.surfaceMuted} onChange={onChange} />
+        <ManagedMetadataSelect record={record} locked={locked} label="Pattern tipi" path="background.patternType" options={['finance', 'bank', 'abstract', 'grid', 'dots', 'custom']} fallback="grid" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Pattern rengi" path="background.patternColor" fallback={record.package.tokens.light.color.accent.primary} onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Pattern opacity" path="background.patternOpacity" fallback="0.12" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Pattern size" path="background.patternSize" fallback="32px" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Pattern spacing" path="background.patternSpacing" fallback="24px" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Pattern rotation" path="background.patternRotation" fallback="0deg" onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Overlay rengi" path="background.overlayColor" fallback={record.package.tokens.light.color.surface} onChange={onChange} />
+        <ManagedMetadataField record={record} locked={locked} label="Overlay opacity" path="background.overlayOpacity" fallback="0.24" onChange={onChange} />
+      </div>
+      <div className="min-h-[280px] rounded-xl border border-[var(--eden-border)] p-5" style={{ background: previewPatternBackground(record) }}>
+        <div className="rounded-xl border border-white/20 bg-white/25 p-4 text-sm font-semibold text-[var(--eden-text)] backdrop-blur">
+          Background / pattern preview
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function IllustrationsTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  const groups = [
+    ['Page Banner Görselleri', 'illustrations.pageBanner', ['light banner illustration', 'dark banner illustration', 'banner fallback image']],
+    ['Liste Alanı Görselleri', 'illustrations.listArea', ['list header decoration', 'list panel subtle illustration', 'list watermark', 'list empty-state illustration']],
+    ['Form / Detail Alanı Görselleri', 'illustrations.formArea', ['form hero illustration', 'detail panel side image', 'form decorative corner art', 'logo placeholder artwork']],
+    ['Wizard Görselleri', 'illustrations.wizardArea', ['wizard background illustration', 'wizard side illustration', 'wizard completion illustration']],
+    ['Login / Welcome / Dashboard Hero Görselleri', 'illustrations.loginDashboardArea', ['login hero image', 'welcome card image', 'dashboard hero illustration']],
+  ] as const
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-muted)] p-4 text-sm text-[var(--eden-text-muted)]">
+        Görseller binary/base64 olarak JSON içine gömülmez; asset reference mantığıyla yönetilir. Hero alanındaki resim slotları light/dark varyantlarını ayrı tutar.
+      </div>
+      <section className="rounded-xl border border-[var(--eden-border)] p-4">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Page Banner görsel sistemi</h3>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <ManagedMetadataSelect record={record} locked={locked} label="banner background type" path="banner.backgroundType" options={['solid', 'gradient', 'pattern', 'illustration', 'illustration + overlay']} fallback="gradient" onChange={onChange} />
+          <ManagedMetadataField record={record} locked={locked} label="banner overlay" path="banner.overlayColor" fallback={record.package.tokens.light.color.accent.secondary} onChange={onChange} />
+          <ManagedMetadataField record={record} locked={locked} label="image opacity" path="banner.imageOpacity" fallback="0.28" onChange={onChange} />
+          <ManagedMetadataSelect record={record} locked={locked} label="image positioning" path="banner.imagePositioning" options={['top-right', 'center', 'bottom-right', 'full-bleed']} fallback="top-right" onChange={onChange} />
+          <ManagedMetadataSelect record={record} locked={locked} label="image sizing" path="banner.imageSizing" options={['cover', 'contain', 'auto']} fallback="cover" onChange={onChange} />
+          <ManagedMetadataSelect record={record} locked={locked} label="crop behavior" path="banner.cropBehavior" options={['safe-center', 'focal-point', 'edge-fade']} fallback="safe-center" onChange={onChange} />
+          <ManagedMetadataSelect record={record} locked={locked} label="corner decoration" path="banner.cornerDecoration" options={['none', 'frame', 'motif', 'watermark']} fallback="motif" onChange={onChange} />
+          <ManagedMetadataSelect record={record} locked={locked} label="frame style" path="banner.frameStyle" options={['none', 'subtle', 'accent', 'ornamental']} fallback="subtle" onChange={onChange} />
+        </div>
+      </section>
+      {groups.map(([title, path, assets]) => (
+        <section key={path} className="rounded-xl border border-[var(--eden-border)] p-4">
+          <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">{title}</h3>
+          <div className="grid gap-3 lg:grid-cols-3">
+            {assets.map((asset, index) => (
+              <div key={asset} className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-muted)] p-3">
+                <p className="mb-2 text-xs font-semibold text-[var(--eden-text)]">{asset}</p>
+                <ManagedMetadataField record={record} locked={locked} label="assetId" path={`${path}.${index}.assetId`} fallback={`${record.themeKey}_${index}`} onChange={onChange} />
+                <ManagedMetadataField record={record} locked={locked} label="assetName" path={`${path}.${index}.assetName`} fallback={asset} onChange={onChange} />
+                <ManagedMetadataSelect record={record} locked={locked} label="sourceType" path={`${path}.${index}.sourceType`} options={['upload', 'internal-library', 'url-reference']} fallback="internal-library" onChange={onChange} />
+                <ManagedMetadataField record={record} locked={locked} label="lightVariant" path={`${path}.${index}.lightVariant`} fallback="/theme-assets/light-placeholder.svg" onChange={onChange} />
+                <ManagedMetadataField record={record} locked={locked} label="darkVariant" path={`${path}.${index}.darkVariant`} fallback="/theme-assets/dark-placeholder.svg" onChange={onChange} />
+                <ManagedMetadataSelect record={record} locked={locked} label="fit" path={`${path}.${index}.fit`} options={['cover', 'contain', 'fill']} fallback="cover" onChange={onChange} />
+                <ManagedMetadataField record={record} locked={locked} label="opacity" path={`${path}.${index}.opacity`} fallback="0.18" onChange={onChange} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+function TypographyTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {(['light', 'dark'] as const).map(mode => (
+        <section key={mode} className="rounded-xl border border-[var(--eden-border)] p-4">
+          <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">{mode === 'light' ? 'Light' : 'Dark'} typography</h3>
+          <TextField disabled={locked} label="Ana font ailesi" value={record.package.tokens[mode].typography.fontFamily} onChange={fontFamily => onChange({ ...record, package: { ...record.package, tokens: { ...record.package.tokens, [mode]: { ...record.package.tokens[mode], typography: { ...record.package.tokens[mode].typography, fontFamily } } } } })} />
+          <TextField disabled={locked} label="Heading weight" value={String(record.package.tokens[mode].typography.headingWeight)} onChange={headingWeight => onChange({ ...record, package: { ...record.package, tokens: { ...record.package.tokens, [mode]: { ...record.package.tokens[mode], typography: { ...record.package.tokens[mode].typography, headingWeight } } } } })} />
+          <TextField disabled={locked} label="Body weight" value={String(record.package.tokens[mode].typography.bodyWeight)} onChange={bodyWeight => onChange({ ...record, package: { ...record.package, tokens: { ...record.package.tokens, [mode]: { ...record.package.tokens[mode], typography: { ...record.package.tokens[mode].typography, bodyWeight } } } } })} />
+        </section>
+      ))}
+      <ManagedMetadataField record={record} locked={locked} label="Başlık font ailesi" path="typography.headingFontFamily" fallback="system-ui" onChange={onChange} />
+      <ManagedMetadataField record={record} locked={locked} label="Monospace font ailesi" path="typography.monoFontFamily" fallback="ui-monospace" onChange={onChange} />
+      <ManagedMetadataField record={record} locked={locked} label="Base font size" path="typography.baseFontSize" fallback="14px" onChange={onChange} />
+      <ManagedMetadataField record={record} locked={locked} label="Line height" path="typography.lineHeight" fallback="1.5" onChange={onChange} />
+    </div>
+  )
+}
+
+function StatesTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  const fields = ['hover background', 'active background', 'selected background', 'selected border', 'disabled opacity', 'focus ring', 'focus ring offset', 'error state', 'warning state', 'success state', 'loading state', 'skeleton state']
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {fields.map(field => (
+        <ManagedMetadataField key={field} record={record} locked={locked} label={field} path={`states.${field.replaceAll(' ', '_')}`} fallback={field.includes('opacity') ? '0.55' : record.package.tokens.light.color.surfaceMuted} onChange={onChange} />
+      ))}
+    </div>
+  )
+}
+
+function MetricsTab({ record, locked, onChange }: { record: ManagedThemeRecord; locked: boolean; onChange: (record: ManagedThemeRecord) => void }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <section className="rounded-xl border border-[var(--eden-border)] p-4">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Spacing</h3>
+        {['page padding', 'section gap', 'card padding', 'field gap', 'table row height', 'sidebar width', 'topbar height'].map(field => (
+          <ManagedMetadataField key={field} record={record} locked={locked} label={field} path={`metrics.${field.replaceAll(' ', '_')}`} fallback="16px" onChange={onChange} />
+        ))}
+      </section>
+      <section className="rounded-xl border border-[var(--eden-border)] p-4">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Radius</h3>
+        {Object.entries(record.package.tokens.light.radius).map(([key, value]) => (
+          <TextField key={key} disabled={locked} label={key} value={String(value)} onChange={next => onChange({ ...record, package: { ...record.package, tokens: { ...record.package.tokens, light: { ...record.package.tokens.light, radius: { ...record.package.tokens.light.radius, [key]: next } } } } })} />
+        ))}
+      </section>
+      <section className="rounded-xl border border-[var(--eden-border)] p-4">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Shadow</h3>
+        {Object.entries(record.package.tokens.light.shadow).map(([key, value]) => (
+          <TextField key={key} disabled={locked} label={key} value={String(value)} onChange={next => onChange({ ...record, package: { ...record.package, tokens: { ...record.package.tokens, light: { ...record.package.tokens.light, shadow: { ...record.package.tokens.light.shadow, [key]: next } } } } })} />
+        ))}
+      </section>
+    </div>
+  )
+}
+
+function ManagedMetadataField({ record, locked, label, path, fallback, onChange }: { record: ManagedThemeRecord; locked: boolean; label: string; path: string; fallback: string; onChange: (record: ManagedThemeRecord) => void }) {
+  const value = String(getNestedValue(getThemeManagementMetadata(record), path) ?? fallback)
+  return <TextField disabled={locked} label={label} value={value} onChange={next => onChange(setThemeManagementMetadata(record, path, next))} />
+}
+
+function ManagedMetadataSelect({ record, locked, label, path, options, fallback, onChange }: { record: ManagedThemeRecord; locked: boolean; label: string; path: string; options: readonly string[]; fallback: string; onChange: (record: ManagedThemeRecord) => void }) {
+  const value = String(getNestedValue(getThemeManagementMetadata(record), path) ?? fallback)
+  return (
+    <label>
+      <span className="mb-1 block text-xs font-semibold text-[var(--eden-text-muted)]">{label}</span>
+      <select disabled={locked} value={value} onChange={event => onChange(setThemeManagementMetadata(record, path, event.target.value))} className="h-10 w-full rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-3 text-sm text-[var(--eden-text)] disabled:opacity-60">
+        {options.map(option => <option key={option} value={option}>{option}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function PreviewMiniShell({ record }: { record: ManagedThemeRecord }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-[var(--eden-border)] bg-[var(--eden-bg)]">
+      <div className="flex h-10 items-center gap-2 border-b border-[var(--eden-border)] bg-[var(--eden-header-bg)] px-3">
+        <span className="h-5 w-5 rounded bg-[var(--eden-accent-soft)]" />
+        <span className="h-2 w-24 rounded bg-[var(--eden-border)]" />
+      </div>
+      <div className="grid grid-cols-[110px_1fr]">
+        <div className="min-h-[210px] bg-[var(--eden-nav-bg)] p-3">
+          <span className="mb-3 block h-3 rounded bg-white/30" />
+          <span className="mb-2 block h-7 rounded bg-white/20" />
+          <span className="block h-7 rounded bg-white/10" />
+        </div>
+        <div className="space-y-3 p-3">
+          <div className="rounded-lg p-4 text-white" style={{ background: previewBannerBackground(record, 'light') }}>
+            <span className="block h-4 w-32 rounded bg-white/50" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-16 rounded-lg border border-[var(--eden-card-border)] bg-[var(--eden-card-bg)]" />
+            <div className="h-16 rounded-lg border border-[var(--eden-card-border)] bg-[var(--eden-card-bg)]" />
+          </div>
+          <div className="h-20 rounded-lg border border-[var(--eden-border)] bg-[var(--eden-table-header-bg)]" />
+        </div>
       </div>
     </div>
   )
@@ -987,6 +1461,63 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="mt-2 text-sm font-semibold text-[var(--eden-text)]">{value}</div>
     </div>
   )
+}
+
+function formatDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
+function getThemeManagementMetadata(record: ManagedThemeRecord): Record<string, unknown> {
+  const metadata = record.package.metadata as Record<string, unknown> | undefined
+  const themeManagement = metadata?.themeManagement
+  return themeManagement && typeof themeManagement === 'object' && !Array.isArray(themeManagement)
+    ? themeManagement as Record<string, unknown>
+    : {}
+}
+
+function setThemeManagementMetadata(record: ManagedThemeRecord, path: string, value: unknown): ManagedThemeRecord {
+  const nextThemeManagement = setNestedValue(getThemeManagementMetadata(record), path, value)
+  return {
+    ...record,
+    package: {
+      ...record.package,
+      metadata: {
+        ...(record.package.metadata || {}),
+        themeManagement: nextThemeManagement,
+      },
+    },
+  }
+}
+
+function defaultSurfaceValue(record: ManagedThemeRecord, path: string) {
+  const light = record.package.tokens.light.color
+  if (path.includes('sidebar')) return light.accent.primary
+  if (path.includes('topbar')) return light.surface
+  if (path.includes('card') || path.includes('form') || path.includes('modal') || path.includes('drawer')) return light.surface
+  if (path.includes('list')) return light.surfaceMuted
+  return light.background
+}
+
+function previewBannerBackground(record: ManagedThemeRecord, mode: ThemeAppearance) {
+  const colors = record.package.tokens[mode].color
+  const meta = getThemeManagementMetadata(record)
+  const type = String(getNestedValue(meta, 'banner.backgroundType') ?? 'gradient')
+  const from = String(getNestedValue(meta, `illustrations.pageBanner.${mode === 'light' ? 'lightColor' : 'darkColor'}`) ?? colors.accent.primary)
+  const to = String(getNestedValue(meta, 'banner.overlayColor') ?? colors.accent.secondary)
+  if (type === 'solid') return colors.accent.primary
+  return `linear-gradient(135deg, ${from}, ${to}), radial-gradient(circle at 85% 20%, ${colors.accent.soft}, transparent 38%)`
+}
+
+function previewPatternBackground(record: ManagedThemeRecord) {
+  const colors = record.package.tokens.light.color
+  const meta = getThemeManagementMetadata(record)
+  const from = String(getNestedValue(meta, 'background.gradientFrom') ?? colors.background)
+  const to = String(getNestedValue(meta, 'background.gradientTo') ?? colors.surfaceMuted)
+  const patternColor = String(getNestedValue(meta, 'background.patternColor') ?? colors.accent.primary)
+  const spacing = String(getNestedValue(meta, 'background.patternSpacing') ?? '24px')
+  return `linear-gradient(135deg, ${from}, ${to}), radial-gradient(circle, ${patternColor} 1px, transparent 1px) 0 0 / ${spacing} ${spacing}`
 }
 
 type ExportFormat = 'eden' | 'figma' | 'css' | 'readme'

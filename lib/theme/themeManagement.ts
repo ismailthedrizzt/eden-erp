@@ -1,4 +1,4 @@
-import { themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
+import { DEFAULT_VISUAL_THEME_ID, themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
 import { themeConceptToEdenTheme, themeTokensToCssVars } from './themeTransforms'
 import { validateEdenThemePackage } from './themeValidation'
 import type { EdenThemePackage, ThemeAppearance, ThemeValidationResult } from './themeSchema'
@@ -98,12 +98,13 @@ export function getSystemThemeRecords(): ManagedThemeRecord[] {
     const themePackage = themeConceptToEdenTheme(theme)
     const validation = validateEdenThemePackage(themePackage).validation
     const now = '2026-06-09T00:00:00.000Z'
+    const isDefaultActive = theme.id === DEFAULT_VISUAL_THEME_ID
     return {
       id: `system_${theme.id}`,
       themeKey: theme.id,
       displayName: theme.name,
       description: theme.description,
-      status: 'active',
+      status: isDefaultActive ? 'active' : 'inactive',
       source: 'system',
       artDirection: theme.artDirection,
       inspiration: theme.inspiration,
@@ -137,7 +138,7 @@ export function getSystemThemeRecords(): ManagedThemeRecord[] {
       createdAt: now,
       updatedAt: now,
       createdBy: 'system',
-      audit: [{ eventType: 'theme_activated', timestamp: now, summary: 'System theme is active.' }],
+      audit: [{ eventType: isDefaultActive ? 'theme_activated' : 'theme_approved', timestamp: now, summary: isDefaultActive ? 'Default system theme is active.' : 'System theme is approved but not active.' }],
     }
   })
 }
@@ -161,7 +162,11 @@ export function writeManagedThemeRecords(records: ManagedThemeRecord[]) {
 
 export function upsertManagedThemeRecord(record: ManagedThemeRecord) {
   const records = readManagedThemeRecords()
-  const next = records.filter(item => item.id !== record.id && item.themeKey !== record.themeKey)
+  const next = records
+    .filter(item => item.id !== record.id && item.themeKey !== record.themeKey)
+    .map(item => record.status === 'active' && item.status === 'active'
+      ? withThemeLifecycle(item, 'inactive', 'Automatically deactivated because another system theme was activated.')
+      : item)
   writeManagedThemeRecords([record, ...next])
 }
 

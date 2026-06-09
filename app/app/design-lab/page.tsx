@@ -1,9 +1,9 @@
-import { DesignLabShell } from '@/components/design-lab/DesignLabShell'
+import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Design Lab | Eden ERP',
+  title: 'Temalarımız | Eden ERP',
 }
 
 export default function DesignLabPage() {
-  return <DesignLabShell />
+  redirect('/app/development/temalarimiz')
 }

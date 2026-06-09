@@ -51,8 +51,8 @@ export const routeReleaseRegistry = [
     requiresPermission: ['documents.view'],
     notes: INTERNAL_NOTES,
   }),
-  route('/app/design-lab', 'design_lab', 'Design Lab', 'development_internal', true, true, true, {
-    notes: 'Development-only visual identity exploration surface. Not available in release.',
+  route('/app/design-lab', 'adminConsole', 'Legacy Temalarımız alias', 'hidden', false, false, false, {
+    notes: 'Deprecated alias. Use /app/development/temalarimiz.',
   }),
   route('/app/development/temalarimiz', 'adminConsole', 'Temalarımız', 'development_internal', true, true, true, {
     requiresPermission: ['adminConsole.manage', 'system.admin'],

@@ -163,10 +163,6 @@ export const navigationItems = [
     fallbackPermission: 'system.admin',
     featureFlag: 'adminConsole.enabled',
   }),
-  item('designLab', 'Tasarim Laboratuvari', '/app/design-lab', 'palette', 'adminConsole', 911, {
-    parentKey: 'settings',
-    featureFlag: 'adminConsole.enabled',
-  }),
   item('visualThemes', 'Temalarımız eski route', '/app/sistem/temalar', 'palette', 'adminConsole', 912, {
     parentKey: 'settings',
     permission: 'adminConsole.manage',
