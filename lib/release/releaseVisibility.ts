@@ -155,7 +155,7 @@ export function getRouteReleaseDecision(
     }
   }
 
-  if (config.moduleKey) {
+  if (config.moduleKey && !config.licenseExempt) {
     const entitlement = isModuleEntitled(userContext.tenantEntitlements, config.moduleKey)
     if (!entitlement.entitled) {
       return {

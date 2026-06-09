@@ -16,6 +16,7 @@ export interface RouteReleaseConfig {
   showInSearch: boolean
   showInCommandPalette: boolean
   requiresPermission?: string[]
+  licenseExempt?: boolean
   comingSoonMessage?: string
   notes?: string
 }
@@ -30,11 +31,20 @@ export const routeReleaseRegistry = [
   route('/offline', 'pwa', 'Offline', 'release', false, false, false, { notes: RELEASE_NOTES }),
   route('/release-not-available', 'release', 'Route not available', 'hidden', false, false, false),
 
-  route('/app', 'home', 'Ana Sayfa', 'release', true, true, true, { notes: RELEASE_NOTES }),
+  route('/app', 'home', 'Ana Sayfa', 'release', true, true, true, {
+    licenseExempt: true,
+    notes: 'Core application shell. Must remain available for every authenticated tenant.',
+  }),
   route('/app/dashboard', 'reporting', 'Yonetim Dashboard', 'development', true, true, true),
   route('/app/onboarding', 'settings', 'Baslangic Merkezi', 'development', true, true, true),
-  route('/app/aboneligim', 'settings', 'Aboneligim', 'release', true, true, true, { notes: 'Customer tenant license and plan summary.' }),
-  route('/app/profil', 'security', 'Profilim', 'release', false, true, true, { notes: 'Tenant-scoped current user profile surface.' }),
+  route('/app/aboneligim', 'settings', 'Aboneligim', 'release', true, true, true, {
+    licenseExempt: true,
+    notes: 'Customer tenant license and plan summary. Core account surface.',
+  }),
+  route('/app/profil', 'security', 'Profilim', 'release', false, true, true, {
+    licenseExempt: true,
+    notes: 'Tenant-scoped current user profile surface. Core account surface.',
+  }),
   route('/app/yardim', 'help', 'Yardim', 'development', true, true, true),
   route('/app/ayarlar/bildirimler', 'notifications', 'Bildirimler', 'development_internal', false, false, false),
   route('/app/belgeler', 'documents', 'Belgeler', 'development_internal', true, true, true, {
@@ -188,7 +198,10 @@ export const routeReleaseRegistry = [
   route('/app/sistem/module-licenses', 'settings', 'Modul Lisanslari', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/system-parameters', 'settings', 'Sistem Parametreleri', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/kullanici-talepleri', 'settings', 'Kullanici Talepleri', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
-  route('/app/sistem/kurulum', 'settings', 'Kurulum Merkezi', 'release', true, true, true, { notes: RELEASE_NOTES }),
+  route('/app/sistem/kurulum', 'settings', 'Kurulum Merkezi', 'release', true, true, true, {
+    licenseExempt: true,
+    notes: 'Initial setup and signup continuation surface. Core account surface.',
+  }),
   route('/app/sistem/login-sayfasi', 'settings', 'Login sayfasi ayarlari', 'coming_soon', true, true, true),
 
   route('/portal', 'portal', 'Portal Shell', 'development_internal', false, true, false, { notes: INTERNAL_NOTES }),
