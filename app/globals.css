@@ -3699,3 +3699,300 @@ html[data-eden-theme] .eden-theme-motif {
     opacity: calc(var(--eden-motif-opacity) * 0.68);
   }
 }
+
+/* Artistic reference tuning: keep the Eden ERP screen skeleton, but align
+   user-selectable theme identities with the supplied visual boards. */
+html[data-eden-theme="hikmet"],
+html[data-visual-theme="hikmet"] {
+  --eden-bg: #f4efe5;
+  --eden-bg-subtle: #ebe1cf;
+  --eden-surface: #fffaf1;
+  --eden-surface-muted: #efe4d2;
+  --eden-surface-raised: #fffdf8;
+  --eden-border: #d9c9ad;
+  --eden-border-strong: #b99a60;
+  --eden-text: #102133;
+  --eden-text-muted: #526070;
+  --eden-text-soft: #766b5a;
+  --eden-accent: #073246;
+  --eden-accent-hover: #041f2d;
+  --eden-accent-soft: #e6d7bc;
+  --eden-accent-text: #fff8e8;
+  --eden-accent-warm: #d6a85c;
+  --eden-success: #007f68;
+  --eden-success-soft: #dceee7;
+  --eden-info: #1f6f86;
+  --eden-info-soft: #dbeaf0;
+  --eden-nav-bg: #062335;
+  --eden-nav-text: #fff5df;
+  --eden-nav-muted: #cdbd9d;
+  --eden-nav-active-bg: rgba(214, 168, 92, 0.22);
+  --eden-header-bg: #fffaf1;
+  --eden-header-border: #d9c9ad;
+  --eden-card-bg: #fffaf1;
+  --eden-card-border: #d9c9ad;
+  --eden-input-bg: #fffdf8;
+  --eden-input-border: #bfa77b;
+  --eden-input-focus: #d6a85c;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 84% 18%, rgba(214, 168, 92, 0.22) 0 82px, transparent 83px),
+    linear-gradient(135deg, #062335 0%, #0b3448 55%, #17353b 100%);
+  --eden-page-banner-text: #fff8e8;
+  --eden-page-banner-muted: rgba(255, 248, 232, 0.78);
+  --eden-page-banner-border: #c49a50;
+  --eden-smart-table-bg: color-mix(in srgb, #fffaf1 92%, #e6d7bc);
+  --eden-smart-table-header-bg: color-mix(in srgb, #efe4d2 76%, #e6d7bc);
+  --eden-smart-table-border: color-mix(in srgb, #073246 36%, #d9c9ad);
+  --eden-smart-row-bg: color-mix(in srgb, #fffaf1 88%, #e6d7bc);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #fffaf1 96%, #e6d7bc);
+  --eden-smart-row-hover: color-mix(in srgb, #fffaf1 66%, #e6d7bc);
+  --eden-smart-control-active-bg: #073246;
+  --eden-smart-control-active-text: #fff8e8;
+  --eden-smart-count-bg: #d6a85c;
+  --eden-smart-count-text: #062335;
+  --eden-wizard-bg: #f4efe5;
+  --eden-wizard-panel-bg: #fffaf1;
+  --eden-wizard-panel-border: #d9c9ad;
+  --eden-motif-primary: #073246;
+  --eden-motif-secondary: #007f68;
+  --eden-motif-warm: #d6a85c;
+  --eden-motif-opacity: 0.22;
+  --eden-page-motif:
+    radial-gradient(circle at 88% 14%, rgba(214, 168, 92, 0.13) 0 150px, transparent 151px),
+    repeating-conic-gradient(from 45deg at 84% 18%, rgba(7, 50, 70, 0.1) 0 7deg, transparent 8deg 18deg);
+  --eden-content-motif:
+    repeating-conic-gradient(from 45deg at 92% 8%, rgba(214, 168, 92, 0.16) 0 8deg, transparent 9deg 18deg),
+    linear-gradient(135deg, rgba(7, 50, 70, 0.08) 0 1px, transparent 1px 32px);
+}
+
+html.dark[data-eden-theme="hikmet"],
+html.dark[data-visual-theme="hikmet"],
+html[data-appearance="dark"][data-eden-theme="hikmet"],
+html[data-appearance="dark"][data-visual-theme="hikmet"] {
+  --eden-bg: #03141f;
+  --eden-bg-subtle: #061b2a;
+  --eden-surface: #092235;
+  --eden-surface-muted: #0d2a3d;
+  --eden-surface-raised: #0e3045;
+  --eden-border: #24465c;
+  --eden-border-strong: #6d5a35;
+  --eden-text: #fff5df;
+  --eden-text-muted: #c9d4d7;
+  --eden-text-soft: #a99a7d;
+  --eden-accent: #d6a85c;
+  --eden-accent-hover: #ecc36f;
+  --eden-accent-soft: #2d291d;
+  --eden-accent-text: #06131d;
+  --eden-nav-bg: #041522;
+  --eden-header-bg: #092235;
+  --eden-card-bg: #092235;
+  --eden-card-border: #24465c;
+  --eden-input-bg: #061b2a;
+  --eden-input-border: #2b5368;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 86% 18%, rgba(214, 168, 92, 0.16) 0 82px, transparent 83px),
+    linear-gradient(135deg, #041522 0%, #08263a 58%, #1e251e 100%);
+  --eden-page-banner-text: #fff5df;
+  --eden-page-banner-muted: rgba(255, 245, 223, 0.76);
+  --eden-smart-table-bg: color-mix(in srgb, #092235 92%, #2d291d);
+  --eden-smart-table-header-bg: color-mix(in srgb, #0d2a3d 76%, #2d291d);
+  --eden-smart-table-border: color-mix(in srgb, #d6a85c 34%, #24465c);
+  --eden-smart-row-bg: color-mix(in srgb, #092235 88%, #2d291d);
+  --eden-smart-row-alt-bg: color-mix(in srgb, #092235 96%, #2d291d);
+  --eden-smart-row-hover: color-mix(in srgb, #092235 66%, #2d291d);
+  --eden-smart-control-active-bg: #d6a85c;
+  --eden-smart-control-active-text: #06131d;
+  --eden-motif-opacity: 0.15;
+}
+
+html[data-eden-theme="bozkir"],
+html[data-visual-theme="bozkir"] {
+  --eden-accent: #8b5a2d;
+  --eden-accent-hover: #6d4421;
+  --eden-accent-warm: #c2773a;
+  --eden-info: #0f1b2d;
+  --eden-nav-bg: #f6eee1;
+  --eden-nav-text: #2b241f;
+  --eden-nav-muted: #75634e;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 88% 28%, rgba(194, 119, 58, 0.28) 0 48px, transparent 49px),
+    linear-gradient(135deg, #f3e2c9 0%, #ead2ae 55%, #8b5a2d 100%);
+  --eden-page-banner-text: #2b241f;
+  --eden-page-banner-muted: #67564a;
+  --eden-page-motif:
+    radial-gradient(circle at 88% 22%, rgba(194, 119, 58, 0.16) 0 140px, transparent 141px),
+    repeating-linear-gradient(170deg, transparent 0 28px, rgba(139, 90, 45, 0.08) 29px 30px);
+}
+
+html.dark[data-eden-theme="bozkir"],
+html.dark[data-visual-theme="bozkir"],
+html[data-appearance="dark"][data-eden-theme="bozkir"],
+html[data-appearance="dark"][data-visual-theme="bozkir"] {
+  --eden-bg: #0b1624;
+  --eden-surface: #142437;
+  --eden-surface-muted: #1b2d43;
+  --eden-card-bg: #142437;
+  --eden-card-border: #2f4358;
+  --eden-accent: #c2773a;
+  --eden-accent-hover: #df8d45;
+  --eden-accent-soft: #302515;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 88% 26%, rgba(194, 119, 58, 0.16) 0 54px, transparent 55px),
+    linear-gradient(135deg, #0b1624 0%, #132b43 55%, #302515 100%);
+  --eden-page-banner-text: #f4e7d5;
+  --eden-page-banner-muted: #d7c4aa;
+}
+
+html[data-eden-theme="esitlik"],
+html[data-visual-theme="esitlik"] {
+  --eden-bg: #fff5f8;
+  --eden-surface: #fffafd;
+  --eden-surface-muted: #f7dfe8;
+  --eden-border: #e8bfce;
+  --eden-text: #3b1730;
+  --eden-accent: #c23b72;
+  --eden-accent-hover: #98295a;
+  --eden-accent-soft: #f7d4e1;
+  --eden-accent-warm: #ef8aa8;
+  --eden-info: #7e2f6b;
+  --eden-nav-bg: #fffafd;
+  --eden-nav-text: #3b1730;
+  --eden-nav-active-bg: rgba(194, 59, 114, 0.14);
+  --eden-nav-active-text: #98295a;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 88% 12%, rgba(239, 138, 168, 0.34) 0 72px, transparent 73px),
+    linear-gradient(135deg, #f7d4e1 0%, #c23b72 58%, #5b173e 100%);
+  --eden-content-motif:
+    radial-gradient(circle at 10% 20%, transparent 0 24px, rgba(194, 59, 114, 0.14) 25px 26px, transparent 27px),
+    radial-gradient(circle at 90% 70%, transparent 0 36px, rgba(239, 138, 168, 0.16) 37px 38px, transparent 39px);
+}
+
+html.dark[data-eden-theme="esitlik"],
+html.dark[data-visual-theme="esitlik"],
+html[data-appearance="dark"][data-eden-theme="esitlik"],
+html[data-appearance="dark"][data-visual-theme="esitlik"] {
+  --eden-bg: #160515;
+  --eden-surface: #2a0f27;
+  --eden-surface-muted: #351333;
+  --eden-card-bg: #2a0f27;
+  --eden-card-border: #5c284f;
+  --eden-accent: #e2558e;
+  --eden-accent-hover: #ff77a8;
+  --eden-accent-soft: #551d3e;
+  --eden-page-banner-bg:
+    radial-gradient(circle at 88% 12%, rgba(226, 85, 142, 0.16) 0 72px, transparent 73px),
+    linear-gradient(135deg, #210a1e 0%, #551d3e 58%, #160515 100%);
+}
+
+html[data-eden-theme="atlas"],
+html[data-visual-theme="atlas"] {
+  --eden-bg: #f4f8fb;
+  --eden-surface: #fffdf8;
+  --eden-border: #c9d7e2;
+  --eden-accent: #2d6cdf;
+  --eden-accent-hover: #1e4fae;
+  --eden-accent-soft: #dce9fb;
+  --eden-accent-warm: #c7985a;
+  --eden-info: #0e8796;
+  --eden-nav-bg: #eef6fb;
+  --eden-nav-text: #10213a;
+  --eden-page-banner-bg:
+    linear-gradient(145deg, rgba(45, 108, 223, 0.96) 0%, rgba(14, 135, 150, 0.88) 54%, rgba(199, 152, 90, 0.88) 100%);
+  --eden-content-motif:
+    repeating-linear-gradient(90deg, transparent 0 42px, rgba(45, 108, 223, 0.12) 43px 44px),
+    repeating-linear-gradient(0deg, transparent 0 32px, rgba(199, 152, 90, 0.12) 33px 34px);
+}
+
+html.dark[data-eden-theme="atlas"],
+html.dark[data-visual-theme="atlas"],
+html[data-appearance="dark"][data-eden-theme="atlas"],
+html[data-appearance="dark"][data-visual-theme="atlas"] {
+  --eden-bg: #041923;
+  --eden-surface: #082d3e;
+  --eden-surface-muted: #0d3a4c;
+  --eden-card-bg: #082d3e;
+  --eden-card-border: #1f5366;
+  --eden-accent: #0eb7c5;
+  --eden-accent-hover: #39d4df;
+  --eden-accent-soft: #0a4350;
+  --eden-page-banner-bg:
+    linear-gradient(145deg, #031119 0%, #064559 58%, #0a3042 100%);
+}
+
+html[data-eden-theme="avangard"],
+html[data-visual-theme="avangard"] {
+  --eden-bg: #f8fafc;
+  --eden-surface: #ffffff;
+  --eden-accent: #7c3aed;
+  --eden-accent-hover: #6125d0;
+  --eden-accent-soft: #eadcff;
+  --eden-accent-warm: #c7f000;
+  --eden-info: #22d3ee;
+  --eden-nav-bg: #ffffff;
+  --eden-nav-text: #101827;
+  --eden-nav-active-bg: rgba(124, 58, 237, 0.14);
+  --eden-nav-active-text: #6125d0;
+  --eden-page-banner-bg:
+    linear-gradient(135deg, #7c3aed 0%, #2f37d4 55%, #22d3ee 100%);
+  --eden-content-motif:
+    repeating-linear-gradient(90deg, transparent 0 24px, rgba(124, 58, 237, 0.11) 25px 26px),
+    linear-gradient(135deg, transparent 0 72%, rgba(199, 240, 0, 0.18) 73% 78%, transparent 79%);
+}
+
+html.dark[data-eden-theme="avangard"],
+html.dark[data-visual-theme="avangard"],
+html[data-appearance="dark"][data-eden-theme="avangard"],
+html[data-appearance="dark"][data-visual-theme="avangard"] {
+  --eden-bg: #07111c;
+  --eden-surface: #0d1b2b;
+  --eden-surface-muted: #12243a;
+  --eden-card-bg: #0d1b2b;
+  --eden-card-border: #24364d;
+  --eden-accent: #8b5cf6;
+  --eden-accent-hover: #a78bfa;
+  --eden-accent-soft: #24194a;
+  --eden-page-banner-bg:
+    linear-gradient(135deg, #12102a 0%, #4a248e 54%, #0c7888 100%);
+}
+
+html[data-eden-theme] .eden-document-slot-card,
+html[data-visual-theme] .eden-document-slot-card {
+  background: linear-gradient(145deg, var(--eden-card-bg), color-mix(in srgb, var(--eden-card-bg) 78%, var(--eden-accent-soft))) !important;
+  border-color: var(--eden-card-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] .eden-document-slot-header,
+html[data-visual-theme] .eden-document-slot-header,
+html[data-eden-theme] .eden-document-slot-footer,
+html[data-visual-theme] .eden-document-slot-footer {
+  background: color-mix(in srgb, var(--eden-card-bg) 72%, var(--eden-accent-soft) 28%) !important;
+  border-color: var(--eden-card-border) !important;
+}
+
+html[data-eden-theme] .eden-document-slot-stage,
+html[data-visual-theme] .eden-document-slot-stage {
+  background:
+    radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--eden-motif-primary) 12%, transparent) 0 58px, transparent 59px),
+    linear-gradient(135deg, var(--eden-surface-muted), var(--eden-card-bg)) !important;
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] [data-tour-id="record-lifecycle-wizard"] > div,
+html[data-visual-theme] [data-tour-id="record-lifecycle-wizard"] > div {
+  background: linear-gradient(135deg, var(--eden-bg), color-mix(in srgb, var(--eden-bg) 80%, var(--eden-accent-soft) 20%)) !important;
+  border: 1px solid var(--eden-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] [data-validation-state="invalid"],
+html[data-visual-theme] [data-validation-state="invalid"] {
+  background-color: color-mix(in srgb, var(--eden-danger-soft) 72%, var(--eden-card-bg)) !important;
+  border-color: var(--eden-danger) !important;
+}
+
+html[data-eden-theme] [data-validation-state="valid"],
+html[data-visual-theme] [data-validation-state="valid"] {
+  background-color: color-mix(in srgb, var(--eden-success-soft) 68%, var(--eden-card-bg)) !important;
+  border-color: var(--eden-success) !important;
+}

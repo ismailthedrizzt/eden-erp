@@ -3,6 +3,7 @@ import type { UiAppearancePreference, UserUiPreferences, VisualThemePreference }
 
 const APPEARANCE_VALUES = new Set<UiAppearancePreference>(['system', 'light', 'dark'])
 const VISUAL_THEME_VALUES = new Set<VisualThemePreference>([
+  'classic',
   'hikmet',
   'bozkir',
   'esitlik',
@@ -12,7 +13,6 @@ const VISUAL_THEME_VALUES = new Set<VisualThemePreference>([
 ])
 const CUSTOM_VISUAL_THEME_PATTERN = /^[a-z0-9][a-z0-9_]{1,63}$/
 const LEGACY_VISUAL_THEME_ALIASES: Record<string, VisualThemePreference> = {
-  classic: 'hikmet',
   classicCurrent: 'hikmet',
   executivePremium: 'atlas',
   executive_premium: 'atlas',

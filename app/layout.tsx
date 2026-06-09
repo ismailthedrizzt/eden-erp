@@ -17,7 +17,6 @@ const themeInitScript = `
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const dark = theme === 'dark' || (theme === 'system' && prefersDark);
     const visualThemeAliases = {
-      classic: 'hikmet',
       classicCurrent: 'hikmet',
       executivePremium: 'atlas',
       executive_premium: 'atlas',

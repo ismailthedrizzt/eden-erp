@@ -492,7 +492,7 @@ function RecordLifecycleWizardFieldView({
 
   if (field.type === 'custom' && field.render) {
     return (
-      <div className={cn('relative space-y-1', colSpanClass)}>
+      <div className={cn('relative space-y-1 rounded-xl border p-2', wizardFieldFrameClass(fieldControlState), colSpanClass)} data-validation-state={fieldControlState}>
         {label}
         {validationState.label && <ValidationPill validationState={validationState} />}
         {field.render({
@@ -508,7 +508,7 @@ function RecordLifecycleWizardFieldView({
   }
 
   return (
-    <div className={cn('relative space-y-1 rounded-xl border border-transparent p-1', field.highlight && 'border-blue-200 bg-blue-50/60 dark:border-blue-950 dark:bg-blue-950/20', colSpanClass)}>
+    <div className={cn('relative space-y-1 rounded-xl border border-transparent p-1', field.highlight && 'border-blue-200 bg-blue-50/60 dark:border-blue-950 dark:bg-blue-950/20', colSpanClass)} data-validation-state={fieldControlState}>
       {label}
       {validationState.label && <ValidationPill validationState={validationState} />}
       {field.type === 'textarea' ? (

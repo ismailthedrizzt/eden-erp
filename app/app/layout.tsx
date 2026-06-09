@@ -73,6 +73,71 @@ const APPEARANCE_OPTIONS = [
   },
 ]
 
+const SYSTEM_VISUAL_THEME_OPTIONS = [
+  {
+    id: 'classic',
+    name: 'Klasik',
+    description: 'Sade ve guvenli ERP gorunumu',
+    accent: '#2563EB',
+    conceptId: 'classic',
+  },
+  {
+    id: 'hikmet',
+    name: 'Hikmet',
+    description: 'Lacivert, altin ve islami geometri',
+    accent: '#D6A85C',
+    conceptId: 'art_deco',
+  },
+  {
+    id: 'bozkir',
+    name: 'Bozkir',
+    description: 'Tas beji, bakir ve bozkir cizgileri',
+    accent: '#B87435',
+    conceptId: 'anatolian_60s',
+  },
+  {
+    id: 'esitlik',
+    name: 'Esitlik',
+    description: 'Kapsayici pembe ve bordo yuzeyler',
+    accent: '#C23B72',
+    conceptId: 'pop_studio',
+  },
+  {
+    id: 'atlas',
+    name: 'Atlas',
+    description: 'Gokyuzu sehri ve okyanus metropol dili',
+    accent: '#2D6CDF',
+    conceptId: 'art_deco',
+  },
+  {
+    id: 'avangard',
+    name: 'Avangard',
+    description: 'Keskin bloklar, neon aksan ve kirik grid',
+    accent: '#7C3AED',
+    conceptId: 'pop_studio',
+  },
+] as const
+
+const CSS_DRIVEN_SYSTEM_THEME_IDS = new Set([
+  'classic',
+  'hikmet',
+  'bozkir',
+  'esitlik',
+  'tabiat',
+  'atlas',
+  'avangard',
+])
+
+const VISUAL_THEME_CONCEPT_BRIDGE: Record<string, (typeof SYSTEM_VISUAL_THEME_OPTIONS)[number]['conceptId'] | 'classic' | 'command_bauhaus'> = {
+  classic: 'classic',
+  hikmet: 'art_deco',
+  bozkir: 'anatolian_60s',
+  esitlik: 'pop_studio',
+  atlas: 'art_deco',
+  avangard: 'pop_studio',
+  tabiat: 'command_bauhaus',
+}
+
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
   '/app/yardim': 'Yardim Merkezi',
@@ -1007,16 +1072,17 @@ function UserProfileMenu({
   const [activePanel, setActivePanel] = useState<'theme' | 'appearance' | null>(null)
   const [managedThemes, setManagedThemes] = useState<ManagedThemeRecord[]>([])
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const activeSystemThemeOption = SYSTEM_VISUAL_THEME_OPTIONS.find(theme => theme.id === activeThemeId)
   const activeTheme = themeConcepts.find(theme => theme.id === activeThemeId)
   const activeManagedTheme = activeTheme ? null : managedThemes.find(theme => theme.themeKey === activeThemeId) || findManagedThemeRecord(activeThemeId)
-  const activeThemeLabel = activeTheme?.name || activeManagedTheme?.displayName || VISUAL_THEME_LABELS[normalizeThemeConceptId(activeThemeId) || DEFAULT_VISUAL_THEME_ID]
-  const activeThemeAccent = activeTheme?.colors.accentWarm || activeManagedTheme?.package.tokens.light.color.accent.primary || '#b88932'
+  const activeThemeLabel = activeSystemThemeOption?.name || activeTheme?.name || activeManagedTheme?.displayName || VISUAL_THEME_LABELS[normalizeThemeConceptId(activeThemeId) || DEFAULT_VISUAL_THEME_ID]
+  const activeThemeAccent = activeSystemThemeOption?.accent || activeTheme?.colors.accentWarm || activeManagedTheme?.package.tokens.light.color.accent.primary || '#b88932'
   const themeOptions = [
-    ...themeConcepts.map(theme => ({
+    ...SYSTEM_VISUAL_THEME_OPTIONS.map(theme => ({
       id: theme.id,
-      name: VISUAL_THEME_LABELS[theme.id] || theme.name,
-      description: theme.personality.join(' / '),
-      accent: theme.colors.accentPrimary,
+      name: theme.name,
+      description: theme.description,
+      accent: theme.accent,
       source: 'system',
     })),
     ...managedThemes.map(theme => ({
@@ -1440,19 +1506,37 @@ function applyAppearancePreference(theme: UiAppearancePreference) {
 function applyVisualThemePreference(themeId: string, appearance: 'light' | 'dark') {
   if (typeof document === 'undefined') return
   const root = document.documentElement
-  const systemThemeId = normalizeThemeConceptId(themeId)
+  const requestedThemeId = normalizeVisualThemePreference(themeId) || DEFAULT_VISUAL_THEME_ID
+  const cssDrivenSystemTheme = CSS_DRIVEN_SYSTEM_THEME_IDS.has(requestedThemeId)
+  const bridgedThemeId = VISUAL_THEME_CONCEPT_BRIDGE[requestedThemeId] || requestedThemeId
+  const systemThemeId = cssDrivenSystemTheme ? null : normalizeThemeConceptId(bridgedThemeId)
   const theme = systemThemeId ? findThemeConcept(systemThemeId) : null
-  const vars = theme ? getEdenThemeCssVars(theme, appearance) : getManagedThemeCssVars(themeId, appearance)
-  const resolvedThemeId = theme?.id || (vars ? themeId : DEFAULT_VISUAL_THEME_ID)
+  const vars = theme ? getEdenThemeCssVars(theme, appearance) : getManagedThemeCssVars(requestedThemeId, appearance)
+  const resolvedThemeId = cssDrivenSystemTheme || theme || vars ? requestedThemeId : DEFAULT_VISUAL_THEME_ID
   const resolvedVars = vars || getEdenThemeCssVars(findThemeConcept(DEFAULT_VISUAL_THEME_ID), appearance)
 
   root.dataset.visualTheme = resolvedThemeId
   root.dataset.appearanceMode = appearance
-  root.dataset.edenTheme = theme ? (CANONICAL_THEME_KEYS[theme.id] || theme.id) : resolvedThemeId
-  root.dataset.edenThemeInternal = resolvedThemeId
+  root.dataset.edenTheme = resolvedThemeId
+  root.dataset.edenThemeInternal = theme ? (CANONICAL_THEME_KEYS[theme.id] || theme.id) : resolvedThemeId
   root.dataset.appearance = appearance
+
+  if (cssDrivenSystemTheme) {
+    clearInlineEdenThemeVars(root)
+    return
+  }
+
   for (const [key, value] of Object.entries(resolvedVars)) {
     root.style.setProperty(key, value)
+  }
+}
+
+function clearInlineEdenThemeVars(root: HTMLElement) {
+  for (let index = root.style.length - 1; index >= 0; index -= 1) {
+    const property = root.style.item(index)
+    if (property.startsWith('--eden-')) {
+      root.style.removeProperty(property)
+    }
   }
 }
 

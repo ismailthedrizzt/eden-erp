@@ -1217,7 +1217,7 @@ export function DocumentSlotUploader({
 
   return (
     <div 
-      className={cn("flex w-full flex-col items-center gap-4", className)}
+      className={cn("eden-document-slot-uploader flex w-full flex-col items-center gap-4", className)}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -1252,7 +1252,7 @@ export function DocumentSlotUploader({
       <>
       {/* Main Card */}
       <div 
-        className="relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="eden-document-slot-card relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
         style={containerStyle}
       >
         {aiBadge && (
@@ -1266,7 +1266,7 @@ export function DocumentSlotUploader({
         )}
 
         {/* Header - Navigation & Title */}
-        <div className="flex items-center justify-between px-2 py-1 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+        <div className="eden-document-slot-header flex items-center justify-between px-2 py-1 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
           <button
             onClick={handlePrevious}
             disabled={displaySlots.length <= 1}
@@ -1303,7 +1303,7 @@ export function DocumentSlotUploader({
           onDragOver={canMutate ? handleDragOver : undefined}
           onDragLeave={canMutate ? handleDragLeave : undefined}
           className={cn(
-            "flex-1 flex flex-col relative",
+            "eden-document-slot-stage flex-1 flex flex-col relative",
             "bg-gray-50 dark:bg-gray-900/50",
             canMutate && !hasDocument && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
@@ -1430,7 +1430,7 @@ export function DocumentSlotUploader({
 
         {/* Bottom - Upload Button */}
         {canMutate && !hasDocument && currentSlot.id !== '__extra__' && (
-          <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="eden-document-slot-footer px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={(event) => {
                 event.stopPropagation()
