@@ -14,7 +14,7 @@ BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8000/openapi.json}"
 DEPLOY_ID="${DEPLOY_ID:-$(date +%Y%m%d-%H%M%S)}"
 BUILD_ROOT="${DEPLOY_BUILD_ROOT:-$STATE_DIR/builds}"
 BUILD_DIR="$BUILD_ROOT/$DEPLOY_ID"
-NEXT_RELEASES_DIR="$STATE_DIR/next-releases"
+NEXT_RELEASES_DIR="${DEPLOY_NEXT_RELEASES_DIR:-$APP_DIR/.next-releases}"
 NEXT_STAGE="$NEXT_RELEASES_DIR/$DEPLOY_ID"
 NEXT_PREVIOUS_TARGET=""
 FRONTEND_PROMOTED=0
@@ -159,6 +159,7 @@ prepare_frontend_build_dir() {
   run rsync -a --delete \
     --exclude ".git" \
     --exclude ".next" \
+    --exclude ".next-releases" \
     --exclude "node_modules" \
     --exclude ".deploy-builds" \
     "$APP_DIR"/ "$BUILD_DIR"/
@@ -256,7 +257,7 @@ if [[ "${DEPLOY_SKIP_GIT_SYNC:-0}" != "1" ]]; then
   log "Syncing live checkout with origin/$DEPLOY_BRANCH"
   run git fetch origin "$DEPLOY_BRANCH"
   run git reset --hard "origin/$DEPLOY_BRANCH"
-  run git clean -fd -e .next
+  run git clean -fd -e .next -e .next-releases
 else
   log "Skipping git sync because DEPLOY_SKIP_GIT_SYNC=1"
 fi

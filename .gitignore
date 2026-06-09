@@ -8,6 +8,8 @@ apps/api/.venv/
 # Next.js
 .next
 .next/
+.next-releases
+.next-releases/
 out/
 
 # Production
