@@ -105,7 +105,7 @@ export function getRouteReleaseDecision(
     return blocked(status, badgeLabel, env, 'hidden')
   }
 
-  if (config.requiresPermission?.length && userContext.permissions?.length) {
+  if (config.requiresPermission?.length && userContext.permissions?.length && !canSeeInternalSurface) {
     const hasPermission = config.requiresPermission.some(permission => userContext.permissions?.includes(permission))
     if (!hasPermission) {
       return {

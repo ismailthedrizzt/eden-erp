@@ -256,6 +256,9 @@ function withPermissionCheck(
   permissionKeys: string[] = decision.requiredPermissions || []
 ): VisibilityDecision {
   if (!permissionKeys.length) return decision
+  if (context.tenantEntitlements?.is_development) {
+    return { ...decision, requiredPermissions: permissionKeys }
+  }
   const userPermissions = context.permissions || []
   if (hasAnyPermission(userPermissions, permissionKeys)) {
     return { ...decision, requiredPermissions: permissionKeys }

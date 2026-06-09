@@ -44,6 +44,9 @@ export function isModuleEntitled(entitlements: TenantEntitlements | null | undef
       status: 'suspended',
     }
   }
+  if (entitlements.is_development) {
+    return { entitled: true, reason: null, status: 'entitled' }
+  }
   if (entitlements.enabled_modules.includes(moduleKey)) {
     return { entitled: true, reason: null, status: 'entitled' }
   }
@@ -64,6 +67,9 @@ export function isFeatureEntitled(entitlements: TenantEntitlements | null | unde
       status: 'suspended',
     }
   }
+  if (entitlements.is_development) {
+    return { entitled: true, reason: null, status: 'entitled' }
+  }
   if (entitlements.enabled_features.includes(featureKey)) {
     return { entitled: true, reason: null, status: 'entitled' }
   }
@@ -77,4 +83,3 @@ export function isFeatureEntitled(entitlements: TenantEntitlements | null | unde
 export function canSeeDevelopmentSurface(entitlements: TenantEntitlements | null | undefined) {
   return Boolean(entitlements?.is_development)
 }
-
