@@ -857,19 +857,13 @@ export function LoginExperience({
           </section>
 
           <section className={styles.panelColumn} aria-label="Giriş ve kayıt">
-            <div className={styles.authPanel}>
+            <div
+              className={styles.authPanel}
+              data-auth-mode={authMode}
+              data-auth-step={step}
+              data-signup-flow={signupFlow}
+            >
               <div className={styles.panelInner}>
-                <div className={styles.panelLogoWrap}>
-                  <Image
-                    src="/brand/eden-logo-colored.png"
-                    alt="Eden ERP"
-                    width={180}
-                    height={80}
-                    className={styles.panelLogo}
-                    priority
-                  />
-                </div>
-
                 {step === 'kimlik' ? (
                   <form
                     onSubmit={event => {
