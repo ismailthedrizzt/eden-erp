@@ -30,6 +30,7 @@ export async function middleware(request: NextRequest) {
     '/sw.js',
     '/workbox-',
     '/offline',
+    '/auth/',
     '/brand/',
     '/icons/',
     '/eden-icon-original.png',
@@ -248,6 +249,6 @@ function setResponseTenantCookies(response: NextResponse, tenantId: string) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|brand|icons|eden-icon-original.png).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|auth|brand|icons|eden-icon-original.png).*)',
   ],
 }
