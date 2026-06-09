@@ -105,6 +105,20 @@ validate_next_build() {
   run node -e "for (const file of ['app-build-manifest.json','build-manifest.json','prerender-manifest.json','routes-manifest.json','required-server-files.json']) JSON.parse(require('fs').readFileSync(process.argv[1] + '/' + file, 'utf8'))" "$next_dir"
 }
 
+preserve_previous_static_assets() {
+  local source_next_dir="$1"
+  local target_next_dir="$2"
+
+  if [[ ! -d "$source_next_dir/static" || ! -d "$target_next_dir/static" ]]; then
+    return 0
+  fi
+
+  # Keep old build-id static chunks available for browsers/service workers that
+  # still hold the previous HTML shell while the new build is promoted.
+  log "Preserving previous Next static assets"
+  run rsync -a --ignore-existing "$source_next_dir/static"/ "$target_next_dir/static"/
+}
+
 prepare_frontend_build_dir() {
   if ! command -v rsync >/dev/null 2>&1; then
     echo "rsync is required for atomic frontend builds." >&2
@@ -135,11 +149,12 @@ build_frontend_atomic() {
   run mkdir -p "$NEXT_STAGE"
   run rsync -a --delete "$BUILD_DIR/.next"/ "$NEXT_STAGE"/
   validate_next_build "$NEXT_STAGE"
+  preserve_previous_static_assets "$APP_DIR/.next" "$NEXT_STAGE"
+  validate_next_build "$NEXT_STAGE"
 }
 
 promote_frontend_build() {
   log "Promoting validated frontend build"
-  run "$PM2_BIN" stop "$FRONTEND_PROCESS" || true
 
   run rm -rf "$NEXT_BACKUP"
   if [[ -d "$APP_DIR/.next" ]]; then
@@ -147,6 +162,7 @@ promote_frontend_build() {
   fi
 
   run mv "$NEXT_STAGE" "$APP_DIR/.next"
+  validate_next_build "$APP_DIR/.next"
 
   if ! run "$PM2_BIN" restart "$FRONTEND_PROCESS" --update-env; then
     rollback_frontend_build
