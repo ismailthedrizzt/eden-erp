@@ -6,6 +6,7 @@ apps/api/.venv/
 .pnp.js
 
 # Next.js
+.next
 .next/
 out/
 

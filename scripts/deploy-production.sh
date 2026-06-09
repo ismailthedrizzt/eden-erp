@@ -14,11 +14,12 @@ BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8000/openapi.json}"
 DEPLOY_ID="${DEPLOY_ID:-$(date +%Y%m%d-%H%M%S)}"
 BUILD_ROOT="${DEPLOY_BUILD_ROOT:-$STATE_DIR/builds}"
 BUILD_DIR="$BUILD_ROOT/$DEPLOY_ID"
-NEXT_STAGE="$STATE_DIR/next-stage-$DEPLOY_ID"
-NEXT_BACKUP_DIR="$STATE_DIR/next-backups"
-NEXT_BACKUP="$NEXT_BACKUP_DIR/.next-$DEPLOY_ID"
+NEXT_RELEASES_DIR="$STATE_DIR/next-releases"
+NEXT_STAGE="$NEXT_RELEASES_DIR/$DEPLOY_ID"
+NEXT_PREVIOUS_TARGET=""
+FRONTEND_PROMOTED=0
 
-mkdir -p "$LOG_DIR" "$STATE_DIR" "$BUILD_ROOT" "$NEXT_BACKUP_DIR" "$(dirname "$LOCK_FILE")"
+mkdir -p "$LOG_DIR" "$STATE_DIR" "$BUILD_ROOT" "$NEXT_RELEASES_DIR" "$(dirname "$LOCK_FILE")"
 LOG_FILE="$LOG_DIR/deploy-$(date +%Y%m%d-%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -63,7 +64,10 @@ wait_for_http() {
 }
 
 cleanup() {
-  rm -rf "$BUILD_DIR" "$NEXT_STAGE"
+  rm -rf "$BUILD_DIR"
+  if [[ "$FRONTEND_PROMOTED" != "1" ]]; then
+    rm -rf "$NEXT_STAGE"
+  fi
 }
 
 resolve_pm2() {
@@ -119,6 +123,30 @@ preserve_previous_static_assets() {
   run rsync -a --ignore-existing "$source_next_dir/static"/ "$target_next_dir/static"/
 }
 
+ensure_next_symlink_layout() {
+  if [[ -L "$APP_DIR/.next" ]]; then
+    validate_next_build "$APP_DIR/.next"
+    return 0
+  fi
+
+  if [[ ! -d "$APP_DIR/.next" ]]; then
+    echo "No existing Next build found at $APP_DIR/.next" >&2
+    return 1
+  fi
+
+  validate_next_build "$APP_DIR/.next"
+
+  local legacy_release="$NEXT_RELEASES_DIR/legacy-$DEPLOY_ID"
+  local tmp_link="$APP_DIR/.next.link-$DEPLOY_ID"
+
+  log "Converting existing .next directory to release symlink layout"
+  run rm -rf "$legacy_release" "$tmp_link"
+  run mv "$APP_DIR/.next" "$legacy_release"
+  run ln -s "$legacy_release" "$tmp_link"
+  run mv -T "$tmp_link" "$APP_DIR/.next"
+  validate_next_build "$APP_DIR/.next"
+}
+
 prepare_frontend_build_dir() {
   if ! command -v rsync >/dev/null 2>&1; then
     echo "rsync is required for atomic frontend builds." >&2
@@ -156,12 +184,18 @@ build_frontend_atomic() {
 promote_frontend_build() {
   log "Promoting validated frontend build"
 
-  run rm -rf "$NEXT_BACKUP"
-  if [[ -d "$APP_DIR/.next" ]]; then
-    run mv "$APP_DIR/.next" "$NEXT_BACKUP"
+  ensure_next_symlink_layout
+  NEXT_PREVIOUS_TARGET="$(readlink -f "$APP_DIR/.next" 2>/dev/null || true)"
+  if [[ -z "$NEXT_PREVIOUS_TARGET" || ! -d "$NEXT_PREVIOUS_TARGET" ]]; then
+    echo "Cannot resolve current .next release target for rollback." >&2
+    return 1
   fi
 
-  run mv "$NEXT_STAGE" "$APP_DIR/.next"
+  local tmp_link="$APP_DIR/.next.link-$DEPLOY_ID"
+  run rm -f "$tmp_link"
+  run ln -s "$NEXT_STAGE" "$tmp_link"
+  run mv -Tf "$tmp_link" "$APP_DIR/.next"
+  FRONTEND_PROMOTED=1
   validate_next_build "$APP_DIR/.next"
 
   if ! run "$PM2_BIN" restart "$FRONTEND_PROCESS" --update-env; then
@@ -172,22 +206,31 @@ promote_frontend_build() {
 
 rollback_frontend_build() {
   log "Rolling back frontend build"
-  run "$PM2_BIN" stop "$FRONTEND_PROCESS" || true
 
-  if [[ -d "$NEXT_BACKUP" ]]; then
-    if [[ -d "$APP_DIR/.next" ]]; then
-      run mv "$APP_DIR/.next" "$STATE_DIR/.next-failed-$DEPLOY_ID"
-    fi
-    run mv "$NEXT_BACKUP" "$APP_DIR/.next"
+  if [[ -n "$NEXT_PREVIOUS_TARGET" && -d "$NEXT_PREVIOUS_TARGET" ]]; then
+    local tmp_link="$APP_DIR/.next.rollback-$DEPLOY_ID"
+    run rm -f "$tmp_link"
+    run ln -s "$NEXT_PREVIOUS_TARGET" "$tmp_link"
+    run mv -Tf "$tmp_link" "$APP_DIR/.next"
+    FRONTEND_PROMOTED=0
+    validate_next_build "$APP_DIR/.next" || true
     run "$PM2_BIN" restart "$FRONTEND_PROCESS" --update-env || true
   else
-    echo "No previous .next backup is available for rollback." >&2
+    echo "No previous .next release target is available for rollback." >&2
   fi
 }
 
-prune_old_next_backups() {
-  find "$NEXT_BACKUP_DIR" -maxdepth 1 -mindepth 1 -type d -name ".next-*" \
+prune_old_next_releases() {
+  local current_target=""
+  current_target="$(readlink -f "$APP_DIR/.next" 2>/dev/null || true)"
+
+  find "$NEXT_RELEASES_DIR" -maxdepth 1 -mindepth 1 -type d \
     | sort \
+    | while IFS= read -r release_dir; do
+        if [[ "$release_dir" != "$current_target" && "$release_dir" != "$NEXT_PREVIOUS_TARGET" ]]; then
+          printf '%s\n' "$release_dir"
+        fi
+      done \
     | head -n -5 \
     | xargs -r rm -rf
 }
@@ -213,7 +256,7 @@ if [[ "${DEPLOY_SKIP_GIT_SYNC:-0}" != "1" ]]; then
   log "Syncing live checkout with origin/$DEPLOY_BRANCH"
   run git fetch origin "$DEPLOY_BRANCH"
   run git reset --hard "origin/$DEPLOY_BRANCH"
-  run git clean -fd
+  run git clean -fd -e .next
 else
   log "Skipping git sync because DEPLOY_SKIP_GIT_SYNC=1"
 fi
@@ -254,6 +297,7 @@ if [[ "${DEPLOY_SKIP_BUILD:-0}" != "1" ]]; then
   build_frontend_atomic
 else
   log "Skipping frontend build because DEPLOY_SKIP_BUILD=1"
+  ensure_next_symlink_layout
   validate_next_build "$APP_DIR/.next"
 fi
 
@@ -285,7 +329,7 @@ else
 fi
 
 run "$PM2_BIN" save
-prune_old_next_backups
+prune_old_next_releases
 echo "$DEPLOY_COMMIT" > "$STATE_DIR/last-successful-commit"
 
 log "Production deploy completed successfully"
