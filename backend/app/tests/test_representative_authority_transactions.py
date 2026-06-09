@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.core.errors import DomainError
+from app.domains.operations.service import _coerce_base_updated_at
 from app.domains.representatives import service as representative_service
 from app.domains.representatives.schemas import RepresentativeAuthorityTransactionRequest
 
@@ -35,6 +36,22 @@ def test_transaction_request_rejects_invalid_scope_shape() -> None:
 
     with pytest.raises(ValidationError):
         RepresentativeAuthorityTransactionRequest(**payload)
+
+
+def test_operation_base_updated_at_accepts_iso_string() -> None:
+    value = _coerce_base_updated_at("2026-05-25T16:23:09.719750+00:00")
+
+    assert value is not None
+    assert value.year == 2026
+    assert value.tzinfo is not None
+
+
+def test_operation_base_updated_at_accepts_z_suffix() -> None:
+    value = _coerce_base_updated_at("2026-05-25T16:23:09.719750Z")
+
+    assert value is not None
+    assert value.year == 2026
+    assert value.tzinfo is not None
 
 
 @pytest.mark.asyncio

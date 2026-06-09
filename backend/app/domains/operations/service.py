@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import date, datetime
+from datetime import time as datetime_time
 from typing import Any
 from uuid import uuid4
 
@@ -18,6 +20,26 @@ async def table_exists(session: AsyncSession, table_name: str) -> bool:
     )
     row = result.mappings().one()
     return row["table_ref"] is not None
+
+
+def _coerce_base_updated_at(value: Any) -> datetime | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, datetime_time.min)
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return None
+        if normalized.endswith("Z"):
+            normalized = f"{normalized[:-1]}+00:00"
+        try:
+            return datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+    return None
 
 
 async def create_or_get_operation_request(
@@ -109,7 +131,7 @@ async def create_or_get_operation_request(
             "operation_type": operation_type,
             "client_request_id": request_id,
             "base_version": payload.get("base_version"),
-            "base_updated_at": payload.get("base_updated_at"),
+            "base_updated_at": _coerce_base_updated_at(payload.get("base_updated_at")),
             "requested_by": context.get("user_id"),
             "payload_json": json.dumps(payload, ensure_ascii=False, default=str),
         },
