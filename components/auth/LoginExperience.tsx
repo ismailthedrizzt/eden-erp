@@ -1,24 +1,31 @@
 'use client'
 
-import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ClipboardEvent, type CSSProperties, type ReactNode } from 'react'
 import Image from 'next/image'
 import {
+  ArrowLeft,
+  ArrowRight,
   Building2,
   BrainCircuit,
   BriefcaseBusiness,
   Calculator,
   CheckCircle2,
+  Cloud,
   Factory,
+  Gauge,
   Landmark,
+  LockKeyhole,
   LogIn,
   PackageCheck,
   Search,
+  ShieldCheck,
   UserPlus,
   Users,
   Wrench,
 } from 'lucide-react'
 import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
+import styles from './LoginExperience.module.css'
 
 const MODULES = [
   { color: '#34d399', icon: Users, name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, çalışan yönetimi' },
@@ -50,11 +57,14 @@ const PLATFORM_FEATURES = [
   },
 ]
 
-const textInputClass =
-  'w-full rounded-xl border border-[#28445c] bg-[#091826] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-white/35 focus:border-eden-blue focus:ring-2 focus:ring-eden-blue/25'
+const TRUST_ITEMS = [
+  { icon: ShieldCheck, title: 'Güvenli & Uyumlu', desc: 'KVKK uyumlu, uçtan uca şifreleme' },
+  { icon: Cloud, title: 'Bulut Tabanlı', desc: 'Yüksek erişilebilirlik ve esneklik' },
+  { icon: Gauge, title: 'Yüksek Performans', desc: 'Hızlı, stabil ve ölçeklenebilir altyapı' },
+]
 
-const otpInputClass =
-  'h-11 w-8 rounded-xl border border-[#28445c] bg-[#091826] text-center text-lg font-bold text-white outline-none transition-all focus:border-eden-blue focus:ring-2 focus:ring-eden-blue/25 sm:h-14 sm:w-12 sm:text-xl'
+const textInputClass = styles.textInput
+const otpInputClass = styles.otpInput
 
 type AuthMode = 'login' | 'signup'
 type SignupFlow = 'new_company' | 'join_company'
@@ -242,7 +252,7 @@ function AuthModeSwitch({ mode, onChange, loginEnabled }: { mode: AuthMode; onCh
   ]
 
   return (
-    <div className="mb-6 grid grid-cols-2 rounded-xl border border-[#28445c] bg-[#091826] p-1">
+    <div className={styles.modeSwitch} role="tablist" aria-label="Kimlik doğrulama modu">
       {options.map(option => {
         const selected = option.value === mode
         const disabled = option.value === 'login' && !loginEnabled
@@ -250,24 +260,86 @@ function AuthModeSwitch({ mode, onChange, loginEnabled }: { mode: AuthMode; onCh
           <button
             key={option.value}
             type="button"
-            aria-pressed={selected}
+            aria-selected={selected}
             aria-disabled={disabled}
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition',
-              disabled
-                ? 'cursor-not-allowed text-white/25'
-                : selected
-                ? 'bg-eden-blue text-white shadow-lg shadow-eden-blue/20'
-                : 'text-white/55 hover:bg-white/5 hover:text-white'
+              styles.modeTab,
+              selected && styles.modeTabActive,
+              disabled && styles.modeTabDisabled
             )}
+            role="tab"
           >
             {option.icon}
             {option.label}
           </button>
         )
       })}
+    </div>
+  )
+}
+
+function AuthVisualBackground() {
+  return (
+    <div className={styles.visualLayer} aria-hidden="true">
+      <svg className={styles.nodeNetwork} viewBox="0 0 720 640" fill="none" role="presentation">
+        <path d="M42 490C142 424 226 425 318 334C418 236 492 192 675 178" stroke="url(#nodeLine)" strokeWidth="1.4" opacity="0.62" />
+        <path d="M86 382C166 330 248 364 326 266C396 178 470 92 638 78" stroke="url(#nodeLine)" strokeWidth="1.1" opacity="0.42" />
+        <path d="M74 556C188 488 246 508 372 408C474 326 530 314 676 300" stroke="url(#nodeLine)" strokeWidth="1.1" opacity="0.34" />
+        {[68, 138, 226, 318, 438, 548, 664].map((x, index) => (
+          <circle key={x} cx={x} cy={[474, 416, 376, 332, 246, 202, 180][index]} r={index % 2 ? 4 : 5} fill="#00D8FF" opacity={index % 2 ? 0.48 : 0.74} />
+        ))}
+        {[92, 206, 326, 468, 628].map((x, index) => (
+          <circle key={`soft-${x}`} cx={x} cy={[380, 346, 266, 98, 76][index]} r="3" fill="#70B8FF" opacity="0.42" />
+        ))}
+        <defs>
+          <linearGradient id="nodeLine" x1="42" y1="500" x2="680" y2="78" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#00D8FF" stopOpacity="0" />
+            <stop offset="0.42" stopColor="#00D8FF" />
+            <stop offset="1" stopColor="#1F73FF" stopOpacity="0.18" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <svg className={styles.hologram} viewBox="0 0 620 460" fill="none" role="presentation">
+        <path d="M228 304L310 256L392 304L310 352L228 304Z" fill="#00D8FF" fillOpacity="0.1" stroke="#00D8FF" strokeOpacity="0.5" />
+        <path d="M254 304L310 272L366 304L310 336L254 304Z" fill="#1F73FF" fillOpacity="0.26" stroke="#70B8FF" />
+        <path d="M310 256V148" stroke="#00D8FF" strokeOpacity="0.38" />
+        <path d="M226 304L146 236M392 304L480 242M310 352V412" stroke="#1F73FF" strokeOpacity="0.34" />
+        {[
+          { x: 78, y: 152, label: 'M6 40H54M14 31L26 20L36 29L50 10', icon: 'chart' },
+          { x: 240, y: 34, label: 'M30 8L54 22H6L30 8ZM12 27H48M16 32V52M30 32V52M44 32V52M10 56H50', icon: 'bank' },
+          { x: 398, y: 72, label: 'M18 27C18 19 24 13 32 13C40 13 46 19 46 27C46 35 40 41 32 41C24 41 18 35 18 27ZM10 55C15 46 23 42 32 42C41 42 49 46 54 55', icon: 'team' },
+          { x: 468, y: 214, label: 'M32 8V18M32 46V56M8 32H18M46 32H56M16 16L23 23M41 41L48 48M48 16L41 23M23 41L16 48M24 32C24 27 27 24 32 24C37 24 40 27 40 32C40 37 37 40 32 40C27 40 24 37 24 32Z', icon: 'gear' },
+          { x: 142, y: 254, label: 'M12 34H52M18 34V50H46V34M22 28V18H42V28M28 18V10H36V18', icon: 'factory' },
+        ].map(card => (
+          <g key={card.icon} transform={`translate(${card.x} ${card.y})`}>
+            <rect width="74" height="74" rx="12" fill="#071B31" fillOpacity="0.72" stroke="#00D8FF" strokeOpacity="0.52" />
+            <path d={card.label} stroke="#00D8FF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+          </g>
+        ))}
+        <path d="M106 412H515" stroke="#00D8FF" strokeOpacity="0.12" />
+        <path d="M160 385H456" stroke="#70B8FF" strokeOpacity="0.2" />
+      </svg>
+
+      <div className={styles.dataWave} />
+      <div className={styles.panelHalo} />
+    </div>
+  )
+}
+
+function SecurityNote() {
+  return (
+    <div className={styles.securityNote}>
+      <div className={styles.securityGlyph}>
+        <LockKeyhole size={24} strokeWidth={1.8} />
+      </div>
+      <p className={styles.securityText}>
+        Verileriniz bizim için en değerli varlıktır.
+        <br />
+        Güvenle koruyoruz.
+      </p>
     </div>
   )
 }
@@ -707,391 +779,392 @@ export function LoginExperience({
   }
 
   return (
-    <div
-      className={cn(
-        'flex bg-[#08131f] text-white',
-        embedded ? 'min-h-[720px] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800' : 'min-h-screen',
-        className
-      )}
-    >
-      <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#07131f] via-[#10283b] to-[#1c617f] p-10 xl:p-14 lg:flex">
-        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="relative flex w-full max-w-2xl flex-col gap-7">
-          <div>
-            <Image
-              src="/brand/eden-logo-colored.png"
-              alt="Eden ERP"
-              width={280}
-              height={125}
-              className="mb-5 h-auto w-56 object-contain drop-shadow-lg"
-              priority
-            />
-            <h1 className="font-display text-4xl font-bold leading-tight text-white">Eden ERP</h1>
-          </div>
+      <div className={cn('eden-auth-root', styles.root, styles.shell, embedded && styles.embedded, className)}>
+        <AuthVisualBackground />
 
-          <div className="grid gap-3 xl:grid-cols-3">
-            {PLATFORM_FEATURES.map(feature => {
-              const Icon = feature.icon
-              return (
-                <div key={feature.title} className="rounded-xl border border-white/[0.12] bg-white/[0.07] p-4 text-left shadow-lg shadow-black/10 backdrop-blur">
-                  <div
-                    className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg text-white"
-                    style={{ background: `${feature.color}26`, color: feature.color }}
-                  >
-                    <Icon size={20} />
-                  </div>
-                  <div className="text-sm font-semibold text-white">{feature.title}</div>
-                  <div className="mt-1.5 text-xs leading-5 text-white/50">{feature.desc}</div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="grid gap-3 xl:grid-cols-2">
-            {MODULES.map(module => {
-              const Icon = module.icon
-              return (
-                <div key={module.name} className="flex min-h-[76px] items-center gap-3 rounded-xl border border-[#35657a]/60 bg-[#0f293b]/80 px-4 py-3 text-left shadow-lg shadow-black/10">
-                  <div
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg"
-                    style={{ background: `${module.color}20`, color: module.color }}
-                  >
-                    <Icon size={19} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-white/90">{module.name}</div>
-                    <div className="mt-0.5 text-xs leading-5 text-white/[0.48]">{module.desc}</div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex w-full items-center justify-center bg-[#0b1724] p-6 sm:p-10 lg:w-[440px] lg:border-l lg:border-[#28445c]">
-        <div className="eden-login-card w-full max-w-sm rounded-2xl border border-transparent bg-transparent p-6 shadow-none sm:p-8 lg:border-0 lg:p-0">
-          <div className="mb-10">
-            <div className="inline-flex">
+        <main className={styles.content}>
+          <section className={styles.brandColumn} aria-label="Eden ERP">
+            <div>
               <Image
                 src="/brand/eden-logo-colored.png"
                 alt="Eden ERP"
-                width={180}
-                height={80}
-                className="h-auto w-36 object-contain drop-shadow-lg"
+                width={280}
+                height={125}
+                className={styles.brandLogo}
                 priority
               />
+              <h1 className={styles.headline}>Eden ERP</h1>
+              <p className={styles.intro}>
+                Yapay zekâ destekli, bank native altyapısı ve uçtan uca entegrasyon ile işletmenizi geleceğe taşıyın.
+              </p>
+              <span className={styles.signalLine} />
             </div>
-          </div>
 
-          {step === 'kimlik' ? (
-            <>
-              <AuthModeSwitch mode={authMode} onChange={switchAuthMode} loginEnabled={loginEnabled} />
-              <h2 className="mb-1 font-display text-2xl font-bold text-white">{modeCopy.title}</h2>
-              <p className="mb-7 text-sm text-white/55">
-                {authMode === 'signup'
-                  ? 'Yeni bir şirket hesabı açabilir veya kayıtlı şirketinize katılma talebi gönderebilirsiniz.'
-                  : modeCopy.subtitle}
-              </p>
-
-              {authMode === 'signup' && (
-                <div className="mb-5 grid gap-2">
-                  {SIGNUP_FLOW_OPTIONS.map(option => {
-                    const selected = signupFlow === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => switchSignupFlow(option.value)}
-                        className={cn(
-                          'rounded-xl border p-3 text-left transition',
-                          selected
-                            ? 'border-eden-blue bg-eden-blue/15 text-white shadow-lg shadow-eden-blue/10'
-                            : 'border-[#28445c] bg-[#091826] text-white/70 hover:border-white/25 hover:bg-white/[0.04]'
-                        )}
-                      >
-                        <span className="flex items-start gap-2">
-                          <span className={cn(
-                            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
-                            selected ? 'border-eden-blue bg-eden-blue text-white' : 'border-white/20 text-transparent'
-                          )}>
-                            <CheckCircle2 size={13} />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold">{option.label}</span>
-                            <span className="mt-1 block text-xs leading-5 text-white/45">{option.description}</span>
-                          </span>
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-
-              {authMode === 'signup' && signupFlow === 'join_company' ? (
-                <div className="mb-4 space-y-3">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-white/60">Şirket VKN</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={joinForm.tax_number}
-                        onChange={event => {
-                          setJoinForm(current => ({ ...current, tax_number: onlyDigits(event.target.value, 10) }))
-                          setSelectedJoinCompanyId(null)
-                          setJoinMatches([])
-                          setJoinLookupMessage(null)
-                          setError('')
-                        }}
-                        onKeyDown={event => event.key === 'Enter' && lookupCompanyJoinMatches()}
-                        placeholder="10 haneli VKN"
-                        className={textInputClass}
-                        inputMode="numeric"
-                        autoFocus={autoFocus}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => lookupCompanyJoinMatches()}
-                        disabled={joinLookupLoading}
-                        className="flex w-12 shrink-0 items-center justify-center rounded-xl border border-[#28445c] bg-[#10283a] text-white/70 transition hover:bg-white/10 disabled:opacity-50"
-                        title="VKN sorgula"
-                      >
-                        {joinLookupLoading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : <Search size={17} />}
-                      </button>
-                    </div>
-                    {joinLookupMessage && <p className="mt-1.5 text-xs text-amber-200">{joinLookupMessage}</p>}
-                  </div>
-
-                  {joinMatches.length > 0 && (
-                    <div className="space-y-2">
-                      {joinMatches.map(match => {
-                        const selected = selectedJoinCompanyId === match.company_id
-                        return (
-                          <button
-                            key={`${match.tenant_id}-${match.company_id}`}
-                            type="button"
-                            onClick={() => setSelectedJoinCompanyId(match.company_id)}
-                            className={cn(
-                              'w-full rounded-xl border px-3 py-2 text-left transition',
-                              selected ? 'border-eden-blue bg-eden-blue/15' : 'border-[#28445c] bg-[#091826] hover:bg-white/[0.04]'
-                            )}
-                          >
-                            <span className="block text-sm font-semibold text-white">{match.company_name}</span>
-                            <span className="mt-0.5 block text-xs text-white/45">{match.tenant_name}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={joinForm.first_name}
-                      onChange={event => setJoinForm(current => ({ ...current, first_name: event.target.value }))}
-                      placeholder="Ad"
-                      className={textInputClass}
-                    />
-                    <input
-                      type="text"
-                      value={joinForm.last_name}
-                      onChange={event => setJoinForm(current => ({ ...current, last_name: event.target.value }))}
-                      placeholder="Soyad"
-                      className={textInputClass}
-                    />
-                  </div>
-
-                  <input
-                    type="text"
-                    value={joinForm.national_id}
-                    onChange={event => setJoinForm(current => ({ ...current, national_id: onlyDigits(event.target.value, 11) }))}
-                    placeholder="TC kimlik no"
-                    className={textInputClass}
-                    inputMode="numeric"
-                  />
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="email"
-                      value={joinForm.email}
-                      onChange={event => setJoinForm(current => ({ ...current, email: event.target.value }))}
-                      placeholder="E-posta"
-                      className={textInputClass}
-                      autoComplete="email"
-                    />
-                    <input
-                      type="tel"
-                      value={joinForm.phone}
-                      onChange={event => setJoinForm(current => ({ ...current, phone: onlyDigits(event.target.value, 11) }))}
-                      placeholder="Telefon"
-                      className={textInputClass}
-                      autoComplete="tel"
-                    />
-                  </div>
-
-                  <select
-                    value={joinForm.gender}
-                    onChange={event => setJoinForm(current => ({ ...current, gender: event.target.value as JoinFormState['gender'] }))}
-                    className={textInputClass}
+            <div className={styles.featureGrid}>
+              {PLATFORM_FEATURES.map(feature => {
+                const Icon = feature.icon
+                return (
+                  <article
+                    key={feature.title}
+                    className={styles.featureCard}
+                    style={{ '--feature-color': feature.color } as CSSProperties}
                   >
-                    <option value="male">Erkek</option>
-                    <option value="female">Kadın</option>
-                  </select>
+                    <div className={styles.iconBox}>
+                      <Icon size={25} strokeWidth={1.8} />
+                    </div>
+                    <h2 className={styles.cardTitle}>{feature.title}</h2>
+                    <p className={styles.cardText}>{feature.desc}</p>
+                  </article>
+                )
+              })}
+            </div>
 
-                  {error && <p className="text-xs text-red-300">{error}</p>}
+            <div className={styles.moduleGrid}>
+              {MODULES.map(module => {
+                const Icon = module.icon
+                return (
+                  <article
+                    key={module.name}
+                    className={styles.moduleCard}
+                    style={{ '--feature-color': module.color } as CSSProperties}
+                  >
+                    <div className={styles.iconBox}>
+                      <Icon size={22} strokeWidth={1.8} />
+                    </div>
+                    <div>
+                      <h2 className={styles.cardTitle}>{module.name}</h2>
+                      <p className={styles.cardText}>{module.desc}</p>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+
+            <div className={styles.trustStrip}>
+              {TRUST_ITEMS.map(item => {
+                const Icon = item.icon
+                return (
+                  <div key={item.title} className={styles.trustItem}>
+                    <Icon className={styles.trustIcon} size={31} strokeWidth={1.7} />
+                    <div>
+                      <div className={styles.trustTitle}>{item.title}</div>
+                      <div className={styles.trustText}>{item.desc}</div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+
+          <section className={styles.panelColumn} aria-label="Giriş ve kayıt">
+            <div className={styles.authPanel}>
+              <div className={styles.panelInner}>
+                <div className={styles.panelLogoWrap}>
+                  <Image
+                    src="/brand/eden-logo-colored.png"
+                    alt="Eden ERP"
+                    width={180}
+                    height={80}
+                    className={styles.panelLogo}
+                    priority
+                  />
                 </div>
-              ) : (
-                <div className="mb-4">
-                  <label className="mb-1.5 block text-xs font-semibold text-white/60">
-                    Cep Telefonu veya E-posta
-                  </label>
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={event => {
-                      setValue(event.target.value)
-                      setError('')
+
+                {step === 'kimlik' ? (
+                  <form
+                    onSubmit={event => {
+                      event.preventDefault()
+                      if (!loading) void handleStep1()
                     }}
-                    onKeyDown={event => event.key === 'Enter' && handleStep1()}
-                    placeholder="5554443322 veya ornek@eden.com"
-                    className={textInputClass}
-                    autoComplete="username"
-                    autoFocus={autoFocus}
-                  />
-                  {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleStep1}
-                disabled={loading}
-                className="mb-3 w-full rounded-xl bg-eden-blue py-3 text-sm font-semibold text-white transition-colors hover:bg-eden-blue-dk disabled:opacity-60"
-              >
-                {loading ? modeCopy.loadingLabel : modeCopy.primaryLabel}
-              </button>
-              <p className="text-center text-xs text-white/40">
-                {modeCopy.helper}
-              </p>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => {
-                  setStep('kimlik')
-                  setOtp(['', '', '', '', '', ''])
-                  setFallbackCode(null)
-                  setOtpError('')
-                }}
-                className="mb-6 flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
-              >
-                ← Geri
-              </button>
-              <h2 className="mb-1 font-display text-2xl font-bold text-white">
-                {joinRequestCompleted ? 'Talep Alındı' : modeCopy.otpTitle}
-              </h2>
-              <p className="mb-7 text-sm text-white/55">
-                {joinRequestCompleted
-                  ? 'Başvurunuz onay sürecine alındı.'
-                  : `${isEmailLogin ? `${value} adresine` : `${value} numarasına`} ${modeCopy.otpSubtitleSuffix}`}
-              </p>
-
-              {!joinRequestCompleted && fallbackCode && (
-                <div className="mb-4 rounded-2xl border border-eden-blue/40 bg-[#10283a] px-4 py-3 text-sm text-sky-100">
-                  <div className="mb-1 font-semibold">{modeCopy.temporaryCodeTitle}</div>
-                  <div className="font-mono text-lg">{fallbackCode}</div>
-                  <div className="mt-2 text-xs text-sky-100/70">
-                    SMS servisi baglanana kadar bu gecici kodu kullanin.
-                  </div>
-                  {error && (
-                    <div className="mt-3 rounded-xl border border-eden-blue/25 bg-[#0b1d2d] px-3 py-2 text-xs text-sky-100">
-                      {error}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!joinRequestCompleted && !fallbackCode && error && (
-                <div className="mb-4 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                  {error}
-                </div>
-              )}
-
-              {!joinRequestCompleted && (
-                <div className="mb-4 flex justify-between gap-1.5 sm:gap-2.5">
-                  {otp.map((digit, index) => (
-                    <input
-                      key={index}
-                      ref={element => {
-                        otpRefs.current[index] = element
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={event => handleOtpInput(index, event.target.value)}
-                      onPaste={handleOtpPaste}
-                      onKeyDown={event => {
-                        if (event.key === 'Backspace' && !digit && index > 0) otpRefs.current[index - 1]?.focus()
-                      }}
-                      className={otpInputClass}
-                      aria-label={`Kod hanesi ${index + 1}`}
-                      autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                      autoFocus={autoFocus && index === 0}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {!joinRequestCompleted && otpError && <p className="mb-3 text-xs text-red-300">{otpError}</p>}
-              {success && (
-                <div className="mb-3 rounded-xl border border-emerald-400/30 bg-emerald-500/15 py-3 text-center text-sm font-medium text-emerald-100">
-                  {joinRequestCompleted ? joinRequestMessage : redirectOnSuccess ? modeCopy.successMessage : 'Kod doğrulandı.'}
-                </div>
-              )}
-
-              {joinRequestCompleted && (
-                <button
-                  onClick={() => {
-                    if (loginEnabled) {
-                      switchAuthMode('login')
-                      return
-                    }
-                    setStep('kimlik')
-                    setSuccess(false)
-                    setJoinRequestMessage(null)
-                    setOtp(['', '', '', '', '', ''])
-                    setFallbackCode(null)
-                    setOtpError('')
-                  }}
-                  className="mt-2 w-full rounded-xl bg-eden-blue px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-eden-blue/20 transition hover:bg-eden-blue-dark"
-                >
-                  Giriş ekranına dön
-                </button>
-              )}
-
-              {!joinRequestCompleted && (
-                <div className="flex items-center justify-between text-xs text-white/45">
-                  <span>Kalan süre: <b>{formatTimer(timer)}</b></span>
-                  <button
-                    onClick={handleResend}
-                    disabled={!resendActive || loading}
-                    className={`transition-colors ${resendActive && !loading ? 'cursor-pointer text-sky-300 hover:text-white' : 'cursor-not-allowed opacity-50'}`}
                   >
-                    Kodu tekrar gönder
-                  </button>
-                </div>
-              )}
-              {!joinRequestCompleted && fallbackCode && (
-                <p className="mt-4 rounded-lg border border-[#28445c] bg-[#091826] p-3 text-center text-xs text-white/45">
-                  Telefon dogrulama servisi hazir olana kadar kod ekranda gosterilir.
-                </p>
-              )}
-            </>
-          )}
-        </div>
+                    <AuthModeSwitch mode={authMode} onChange={switchAuthMode} loginEnabled={loginEnabled} />
+                    <h2 className={styles.formTitle}>{modeCopy.title}</h2>
+                    <p className={styles.formSubtitle}>
+                      {authMode === 'signup'
+                        ? 'Yeni bir şirket hesabı açabilir veya kayıtlı şirketinize katılma talebi gönderebilirsiniz.'
+                        : modeCopy.subtitle}
+                    </p>
+
+                    {authMode === 'signup' && (
+                      <div className={styles.signupOptions}>
+                        {SIGNUP_FLOW_OPTIONS.map(option => {
+                          const selected = signupFlow === option.value
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => switchSignupFlow(option.value)}
+                              className={cn(styles.optionButton, selected && styles.selectedOption)}
+                            >
+                              <span className={styles.optionContent}>
+                                <span className={styles.optionCheck}>
+                                  <CheckCircle2 size={14} />
+                                </span>
+                                <span>
+                                  <span className={styles.optionTitle}>{option.label}</span>
+                                  <span className={styles.optionDescription}>{option.description}</span>
+                                </span>
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {authMode === 'signup' && signupFlow === 'join_company' ? (
+                      <div className={styles.joinStack}>
+                        <div>
+                          <label className={styles.label}>Şirket VKN</label>
+                          <div className={styles.fieldRow}>
+                            <input
+                              type="text"
+                              value={joinForm.tax_number}
+                              onChange={event => {
+                                setJoinForm(current => ({ ...current, tax_number: onlyDigits(event.target.value, 10) }))
+                                setSelectedJoinCompanyId(null)
+                                setJoinMatches([])
+                                setJoinLookupMessage(null)
+                                setError('')
+                              }}
+                              placeholder="10 haneli VKN"
+                              className={textInputClass}
+                              inputMode="numeric"
+                              autoFocus={autoFocus}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => lookupCompanyJoinMatches()}
+                              disabled={joinLookupLoading}
+                              className={styles.lookupButton}
+                              title="VKN sorgula"
+                              aria-label="VKN sorgula"
+                            >
+                              {joinLookupLoading ? <span className={styles.spinner} /> : <Search size={18} />}
+                            </button>
+                          </div>
+                          {joinLookupMessage && <p className={styles.warningText} role="status">{joinLookupMessage}</p>}
+                        </div>
+
+                        {joinMatches.length > 0 && (
+                          <div className={styles.joinStack}>
+                            {joinMatches.map(match => {
+                              const selected = selectedJoinCompanyId === match.company_id
+                              return (
+                                <button
+                                  key={`${match.tenant_id}-${match.company_id}`}
+                                  type="button"
+                                  onClick={() => setSelectedJoinCompanyId(match.company_id)}
+                                  className={cn(styles.matchButton, selected && styles.selectedOption)}
+                                >
+                                  <span className={styles.matchTitle}>{match.company_name}</span>
+                                  <span className={styles.matchDescription}>{match.tenant_name}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        <div className={styles.fieldGrid}>
+                          <input
+                            type="text"
+                            value={joinForm.first_name}
+                            onChange={event => setJoinForm(current => ({ ...current, first_name: event.target.value }))}
+                            placeholder="Ad"
+                            className={textInputClass}
+                          />
+                          <input
+                            type="text"
+                            value={joinForm.last_name}
+                            onChange={event => setJoinForm(current => ({ ...current, last_name: event.target.value }))}
+                            placeholder="Soyad"
+                            className={textInputClass}
+                          />
+                        </div>
+
+                        <input
+                          type="text"
+                          value={joinForm.national_id}
+                          onChange={event => setJoinForm(current => ({ ...current, national_id: onlyDigits(event.target.value, 11) }))}
+                          placeholder="TC kimlik no"
+                          className={textInputClass}
+                          inputMode="numeric"
+                        />
+
+                        <div className={styles.fieldGrid}>
+                          <input
+                            type="email"
+                            value={joinForm.email}
+                            onChange={event => setJoinForm(current => ({ ...current, email: event.target.value }))}
+                            placeholder="E-posta"
+                            className={textInputClass}
+                            autoComplete="email"
+                          />
+                          <input
+                            type="tel"
+                            value={joinForm.phone}
+                            onChange={event => setJoinForm(current => ({ ...current, phone: onlyDigits(event.target.value, 11) }))}
+                            placeholder="Telefon"
+                            className={textInputClass}
+                            autoComplete="tel"
+                          />
+                        </div>
+
+                        <select
+                          value={joinForm.gender}
+                          onChange={event => setJoinForm(current => ({ ...current, gender: event.target.value as JoinFormState['gender'] }))}
+                          className={textInputClass}
+                        >
+                          <option value="male">Erkek</option>
+                          <option value="female">Kadın</option>
+                        </select>
+
+                        {error && <p className={styles.errorText} role="alert">{error}</p>}
+                      </div>
+                    ) : (
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Cep Telefonu veya E-posta</label>
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={event => {
+                            setValue(event.target.value)
+                            setError('')
+                          }}
+                          placeholder="5554443322 veya ornek@eden.com"
+                          className={textInputClass}
+                          autoComplete="username"
+                          autoFocus={autoFocus}
+                        />
+                        {error && <p className={styles.errorText} role="alert">{error}</p>}
+                      </div>
+                    )}
+
+                    <button type="submit" disabled={loading} className={styles.primaryButton}>
+                      {loading ? modeCopy.loadingLabel : modeCopy.primaryLabel}
+                      {!loading && <ArrowRight size={19} />}
+                    </button>
+                    <p className={styles.helperText}>{modeCopy.helper}</p>
+                  </form>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep('kimlik')
+                        setOtp(['', '', '', '', '', ''])
+                        setFallbackCode(null)
+                        setOtpError('')
+                      }}
+                      className={styles.backButton}
+                    >
+                      <ArrowLeft size={16} />
+                      Geri
+                    </button>
+                    <h2 className={styles.formTitle}>{joinRequestCompleted ? 'Talep Alındı' : modeCopy.otpTitle}</h2>
+                    <p className={styles.formSubtitle}>
+                      {joinRequestCompleted
+                        ? 'Başvurunuz onay sürecine alındı.'
+                        : `${isEmailLogin ? `${value} adresine` : `${value} numarasına`} ${modeCopy.otpSubtitleSuffix}`}
+                    </p>
+
+                    {!joinRequestCompleted && fallbackCode && (
+                      <div className={styles.infoPanel} role="status">
+                        <div className={styles.temporaryCodeTitle}>{modeCopy.temporaryCodeTitle}</div>
+                        <div className={styles.temporaryCode}>{fallbackCode}</div>
+                        <div className={styles.temporaryText}>
+                          SMS servisi bağlanana kadar bu geçici kodu kullanın.
+                        </div>
+                        {error && <div className={styles.embeddedError}>{error}</div>}
+                      </div>
+                    )}
+
+                    {!joinRequestCompleted && !fallbackCode && error && (
+                      <div className={styles.errorPanel} role="alert">{error}</div>
+                    )}
+
+                    {!joinRequestCompleted && (
+                      <div className={styles.otpRow}>
+                        {otp.map((digit, index) => (
+                          <input
+                            key={index}
+                            ref={element => {
+                              otpRefs.current[index] = element
+                            }}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={event => handleOtpInput(index, event.target.value)}
+                            onPaste={handleOtpPaste}
+                            onKeyDown={event => {
+                              if (event.key === 'Backspace' && !digit && index > 0) otpRefs.current[index - 1]?.focus()
+                            }}
+                            className={otpInputClass}
+                            aria-label={`Kod hanesi ${index + 1}`}
+                            autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                            autoFocus={autoFocus && index === 0}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {!joinRequestCompleted && otpError && <p className={styles.errorText} role="alert">{otpError}</p>}
+                    {success && (
+                      <div className={styles.successPanel} role="status">
+                        {joinRequestCompleted ? joinRequestMessage : redirectOnSuccess ? modeCopy.successMessage : 'Kod doğrulandı.'}
+                      </div>
+                    )}
+
+                    {joinRequestCompleted && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (loginEnabled) {
+                            switchAuthMode('login')
+                            return
+                          }
+                          setStep('kimlik')
+                          setSuccess(false)
+                          setJoinRequestMessage(null)
+                          setOtp(['', '', '', '', '', ''])
+                          setFallbackCode(null)
+                          setOtpError('')
+                        }}
+                        className={styles.primaryButton}
+                      >
+                        Giriş ekranına dön
+                      </button>
+                    )}
+
+                    {!joinRequestCompleted && (
+                      <div className={styles.otpMeta}>
+                        <span>Kalan süre: <b>{formatTimer(timer)}</b></span>
+                        <button
+                          type="button"
+                          onClick={handleResend}
+                          disabled={!resendActive || loading}
+                          className={styles.resendButton}
+                        >
+                          Kodu tekrar gönder
+                        </button>
+                      </div>
+                    )}
+
+                    {!joinRequestCompleted && fallbackCode && (
+                      <p className={styles.temporaryNote}>
+                        Telefon doğrulama servisi hazır olana kadar kod ekranda gösterilir.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                <SecurityNote />
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
-    </div>
-  )
+    )
 }
 
 export default LoginExperience
