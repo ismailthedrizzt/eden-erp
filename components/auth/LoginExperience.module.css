@@ -167,6 +167,15 @@
   background-image: none !important;
 }
 
+.root .content,
+.shell .content,
+:global(html[data-eden-theme]) .root .content,
+:global(html[data-visual-theme]) .root .content {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
 .brandColumn {
   display: flex;
   flex-direction: column;
