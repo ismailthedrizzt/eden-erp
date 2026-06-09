@@ -1,0 +1,44 @@
+const { spawnSync } = require('child_process')
+
+const full = process.argv.includes('--full') || process.env.EDEN_QUALITY_GATE_PROFILE === 'full'
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+
+const coreChecks = [
+  ['page flow contracts', ['run', 'page-flow:contract:check']],
+  ['typecheck', ['run', 'typecheck:local']],
+  ['release registry', ['run', 'release:check']],
+  ['environment safety', ['run', 'env:safety']],
+  ['database target safety', ['run', 'db:target:check']],
+  ['import boundaries', ['run', 'boundaries:check']],
+  ['OpenAPI drift', ['run', 'openapi:drift']],
+]
+
+const fullChecks = [
+  ['frontend build', ['run', 'build']],
+  ['ESLint', ['run', 'lint']],
+  ['backend lint', ['run', 'backend:lint']],
+  ['backend typecheck', ['run', 'backend:typecheck']],
+  ['backend tests', ['run', 'backend:test']],
+  ['smoke test dry run', ['run', 'smoke:test:dry']],
+]
+
+function runCheck(name, args) {
+  console.log(`\n==> ${name}`)
+  const result = spawnSync(npmCommand, args, {
+    cwd: process.cwd(),
+    env: process.env,
+    shell: false,
+    stdio: 'inherit',
+  })
+  if (result.status !== 0) {
+    console.error(`\nQuality gate failed at: ${name}`)
+    process.exit(result.status || 1)
+  }
+}
+
+for (const [name, args] of coreChecks) runCheck(name, args)
+if (full) {
+  for (const [name, args] of fullChecks) runCheck(name, args)
+} else {
+  console.log('\nCore quality gate passed. Run `npm run eden:quality-gate -- --full` before release handoff.')
+}

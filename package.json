@@ -24,6 +24,8 @@
     "openapi:generate": "openapi-typescript backend/openapi.json -o lib/generated/backend-client/types.ts && node scripts/mark-generated-openapi-client.js",
     "openapi:refresh": "npm run openapi:export && npm run openapi:generate",
     "openapi:drift": "npm run openapi:refresh && git diff --exit-code backend/openapi.json lib/generated/backend-client/types.ts",
+    "page-flow:contract:check": "node scripts/check-page-flow-contracts.js",
+    "eden:quality-gate": "node scripts/eden-quality-gate.js",
     "demo:seed": "node scripts/check-database-target.js demo:seed && cd backend && .venv/bin/python scripts/seed_demo.py",
     "demo:seed:dry": "node scripts/check-database-target.js demo:seed:dry && cd backend && .venv/bin/python scripts/seed_demo.py --dry-run",
     "demo:validate": "backend/.venv/bin/python backend/scripts/validate_demo_data.py",
