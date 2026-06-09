@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.projections.representative import _apply_scope_filters
+from app.projections.representative import _apply_scope_filters, _merge_current_authority
 from app.projections.types import ProjectionQueryInput
 
 
@@ -18,6 +18,41 @@ def test_representative_record_and_authority_status_are_separate() -> None:
 
     assert rows[0]["record_status"] == "active"
     assert rows[0]["authority_status"] == "suspended"
+
+
+def test_authority_hydration_keeps_representative_identity_fields() -> None:
+    representative = {
+        "id": "representative-1",
+        "record_status": "active",
+        "status": "Aktif",
+        "updated_at": "representative-updated",
+        "version": 3,
+    }
+    authority = {
+        "id": "authority-transaction-1",
+        "representative_id": "representative-1",
+        "status": "approved",
+        "record_status": "draft",
+        "updated_at": "authority-updated",
+        "version": 9,
+        "authority_record_status": "active",
+        "authority_types": ["signature_authority"],
+        "scope_type": "company_wide",
+    }
+
+    _merge_current_authority(representative, authority)
+
+    assert representative["id"] == "representative-1"
+    assert representative["record_status"] == "active"
+    assert representative["status"] == "Aktif"
+    assert representative["updated_at"] == "representative-updated"
+    assert representative["version"] == 3
+    assert representative["authority_record_status"] == "active"
+    assert representative["authority_status"] == "active"
+    assert representative["authority_types"] == ["signature_authority"]
+    assert representative["scope_type"] == "company_wide"
+    assert representative["current_authority"]["id"] == "authority-transaction-1"
+    assert representative["current_authority"]["status"] == "approved"
 
 
 def test_branch_filter_includes_company_wide_when_requested() -> None:

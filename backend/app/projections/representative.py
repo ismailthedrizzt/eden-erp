@@ -14,6 +14,39 @@ from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
 
+_AUTHORITY_TOP_LEVEL_FIELDS = {
+    "authority_status",
+    "authority_record_status",
+    "authority_status_label",
+    "authority_types",
+    "primary_authority_type",
+    "signature_type",
+    "transaction_limit",
+    "payment_approval_limit",
+    "purchase_approval_limit",
+    "bank_transaction_limit",
+    "contract_signature_limit",
+    "currency",
+    "limits",
+    "scope",
+    "scope_type",
+    "branch_id",
+    "organization_unit_id",
+    "facility_id",
+    "scope_label",
+    "scope_notes",
+    "requires_joint_signature",
+    "can_approve_alone",
+    "effective_date",
+    "end_date",
+    "warnings",
+    "transaction_no",
+    "transaction_type",
+    "authority_effect_status",
+    "bank_authority_level",
+    "department_scope",
+}
+
 
 async def list_representative_projection(
     session: AsyncSession,
@@ -121,11 +154,45 @@ async def _hydrate_authorities(
         authority = authority_by_rep.get(str(row.get("id")))
         if not authority:
             continue
-        for key, value in authority.items():
-            if key == "representative_id":
-                continue
-            row[key] = value
+        _merge_current_authority(row, authority)
     return []
+
+
+def _merge_current_authority(
+    representative: dict[str, Any],
+    authority: dict[str, Any],
+) -> None:
+    current_authority = _current_authority_payload(authority)
+    representative["current_authority"] = current_authority
+    for key in _AUTHORITY_TOP_LEVEL_FIELDS:
+        if key in current_authority:
+            representative[key] = current_authority[key]
+
+
+def _current_authority_payload(authority: dict[str, Any]) -> dict[str, Any]:
+    payload = {
+        key: value
+        for key, value in authority.items()
+        if key != "representative_id"
+    }
+    authority_record_status = payload.get("authority_record_status") or payload.get(
+        "authority_status"
+    )
+    authority_status = payload.get("authority_status") or authority_record_status
+    if authority_record_status is not None:
+        payload["authority_record_status"] = authority_record_status
+    if authority_status is not None:
+        payload["authority_status"] = authority_status
+    if payload.get("warnings") is None:
+        payload["warnings"] = []
+    scope = {
+        key: payload.get(key)
+        for key in ["scope_type", "branch_id", "organization_unit_id", "facility_id"]
+        if payload.get(key) is not None
+    }
+    if scope and not isinstance(payload.get("scope"), dict):
+        payload["scope"] = scope
+    return payload
 
 
 def _normalize_representative_row(row: dict[str, Any]) -> dict[str, Any]:

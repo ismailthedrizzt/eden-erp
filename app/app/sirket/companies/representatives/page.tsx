@@ -851,7 +851,19 @@ export default function TemsilcilerPage() {
   const handleAuthorityWizardSubmit = async (result: Record<string, any>, payload: Record<string, any>) => {
     if (!selectedRepresentative?.id) return
     const representativeResult = result.data?.representative || result.data
-    if (representativeResult) setSelectedRepresentative(normalizeRepresentativeForForm(representativeResult))
+    const currentAuthority = result.data?.current_authority || representativeResult?.current_authority
+    if (representativeResult) {
+      const nextRepresentative = currentAuthority
+        ? {
+            ...representativeResult,
+            current_authority: currentAuthority,
+            authority_status: currentAuthority.authority_status || representativeResult.authority_status,
+            authority_record_status: currentAuthority.authority_record_status || representativeResult.authority_record_status,
+            authority_types: currentAuthority.authority_types || representativeResult.authority_types,
+          }
+        : representativeResult
+      setSelectedRepresentative(normalizeRepresentativeForForm(nextRepresentative))
+    }
     setAuthorityWizardOpen(false)
     invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
     await loadData(true)
