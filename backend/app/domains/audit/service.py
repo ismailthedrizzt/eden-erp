@@ -18,6 +18,61 @@ from app.domains.operations.service import table_exists
 
 logger = logging.getLogger(__name__)
 
+AUDIT_REQUIRED_COLUMNS = {
+    "id",
+    "tenant_id",
+    "company_id",
+    "branch_id",
+    "module_key",
+    "entity_type",
+    "entity_id",
+    "resource",
+    "record_id",
+    "action",
+    "action_type",
+    "action_key",
+    "operation_id",
+    "process_instance_id",
+    "task_id",
+    "approval_id",
+    "outbox_event_id",
+    "user_id",
+    "before_json",
+    "after_json",
+    "old_values",
+    "new_values",
+    "changed_fields",
+    "summary",
+    "result_status",
+    "severity",
+    "metadata_json",
+}
+
+
+async def _table_columns(session: AsyncSession, table_name: str) -> set[str]:
+    result = await session.execute(
+        text(
+            """
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = :table_name
+            """
+        ),
+        {"table_name": table_name},
+    )
+    return {str(column) for column in result.scalars().all()}
+
+
+async def _assert_audit_schema_compatible(session: AsyncSession) -> None:
+    columns = await _table_columns(session, "audit_logs")
+    missing = sorted(AUDIT_REQUIRED_COLUMNS - columns)
+    if missing:
+        raise RuntimeError(
+            "Audit infrastructure is not compatible. "
+            f"Missing columns: {', '.join(missing)}"
+        )
+
 
 async def record_audit(
     session: AsyncSession,
@@ -45,6 +100,7 @@ async def record_audit(
     started = time.perf_counter()
     if not await table_exists(session, "public.audit_logs"):
         raise RuntimeError("Audit infrastructure is not available.")
+    await _assert_audit_schema_compatible(session)
     audit_id = str(uuid4())
     masked_old = mask_sensitive_data(old_values or {})
     masked_new = mask_sensitive_data(new_values or {})

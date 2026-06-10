@@ -15,6 +15,49 @@ from app.domains.operations.service import table_exists
 
 logger = logging.getLogger(__name__)
 
+OUTBOX_REQUIRED_COLUMNS = {
+    "id",
+    "tenant_id",
+    "company_id",
+    "module_key",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "operation_id",
+    "process_instance_id",
+    "causation_id",
+    "correlation_id",
+    "payload_json",
+    "metadata_json",
+    "status",
+}
+
+
+async def _table_columns(session: AsyncSession, table_name: str) -> set[str]:
+    result = await session.execute(
+        text(
+            """
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = :table_name
+            """
+        ),
+        {"table_name": table_name},
+    )
+    return {str(column) for column in result.scalars().all()}
+
+
+async def _assert_outbox_schema_compatible(session: AsyncSession) -> None:
+    columns = await _table_columns(session, "outbox_events")
+    missing = sorted(OUTBOX_REQUIRED_COLUMNS - columns)
+    if missing:
+        raise RuntimeError(
+            "Outbox infrastructure is not compatible. "
+            f"Missing columns: {', '.join(missing)}"
+        )
+
 
 async def enqueue_event(
     session: AsyncSession,
@@ -32,6 +75,7 @@ async def enqueue_event(
 ) -> dict[str, Any]:
     if not await table_exists(session, "public.outbox_events"):
         raise RuntimeError("Outbox infrastructure is not available.")
+    await _assert_outbox_schema_compatible(session)
     event_id = str(uuid4())
     result = await session.execute(
         text(
@@ -111,14 +155,15 @@ async def enqueue_outbox_event_best_effort(
     payload: dict[str, Any],
 ) -> str | None:
     try:
-        row = await enqueue_event(
-            session,
-            context,
-            event_type=event_type,
-            aggregate_type=aggregate_type,
-            aggregate_id=aggregate_id,
-            payload=payload,
-        )
+        async with session.begin_nested():
+            row = await enqueue_event(
+                session,
+                context,
+                event_type=event_type,
+                aggregate_type=aggregate_type,
+                aggregate_id=aggregate_id,
+                payload=payload,
+            )
         return str(row["id"])
     except Exception as error:  # pragma: no cover - best-effort safety net
         increment_counter("outbox_enqueue_failed_count")

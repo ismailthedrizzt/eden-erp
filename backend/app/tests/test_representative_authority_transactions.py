@@ -6,9 +6,30 @@ import pytest
 from pydantic import ValidationError
 
 from app.core.errors import DomainError
+from app.domains.audit.service import AUDIT_REQUIRED_COLUMNS, _assert_audit_schema_compatible
 from app.domains.operations.service import _coerce_base_updated_at
+from app.domains.outbox.service import OUTBOX_REQUIRED_COLUMNS, _assert_outbox_schema_compatible
 from app.domains.representatives import service as representative_service
 from app.domains.representatives.schemas import RepresentativeAuthorityTransactionRequest
+
+
+class _ColumnResult:
+    def __init__(self, columns: set[str]) -> None:
+        self.columns = columns
+
+    def scalars(self) -> _ColumnResult:
+        return self
+
+    def all(self) -> list[str]:
+        return sorted(self.columns)
+
+
+class _ColumnSession:
+    def __init__(self, columns: set[str]) -> None:
+        self.columns = columns
+
+    async def execute(self, *_args: Any, **_kwargs: Any) -> _ColumnResult:
+        return _ColumnResult(self.columns)
 
 
 def valid_authority_payload() -> dict[str, Any]:
@@ -52,6 +73,22 @@ def test_operation_base_updated_at_accepts_z_suffix() -> None:
     assert value is not None
     assert value.year == 2026
     assert value.tzinfo is not None
+
+
+@pytest.mark.asyncio
+async def test_outbox_schema_guard_reports_missing_legacy_columns() -> None:
+    session = _ColumnSession(OUTBOX_REQUIRED_COLUMNS - {"event_version"})
+
+    with pytest.raises(RuntimeError, match="event_version"):
+        await _assert_outbox_schema_compatible(session)  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+async def test_audit_schema_guard_reports_missing_legacy_columns() -> None:
+    session = _ColumnSession(AUDIT_REQUIRED_COLUMNS - {"tenant_id"})
+
+    with pytest.raises(RuntimeError, match="tenant_id"):
+        await _assert_audit_schema_compatible(session)  # type: ignore[arg-type]
 
 
 @pytest.mark.asyncio
