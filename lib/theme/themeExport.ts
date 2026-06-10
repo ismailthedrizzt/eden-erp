@@ -6,7 +6,7 @@ export function exportEdenTheme(themeKey: string) {
   if (!theme) return null
 
   return {
-    filename: `${theme.themeKey}.eden-theme.json`,
+    filename: `${theme.meta.themeKey}.eden-theme.v2.json`,
     contentType: 'application/json; charset=utf-8',
     body: JSON.stringify(theme, null, 2),
   }
@@ -17,7 +17,7 @@ export function exportFigmaTokens(themeKey: string) {
   if (!theme) return null
 
   return {
-    filename: `${theme.themeKey}.figma-tokens.json`,
+    filename: `${theme.meta.themeKey}.figma-tokens.json`,
     contentType: 'application/json; charset=utf-8',
     body: JSON.stringify(edenThemeToFigmaTokens(theme), null, 2),
   }
@@ -28,7 +28,7 @@ export function exportCssVariables(themeKey: string) {
   if (!theme) return null
 
   return {
-    filename: `${theme.themeKey}.css-variables.css`,
+    filename: `${theme.meta.themeKey}.css-variables.css`,
     contentType: 'text/css; charset=utf-8',
     body: edenThemeToCssVariables(theme),
   }
@@ -39,7 +39,7 @@ export function exportThemeReadme(themeKey: string) {
   if (!theme) return null
 
   return {
-    filename: `${theme.themeKey}.README.md`,
+    filename: `${theme.meta.themeKey}.README.md`,
     contentType: 'text/markdown; charset=utf-8',
     body: buildThemeReadme(theme),
   }
@@ -54,23 +54,25 @@ export function exportThemeArtifact(themeKey: string, format: ThemeExportFormat)
 }
 
 function buildThemeReadme(theme: EdenThemePackage) {
-  return `# ${theme.displayName}
+  return `# ${theme.meta.displayName}
 
-Theme key: \`${theme.themeKey}\`
+Theme key: \`${theme.meta.themeKey}\`
 Schema version: \`${theme.schemaVersion}\`
-Package version: \`${theme.version}\`
+Package version: \`${theme.meta.version}\`
+Scope: \`${theme.meta.scope}\`
 
 ## Designer Scope
 
 - Layout, navigation, workflows and component structure must not change.
-- Edit only design tokens in \`eden-theme.json\` or Tokens Studio compatible JSON.
+- Edit only V2 token, illustration and asset reference fields in \`eden-theme.v2.json\`.
 - Do not add CSS, JavaScript, HTML, external URLs, font files, SVG payloads or executable content.
-- Light and dark tokens must be maintained together.
+- Light and dark mode definitions must be maintained together under \`modes.light\` and \`modes.dark\`.
+- PageBanner, Smart List, form hero, wizard and dashboard visual assets are references, not embedded binaries.
 - Keep contrast readable for ERP tables, forms, badges, warnings and primary actions.
 
 ## Expected Files
 
-- \`eden-theme.json\`
+- \`eden-theme.v2.json\`
 - \`figma-tokens.json\`
 - \`css-variables.css\`
 - \`README.md\`
@@ -91,6 +93,6 @@ Package version: \`${theme.version}\`
 
 ## Import Rule
 
-Returned files are validated as JSON-only design tokens. Imported themes enter preview status first and require admin approval before activation.
+Returned files are validated as V2 JSON-only design tokens. Imported themes enter review status first and require lifecycle activation before use.
 `
 }

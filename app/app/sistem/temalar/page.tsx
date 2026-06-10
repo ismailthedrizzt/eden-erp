@@ -17,7 +17,7 @@ export default function VisualThemesAdminPage() {
   const [result, setResult] = useState<ThemeImportPreviewRecord | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const selectedPreview = useMemo(() => result?.status === 'preview' ? result : null, [result])
+  const selectedPreview = useMemo(() => result?.status === 'review' ? result : null, [result])
 
   async function handleFile(file: File | null) {
     if (!file) return
@@ -46,7 +46,7 @@ export default function VisualThemesAdminPage() {
       if (preview.theme) {
         window.localStorage.setItem(THEME_IMPORT_PREVIEW_STORAGE_KEY, JSON.stringify(preview.theme))
       }
-      setToast({ type: 'success', title: 'Preview hazir', message: 'Tema Design Lab icin local preview olarak kaydedildi.' })
+      setToast({ type: 'success', title: 'Inceleme hazir', message: 'Tema Design Lab icin V2 local inceleme kaydi olarak saklandi.' })
     } catch (error) {
       setToast({ type: 'error', title: 'Import reddedildi', message: error instanceof Error ? error.message : 'Tema import edilemedi.' })
     } finally {
@@ -133,7 +133,7 @@ export default function VisualThemesAdminPage() {
                 value={jsonText}
                 onChange={event => setJsonText(event.target.value)}
                 rows={12}
-                placeholder={'{ "schemaVersion": "1.0.0", ... }'}
+                placeholder={'{ "schemaVersion": "2.0.0", "meta": { ... }, "modes": { ... } }'}
                 className="w-full resize-y rounded-md border border-border bg-background p-3 font-mono text-xs outline-none focus:border-primary"
               />
 
@@ -194,11 +194,11 @@ function ValidationPanel({ result }: { result: ThemeImportPreviewRecord }) {
   return (
     <section className={cn(
       'rounded-md border p-4',
-      result.status === 'preview' ? 'border-emerald-200 bg-emerald-50 text-emerald-950' : 'border-red-200 bg-red-50 text-red-950'
+      result.status === 'review' ? 'border-emerald-200 bg-emerald-50 text-emerald-950' : 'border-red-200 bg-red-50 text-red-950'
     )}>
       <div className="mb-2 flex items-center gap-2">
-        {result.status === 'preview' ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-        <h2 className="text-sm font-semibold">{result.status === 'preview' ? 'Preview hazir' : 'Import reddedildi'}</h2>
+        {result.status === 'review' ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+        <h2 className="text-sm font-semibold">{result.status === 'review' ? 'Inceleme hazir' : 'Import reddedildi'}</h2>
       </div>
       <div className="space-y-1 text-sm">
         <p>Tema: {result.displayName || result.themeKey || '-'}</p>

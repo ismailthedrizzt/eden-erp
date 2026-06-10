@@ -53,12 +53,12 @@ export function DesignLabShell() {
   const activeTheme = findThemeConcept(activeThemeId)
   const themeVars = useMemo(() => {
     if (showImportedPreview && importedPreviewTheme) {
-      return themeTokensToDesignLabCssVars(importedPreviewTheme.tokens[previewAppearance])
+      return themeTokensToDesignLabCssVars(importedPreviewTheme.modes[previewAppearance])
     }
     return getThemeCssVars(activeTheme, previewAppearance)
   }, [activeTheme, importedPreviewTheme, previewAppearance, showImportedPreview])
   const previewDisplayName = showImportedPreview && importedPreviewTheme
-    ? importedPreviewTheme.displayName
+    ? importedPreviewTheme.meta.displayName
     : activeTheme.name
 
   useEffect(() => {
@@ -197,7 +197,7 @@ export function DesignLabShell() {
                   Imported preview theme
                 </div>
                 <p className="mt-1 text-sm text-[var(--dl-text-secondary)]">
-                  {importedPreviewTheme.displayName} preview olarak yuklendi. Bu secim global user preference yazmaz.
+                  {importedPreviewTheme.meta.displayName} preview olarak yuklendi. Bu secim global user preference yazmaz.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

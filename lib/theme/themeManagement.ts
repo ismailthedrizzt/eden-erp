@@ -1,56 +1,48 @@
-import { DEFAULT_VISUAL_THEME_ID, themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
+import { themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
 import { themeConceptToEdenTheme, themeTokensToCssVars } from './themeTransforms'
 import { validateEdenThemePackage } from './themeValidation'
-import type { EdenThemePackage, ThemeAppearance, ThemeValidationResult } from './themeSchema'
+import type {
+  EdenThemePackage,
+  ThemeAppearance,
+  ThemeLifecycleStatus,
+  ThemeValidationResult,
+} from './themeSchema'
 
-export const THEME_MANAGEMENT_STORAGE_KEY = 'eden.themeManagement.records'
+export const THEME_MANAGEMENT_STORAGE_KEY = 'eden.themeManagement.records.v2'
 export const THEME_MANAGEMENT_CHANGE_EVENT = 'eden:theme-management-change'
 
-export type ManagedThemeStatus = 'draft' | 'preview' | 'active' | 'inactive' | 'archived' | 'rejected'
+export type ManagedThemeStatus = ThemeLifecycleStatus
 export type ManagedThemeSource = 'system' | 'imported' | 'user_created' | 'generated'
 export type ManagedThemeDensity = 'minimal' | 'balanced' | 'rich'
-export type ManagedMotifType =
-  | 'none'
-  | 'geometric'
-  | 'botanical'
-  | 'horizon'
-  | 'circles'
-  | 'skyline'
-  | 'broken_grid'
-  | 'custom_svg'
+export type ManagedMotifType = EdenThemePackage['modes']['light']['motif']['type']
 
-export interface ManagedThemeComponentTokens {
-  shell: Record<string, string>
-  pageBanner: Record<string, string>
-  cards: Record<string, string>
-  forms: Record<string, string>
-  tables: Record<string, string>
-  badges: Record<string, string>
-  wizard: Record<string, string>
-  interaction: Record<string, string>
-  shape: Record<string, string>
-  shadow: Record<string, string>
-  density: Record<string, string>
-  icon: Record<string, string>
+export interface ManagedThemeAssetImage {
+  slotId: string
+  file?: File
+  previewUrl?: string
+  thumbnailUrl?: string
+  url?: string
+  name?: string
+  size?: number
+  uploadedAt?: Date | string
 }
 
-export interface ManagedThemeMotifConfig {
-  motifType: ManagedMotifType
-  bannerEnabled: boolean
-  contentEnabled: boolean
-  emptyStateEnabled: boolean
-  wizardEnabled: boolean
-  primaryColor: string
-  secondaryColor: string
-  warmColor: string
-  opacityLight: number
-  opacityDark: number
-  lineWidth: number
-  placement: 'top-right' | 'top-left' | 'bottom-right' | 'background-center' | 'corner-frame'
-  density: ManagedThemeDensity
-  inlineSvgTemplate: string
-  cssBackgroundTemplate: string
+export interface ManagedThemeAssetDocument {
+  slotId: string
+  documentId?: string
+  storagePath?: string
+  file?: File
+  name: string
+  size: number
+  type: string
+  uploadedAt?: Date | string
+  status?: 'active' | 'archived' | 'deleted' | string
+  url?: string
+  previewUrl?: string
 }
+
+export type ManagedThemeComponentTokens = EdenThemePackage['modes']['light']['components']
+export type ManagedThemeMotifConfig = EdenThemePackage['modes']['light']['motif']
 
 export interface ManagedThemeAuditEvent {
   eventType: string
@@ -81,6 +73,8 @@ export interface ManagedThemeRecord {
   createdAt: string
   updatedAt: string
   createdBy: string
+  images: ManagedThemeAssetImage[]
+  documents: ManagedThemeAssetDocument[]
   audit: ManagedThemeAuditEvent[]
 }
 
@@ -97,48 +91,33 @@ export function getSystemThemeRecords(): ManagedThemeRecord[] {
   return themeConcepts.map(theme => {
     const themePackage = themeConceptToEdenTheme(theme)
     const validation = validateEdenThemePackage(themePackage).validation
-    const now = '2026-06-09T00:00:00.000Z'
-    const isDefaultActive = theme.id === DEFAULT_VISUAL_THEME_ID
+    const now = themePackage.meta.updatedAt || '2026-06-10T00:00:00.000Z'
     return {
       id: `system_${theme.id}`,
-      themeKey: theme.id,
-      displayName: theme.name,
-      description: theme.description,
-      status: isDefaultActive ? 'active' : 'inactive',
+      themeKey: themePackage.meta.themeKey,
+      displayName: themePackage.meta.displayName,
+      description: themePackage.meta.description,
+      status: themePackage.meta.status,
       source: 'system',
-      artDirection: theme.artDirection,
-      inspiration: theme.inspiration,
-      category: 'system',
+      artDirection: themePackage.metadata.artDirection,
+      inspiration: themePackage.metadata.inspiration,
+      category: themePackage.metadata.category,
       supportsLight: true,
       supportsDark: true,
       canBeDefault: true,
-      notes: theme.designerNote,
-      author: 'EDEN Teknoloji',
-      version: '1.0.0',
+      notes: themePackage.metadata.notes,
+      author: themePackage.meta.author,
+      version: themePackage.meta.version,
       package: themePackage,
       componentTokens: componentTokensFromPackage(themePackage, 'light'),
-      motif: {
-        motifType: motifTypeFromSystemTheme(theme.id),
-        bannerEnabled: theme.motif.useOnHero,
-        contentEnabled: theme.motif.useOnSectionHeaders,
-        emptyStateEnabled: theme.motif.useOnEmptyStates,
-        wizardEnabled: theme.motif.useOnFeaturedCards,
-        primaryColor: theme.colors.accentPrimary,
-        secondaryColor: theme.colors.accentSecondary,
-        warmColor: theme.colors.accentWarm,
-        opacityLight: theme.motif.opacity.light,
-        opacityDark: theme.motif.opacity.dark,
-        lineWidth: theme.motif.lineWeight,
-        placement: 'corner-frame',
-        density: 'balanced',
-        inlineSvgTemplate: '',
-        cssBackgroundTemplate: '',
-      },
+      motif: themePackage.modes.light.motif,
       validation,
       createdAt: now,
       updatedAt: now,
       createdBy: 'system',
-      audit: [{ eventType: isDefaultActive ? 'theme_activated' : 'theme_approved', timestamp: now, summary: isDefaultActive ? 'Default system theme is active.' : 'System theme is approved but not active.' }],
+      images: [],
+      documents: [],
+      audit: [{ eventType: 'theme_seeded', timestamp: now, summary: 'System V2 theme seed.' }],
     }
   })
 }
@@ -156,22 +135,26 @@ export function readManagedThemeRecords(): ManagedThemeRecord[] {
 
 export function writeManagedThemeRecords(records: ManagedThemeRecord[]) {
   if (typeof window === 'undefined') return
-  window.localStorage.setItem(THEME_MANAGEMENT_STORAGE_KEY, JSON.stringify(records.map(sanitizeManagedThemeRecord).filter(Boolean)))
+  const clean = records.map(sanitizeManagedThemeRecord).filter(Boolean) as ManagedThemeRecord[]
+  window.localStorage.setItem(THEME_MANAGEMENT_STORAGE_KEY, JSON.stringify(clean))
   window.dispatchEvent(new CustomEvent(THEME_MANAGEMENT_CHANGE_EVENT))
 }
 
 export function upsertManagedThemeRecord(record: ManagedThemeRecord) {
+  const clean = sanitizeManagedThemeRecord(record)
+  if (!clean) return
   const records = readManagedThemeRecords()
   const next = records
-    .filter(item => item.id !== record.id && item.themeKey !== record.themeKey)
-    .map(item => record.status === 'active' && item.status === 'active'
-      ? withThemeLifecycle(item, 'inactive', 'Automatically deactivated because another system theme was activated.')
-      : item)
-  writeManagedThemeRecords([record, ...next])
+    .filter(item => item.id !== clean.id && item.themeKey !== clean.themeKey)
+    .map(item => clean.status === 'active' && item.status === 'active'
+      ? withThemeLifecycle(item, 'approved', 'Yeni sistem temasi aktiflestigi icin onceki tema onayli duruma alindi.')
+      : item
+    )
+  writeManagedThemeRecords([clean, ...next])
 }
 
 export function deleteManagedThemeRecord(recordId: string) {
-  writeManagedThemeRecords(readManagedThemeRecords().filter(item => item.id !== recordId))
+  writeManagedThemeRecords(readManagedThemeRecords().filter(item => item.id !== recordId && item.status !== 'active'))
 }
 
 export function listActiveManagedThemeRecords() {
@@ -186,7 +169,7 @@ export function findManagedThemeRecord(themeKey: string | null | undefined) {
 export function getManagedThemeCssVars(themeKey: string, appearance: ThemeAppearance) {
   const record = findManagedThemeRecord(themeKey)
   if (!record) return null
-  return themeTokensToCssVars(record.package.tokens[appearance])
+  return record.package.cssVariables[appearance] || themeTokensToCssVars(record.package.modes[appearance])
 }
 
 export function createDraftThemeRecord(options: {
@@ -200,26 +183,42 @@ export function createDraftThemeRecord(options: {
   createdBy?: string
 }) {
   const baseTheme = themeConcepts.find(theme => theme.id === options.baseThemeId) || themeConcepts[0]
-  const themePackage = {
-    ...themeConceptToEdenTheme(baseTheme),
-    themeKey: options.themeKey,
-    displayName: options.displayName,
-    description: options.description || '',
-    author: options.createdBy || 'development_admin',
-    version: '0.1.0',
-    metadata: {
-      personality: options.artDirection || baseTheme.artDirection,
-      bestFor: options.category || 'custom_theme',
-      decorativeMotif: themeConceptToEdenTheme(baseTheme).metadata?.decorativeMotif,
-      createdAt: new Date().toISOString(),
-      source: 'generated',
+  const now = new Date().toISOString()
+  const basePackage = themeConceptToEdenTheme(baseTheme)
+  const themePackage = refreshThemePackage({
+    ...basePackage,
+    meta: {
+      ...basePackage.meta,
+      id: options.themeKey,
+      themeKey: options.themeKey,
+      displayName: options.displayName,
+      slug: options.themeKey,
+      description: options.description || '',
+      author: options.createdBy || 'development_admin',
+      version: '0.1.0',
+      status: 'draft',
+      isActive: false,
+      isDefault: false,
+      createdAt: now,
+      updatedAt: now,
     },
-  } satisfies EdenThemePackage
+    lifecycle: {
+      status: 'draft',
+      reason: 'Theme draft created from V2 template.',
+    },
+    metadata: {
+      ...basePackage.metadata,
+      artDirection: options.artDirection || basePackage.metadata.artDirection,
+      inspiration: options.inspiration || basePackage.metadata.inspiration,
+      category: options.category || 'system',
+      source: 'user_created',
+      notes: '',
+    },
+  })
 
   const validation = validateEdenThemePackage(themePackage).validation
-  const now = new Date().toISOString()
   return {
-    id: `draft_${options.themeKey}_${Date.now()}`,
+    id: `theme_${options.themeKey}_${Date.now()}`,
     themeKey: options.themeKey,
     displayName: options.displayName,
     description: options.description || '',
@@ -227,7 +226,7 @@ export function createDraftThemeRecord(options: {
     source: 'user_created',
     artDirection: options.artDirection || '',
     inspiration: options.inspiration || '',
-    category: options.category || 'custom',
+    category: options.category || 'system',
     supportsLight: true,
     supportsDark: true,
     canBeDefault: false,
@@ -236,235 +235,145 @@ export function createDraftThemeRecord(options: {
     version: '0.1.0',
     package: themePackage,
     componentTokens: componentTokensFromPackage(themePackage, 'light'),
-    motif: defaultMotifFromPackage(themePackage),
+    motif: themePackage.modes.light.motif,
     validation,
     createdAt: now,
     updatedAt: now,
     createdBy: options.createdBy || 'development_admin',
-    audit: [{ eventType: 'theme_created', timestamp: now, summary: 'Draft theme created.' }],
+    images: [],
+    documents: [],
+    audit: [{ eventType: 'theme_created', timestamp: now, summary: 'V2 draft theme created.' }],
   } satisfies ManagedThemeRecord
 }
 
 export function createImportedThemeRecord(themePackage: EdenThemePackage, validation: ThemeValidationResult, createdBy = 'development_admin') {
   const now = new Date().toISOString()
+  const nextPackage = refreshThemePackage({
+    ...themePackage,
+    meta: {
+      ...themePackage.meta,
+      status: validation.valid ? 'review' : 'rejected',
+      isActive: false,
+      updatedAt: now,
+    },
+    lifecycle: {
+      ...themePackage.lifecycle,
+      status: validation.valid ? 'review' : 'rejected',
+      submittedAt: validation.valid ? now : themePackage.lifecycle.submittedAt,
+    },
+    metadata: {
+      ...themePackage.metadata,
+      source: 'imported',
+    },
+  })
+
   return {
-    id: `imported_${themePackage.themeKey}_${Date.now()}`,
-    themeKey: themePackage.themeKey,
-    displayName: themePackage.displayName,
-    description: themePackage.description || '',
-    status: validation.valid ? 'preview' : 'rejected',
+    id: `imported_${themePackage.meta.themeKey}_${Date.now()}`,
+    themeKey: nextPackage.meta.themeKey,
+    displayName: nextPackage.meta.displayName,
+    description: nextPackage.meta.description || '',
+    status: nextPackage.meta.status,
     source: 'imported',
-    artDirection: textMetadata(themePackage.metadata?.personality),
-    inspiration: '',
-    category: textMetadata(themePackage.metadata?.bestFor) || 'imported',
+    artDirection: nextPackage.metadata.artDirection,
+    inspiration: nextPackage.metadata.inspiration,
+    category: nextPackage.metadata.category || 'system',
     supportsLight: true,
     supportsDark: true,
     canBeDefault: false,
-    notes: 'Imported JSON theme. Activation requires validation.',
-    author: themePackage.author || createdBy,
-    version: themePackage.version,
-    package: {
-      ...themePackage,
-      metadata: {
-        ...(themePackage.metadata || {}),
-        source: 'imported',
-        importedAt: now,
-      },
-    },
-    componentTokens: componentTokensFromPackage(themePackage, 'light'),
-    motif: defaultMotifFromPackage(themePackage),
+    notes: 'Imported V2 JSON theme. Lifecycle activation is required.',
+    author: nextPackage.meta.author || createdBy,
+    version: nextPackage.meta.version,
+    package: nextPackage,
+    componentTokens: componentTokensFromPackage(nextPackage, 'light'),
+    motif: nextPackage.modes.light.motif,
     validation,
     createdAt: now,
     updatedAt: now,
     createdBy,
-    audit: [{ eventType: 'theme_imported', timestamp: now, summary: validation.valid ? 'Theme imported as preview.' : 'Theme import rejected.' }],
+    images: [],
+    documents: [],
+    audit: [{ eventType: 'theme_imported', timestamp: now, summary: validation.valid ? 'Theme imported as review.' : 'Theme import rejected.' }],
   } satisfies ManagedThemeRecord
 }
 
 export function withThemeLifecycle(record: ManagedThemeRecord, status: ManagedThemeStatus, summary: string) {
   const now = new Date().toISOString()
-  const next = {
+  const nextPackage = refreshThemePackage({
+    ...record.package,
+    meta: {
+      ...record.package.meta,
+      status,
+      isActive: status === 'active',
+      updatedAt: now,
+    },
+    lifecycle: {
+      ...record.package.lifecycle,
+      status,
+      submittedAt: status === 'review' ? now : record.package.lifecycle.submittedAt,
+      approvedAt: status === 'approved' ? now : record.package.lifecycle.approvedAt,
+      activatedAt: status === 'active' ? now : record.package.lifecycle.activatedAt,
+      archivedAt: status === 'archived' ? now : record.package.lifecycle.archivedAt,
+      reason: summary,
+    },
+  })
+  return validateManagedTheme({
     ...record,
     status,
+    package: nextPackage,
     updatedAt: now,
     audit: [
       { eventType: `theme_${status}`, timestamp: now, summary },
       ...record.audit,
     ],
-  }
-  return validateManagedTheme(next)
+  })
 }
 
 export function validateManagedTheme(record: ManagedThemeRecord) {
-  const validation = validateEdenThemePackage(record.package).validation
-  return {
-    ...record,
-    validation,
-    package: {
-      ...record.package,
+  const nextPackage = refreshThemePackage({
+    ...record.package,
+    meta: {
+      ...record.package.meta,
       themeKey: record.themeKey,
       displayName: record.displayName,
+      slug: record.themeKey,
       description: record.description,
       author: record.author,
       version: record.version,
+      status: record.status,
+      isActive: record.status === 'active',
+      updatedAt: record.updatedAt,
+    },
+    metadata: {
+      ...record.package.metadata,
+      artDirection: record.artDirection,
+      inspiration: record.inspiration,
+      category: record.category,
+      notes: record.notes,
+      source: record.source,
+    },
+  })
+  const validation = validateEdenThemePackage(nextPackage).validation
+  return {
+    ...record,
+    package: nextPackage,
+    validation,
+    componentTokens: componentTokensFromPackage(nextPackage, 'light'),
+    motif: nextPackage.modes.light.motif,
+  }
+}
+
+export function refreshThemePackage(themePackage: EdenThemePackage): EdenThemePackage {
+  return {
+    ...themePackage,
+    cssVariables: {
+      light: themeTokensToCssVars(themePackage.modes.light),
+      dark: themeTokensToCssVars(themePackage.modes.dark),
     },
   }
 }
 
 export function componentTokensFromPackage(themePackage: EdenThemePackage, appearance: ThemeAppearance): ManagedThemeComponentTokens {
-  const vars = themeTokensToCssVars(themePackage.tokens[appearance])
-  return {
-    shell: pickVars(vars, {
-      navBg: '--eden-nav-bg',
-      navText: '--eden-nav-text',
-      navMuted: '--eden-nav-muted',
-      navHoverBg: '--eden-nav-hover-bg',
-      navActiveBg: '--eden-nav-active-bg',
-      navActiveText: '--eden-nav-active-text',
-      headerBg: '--eden-header-bg',
-      headerBorder: '--eden-header-border',
-    }),
-    pageBanner: pickVars(vars, {
-      pageBannerBg: '--eden-accent',
-      pageBannerText: '--eden-accent-text',
-      pageBannerMuted: '--eden-text-soft',
-      pageBannerAccent: '--eden-accent-warm',
-      pageBannerBorder: '--eden-border',
-      pageBannerShadow: '--eden-shadow-card',
-    }),
-    cards: pickVars(vars, {
-      cardBg: '--eden-card-bg',
-      cardBorder: '--eden-card-border',
-      cardShadow: '--eden-card-shadow',
-      cardHoverBg: '--eden-surface-muted',
-    }),
-    forms: pickVars(vars, {
-      inputBg: '--eden-input-bg',
-      inputBorder: '--eden-input-border',
-      inputFocus: '--eden-input-focus',
-      inputPlaceholder: '--eden-text-soft',
-      inputDisabledBg: '--eden-surface-muted',
-    }),
-    tables: pickVars(vars, {
-      tableHeaderBg: '--eden-table-header-bg',
-      tableHeaderText: '--eden-text',
-      tableBorder: '--eden-border',
-      tableRowHover: '--eden-table-row-hover',
-      tableRowSelected: '--eden-table-row-selected',
-      smartListBg: '--eden-surface-muted',
-      smartListBorder: '--eden-border',
-      smartListHover: '--eden-table-row-hover',
-    }),
-    badges: {
-      badgeNeutralBg: vars['--eden-badge-bg'],
-      badgeNeutralText: vars['--eden-text'],
-      badgeSuccessBg: vars['--eden-success-soft'],
-      badgeSuccessText: vars['--eden-success'],
-      badgeWarningBg: vars['--eden-warning-soft'],
-      badgeWarningText: vars['--eden-warning'],
-      badgeDangerBg: vars['--eden-danger-soft'],
-      badgeDangerText: vars['--eden-danger'],
-      badgeInfoBg: vars['--eden-info-soft'],
-      badgeInfoText: vars['--eden-info'],
-    },
-    wizard: {
-      wizardBg: vars['--eden-bg'],
-      wizardPanelBg: vars['--eden-surface'],
-      wizardPanelBorder: vars['--eden-border'],
-      wizardStepBg: vars['--eden-surface-muted'],
-      wizardStepActiveBg: vars['--eden-accent'],
-      wizardStepActiveText: vars['--eden-accent-text'],
-      wizardStepCompleteBg: vars['--eden-success-soft'],
-      wizardStepLine: vars['--eden-border'],
-      wizardSummaryBg: vars['--eden-surface-raised'],
-      wizardSidebarBg: vars['--eden-surface-muted'],
-      wizardSidebarBorder: vars['--eden-border'],
-    },
-    interaction: {
-      focusRing: vars['--eden-focus-ring'],
-      hoverOverlay: vars['--eden-surface-muted'],
-      selectedOverlay: vars['--eden-accent-soft'],
-    },
-    shape: {
-      radiusSmall: vars['--eden-radius-sm'],
-      radiusMedium: vars['--eden-radius-md'],
-      radiusLarge: vars['--eden-radius-lg'],
-      radiusCard: vars['--eden-radius-card'],
-      radiusButton: vars['--eden-radius-button'],
-      radiusInput: vars['--eden-radius-input'],
-      radiusBanner: vars['--eden-radius-card'],
-      radiusWizard: vars['--eden-radius-lg'],
-    },
-    shadow: {
-      shadowSubtle: vars['--eden-shadow-subtle'],
-      shadowCard: vars['--eden-shadow-card'],
-      shadowFloating: vars['--eden-shadow-floating'],
-      shadowFocus: vars['--eden-shadow-focus'],
-      shadowBanner: vars['--eden-shadow-card'],
-    },
-    density: {
-      tableRowHeight: vars['--eden-table-row-height'],
-      formFieldHeight: vars['--eden-form-field-height'],
-      cardPadding: vars['--eden-card-padding'],
-      sectionGap: vars['--eden-section-gap'],
-    },
-    icon: {
-      iconStroke: vars['--eden-icon-stroke'],
-      iconContainerBg: vars['--eden-icon-container-bg'],
-      iconContainerBorder: vars['--eden-icon-container-border'],
-      moduleIconBg: vars['--eden-module-icon-bg'],
-      statusIconBg: vars['--eden-status-icon-bg'],
-    },
-  }
-}
-
-function pickVars(vars: Record<`--${string}`, string>, mapping: Record<string, `--${string}`>) {
-  return Object.fromEntries(Object.entries(mapping).map(([key, token]) => [key, vars[token] || ''])) as Record<string, string>
-}
-
-function defaultMotifFromPackage(themePackage: EdenThemePackage): ManagedThemeMotifConfig {
-  const motif = themePackage.metadata?.decorativeMotif
-  const light = themePackage.tokens.light.color
-  return {
-    motifType: motif ? motifTypeFromDecorativeStyle(motif.style) : 'geometric',
-    bannerEnabled: motif?.useOnHero ?? true,
-    contentEnabled: motif?.useOnSectionHeaders ?? true,
-    emptyStateEnabled: motif?.useOnEmptyStates ?? true,
-    wizardEnabled: motif?.useOnFeaturedCards ?? true,
-    primaryColor: light.accent.primary,
-    secondaryColor: light.accent.secondary,
-    warmColor: light.warning,
-    opacityLight: motif?.opacity.light ?? 0.16,
-    opacityDark: motif?.opacity.dark ?? 0.1,
-    lineWidth: motif?.lineWeight ?? 1,
-    placement: 'corner-frame',
-    density: 'balanced',
-    inlineSvgTemplate: '',
-    cssBackgroundTemplate: '',
-  }
-}
-
-function motifTypeFromSystemTheme(id: ThemeConceptId): ManagedMotifType {
-  if (id === 'tabiat') return 'botanical'
-  if (id === 'bozkir') return 'horizon'
-  if (id === 'esitlik') return 'circles'
-  if (id === 'atlas') return 'skyline'
-  if (id === 'avangard') return 'broken_grid'
-  return 'geometric'
-}
-
-function motifTypeFromDecorativeStyle(style: string): ManagedMotifType {
-  if (style.includes('botanical')) return 'botanical'
-  if (style.includes('horizon') || style.includes('sun')) return 'horizon'
-  if (style.includes('rings')) return 'circles'
-  if (style.includes('deco')) return 'skyline'
-  if (style.includes('grid')) return 'broken_grid'
-  return 'geometric'
-}
-
-function textMetadata(value: unknown) {
-  if (Array.isArray(value)) return value.filter(item => typeof item === 'string').join(', ')
-  return typeof value === 'string' ? value : ''
+  return themePackage.modes[appearance].components
 }
 
 function sanitizeManagedThemeRecord(value: unknown): ManagedThemeRecord | null {
@@ -472,18 +381,35 @@ function sanitizeManagedThemeRecord(value: unknown): ManagedThemeRecord | null {
   const record = value as ManagedThemeRecord
   const themeKey = normalizeManagedThemeKey(record.themeKey)
   if (!themeKey || !record.package) return null
-  const status: ManagedThemeStatus = ['draft', 'preview', 'active', 'inactive', 'archived', 'rejected'].includes(record.status)
-    ? record.status
-    : 'draft'
+  const validation = validateEdenThemePackage(record.package)
+  if (!validation.theme) return null
+  const status = validation.theme.meta.status
   return {
     ...record,
+    id: String(record.id || `theme_${themeKey}`),
     themeKey,
+    displayName: String(record.displayName || validation.theme.meta.displayName || themeKey).slice(0, 100),
+    description: String(record.description || validation.theme.meta.description || '').slice(0, 1000),
     status,
-    displayName: String(record.displayName || themeKey).slice(0, 80),
-    description: String(record.description || '').slice(0, 280),
-    source: ['system', 'imported', 'user_created', 'generated'].includes(record.source) ? record.source : 'user_created',
-    componentTokens: record.componentTokens || componentTokensFromPackage(record.package, 'light'),
-    motif: record.motif || defaultMotifFromPackage(record.package),
+    source: ['system', 'imported', 'user_created', 'generated'].includes(record.source) ? record.source : validation.theme.metadata.source,
+    artDirection: String(record.artDirection || validation.theme.metadata.artDirection || ''),
+    inspiration: String(record.inspiration || validation.theme.metadata.inspiration || ''),
+    category: String(record.category || validation.theme.metadata.category || 'system'),
+    supportsLight: true,
+    supportsDark: true,
+    canBeDefault: Boolean(record.canBeDefault),
+    notes: String(record.notes || validation.theme.metadata.notes || ''),
+    author: String(record.author || validation.theme.meta.author || 'development_admin'),
+    version: String(record.version || validation.theme.meta.version || '0.1.0'),
+    package: refreshThemePackage(validation.theme),
+    componentTokens: componentTokensFromPackage(validation.theme, 'light'),
+    motif: validation.theme.modes.light.motif,
+    validation: validation.validation,
+    createdAt: String(record.createdAt || validation.theme.meta.createdAt || new Date().toISOString()),
+    updatedAt: String(record.updatedAt || validation.theme.meta.updatedAt || new Date().toISOString()),
+    createdBy: String(record.createdBy || 'development_admin'),
+    images: Array.isArray(record.images) ? record.images : [],
+    documents: Array.isArray(record.documents) ? record.documents : [],
     audit: Array.isArray(record.audit) ? record.audit.slice(0, 100) : [],
   }
 }

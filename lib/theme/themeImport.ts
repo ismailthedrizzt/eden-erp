@@ -7,11 +7,12 @@ export function createThemeImportPreview(input: unknown): ThemeImportPreviewReco
     : validateEdenThemePackage(input)
 
   if (!validation.valid || !theme) {
+    const raw = typeof input === 'string' ? safeJson(input) : input
     return {
       id: `rejected_${Date.now()}`,
       status: 'rejected',
-      themeKey: isRecord(input) && typeof input.themeKey === 'string' ? input.themeKey : null,
-      displayName: isRecord(input) && typeof input.displayName === 'string' ? input.displayName : null,
+      themeKey: isRecord(raw) && isRecord(raw.meta) && typeof raw.meta.themeKey === 'string' ? raw.meta.themeKey : null,
+      displayName: isRecord(raw) && isRecord(raw.meta) && typeof raw.meta.displayName === 'string' ? raw.meta.displayName : null,
       theme: null,
       validation,
       canActivate: false,
@@ -21,10 +22,10 @@ export function createThemeImportPreview(input: unknown): ThemeImportPreviewReco
   }
 
   return {
-    id: `preview_${theme.themeKey}_${Date.now()}`,
-    status: 'preview',
-    themeKey: theme.themeKey,
-    displayName: theme.displayName,
+    id: `review_${theme.meta.themeKey}_${Date.now()}`,
+    status: 'review',
+    themeKey: theme.meta.themeKey,
+    displayName: theme.meta.displayName,
     theme: markImportedPreview(theme),
     validation,
     canActivate: !validation.activationBlocked,
@@ -34,14 +35,33 @@ export function createThemeImportPreview(input: unknown): ThemeImportPreviewReco
 }
 
 export function markImportedPreview(theme: EdenThemePackage): EdenThemePackage {
+  const now = new Date().toISOString()
   return {
     ...theme,
-    metadata: {
-      ...(theme.metadata || {}),
-      source: 'imported',
-      importedAt: new Date().toISOString(),
-      importStatus: 'preview',
+    meta: {
+      ...theme.meta,
+      status: 'review',
+      isActive: false,
+      updatedAt: now,
     },
+    lifecycle: {
+      ...theme.lifecycle,
+      status: 'review',
+      submittedAt: now,
+    },
+    metadata: {
+      ...theme.metadata,
+      source: 'imported',
+      notes: `${theme.metadata.notes || ''}\nImported as review preview at ${now}.`.trim(),
+    },
+  }
+}
+
+function safeJson(input: string) {
+  try {
+    return JSON.parse(input)
+  } catch {
+    return null
   }
 }
 

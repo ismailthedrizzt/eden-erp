@@ -1,28 +1,18 @@
-import type { ThemeAppearance, ThemeContrastIssue, ThemeModeTokens } from './themeSchema'
+import type { ThemeAppearance, ThemeColorTokens, ThemeContrastIssue, ThemeModeTokens } from './themeSchema'
 
 type Rgb = { r: number; g: number; b: number }
 
-export function checkThemeContrast(tokens: { light: ThemeModeTokens; dark: ThemeModeTokens }) {
+export function checkThemeContrast(modes: { light: ThemeModeTokens; dark: ThemeModeTokens }) {
   return {
-    light: checkModeContrast('light', tokens.light),
-    dark: checkModeContrast('dark', tokens.dark),
+    light: checkModeContrast('light', modes.light),
+    dark: checkModeContrast('dark', modes.dark),
   }
 }
 
 export function checkModeContrast(mode: ThemeAppearance, tokens: ThemeModeTokens): ThemeContrastIssue[] {
+  const colors = tokens.colors
+  const pairs = contrastPairs(colors)
   const issues: ThemeContrastIssue[] = []
-  const pairs = [
-    ['color.text.primary on color.background', tokens.color.text.primary, tokens.color.background, 4.5],
-    ['color.text.primary on color.surface', tokens.color.text.primary, tokens.color.surface, 4.5],
-    ['color.text.secondary on color.surface', tokens.color.text.secondary, tokens.color.surface, 4.5],
-    ['color.text.muted on color.surface', tokens.color.text.muted, tokens.color.surface, 3],
-    ['color.danger on color.surface', tokens.color.danger, tokens.color.surface, 3],
-    ['color.warning on color.surface', tokens.color.warning, tokens.color.surface, 3],
-    ['color.success on color.surface', tokens.color.success, tokens.color.surface, 3],
-    ['button text on color.accent.primary', bestTextColor(tokens.color.accent.primary), tokens.color.accent.primary, 4.5],
-    ['input text on color.surface', tokens.color.text.primary, tokens.color.surface, 4.5],
-    ['badge text on color.accent.soft', tokens.color.text.primary, tokens.color.accent.soft, 3],
-  ] as const
 
   for (const [path, foreground, background, minimum] of pairs) {
     const ratio = contrastRatio(foreground, background)
@@ -44,6 +34,22 @@ export function checkModeContrast(mode: ThemeAppearance, tokens: ThemeModeTokens
   return issues
 }
 
+function contrastPairs(colors: ThemeColorTokens) {
+  return [
+    ['foreground on background', colors.foreground, colors.background, 4.5],
+    ['foreground on surface', colors.foreground, colors.surface, 4.5],
+    ['mutedForeground on surface', colors.mutedForeground, colors.surface, 4.5],
+    ['cardForeground on card', colors.cardForeground, colors.card, 4.5],
+    ['primaryForeground on primary', colors.primaryForeground, colors.primary, 4.5],
+    ['accentForeground on accent', colors.accentForeground, colors.accent, 4.5],
+    ['danger on surface', colors.danger, colors.surface, 3],
+    ['warning on surface', colors.warning, colors.surface, 3],
+    ['success on surface', colors.success, colors.surface, 3],
+    ['info on surface', colors.info, colors.surface, 3],
+    ['inputForeground on input', colors.inputForeground, colors.input, 4.5],
+  ] as const
+}
+
 export function contrastRatio(foreground: string, background: string) {
   const fg = parseColor(foreground)
   const bg = parseColor(background)
@@ -63,12 +69,6 @@ export function parseColor(value: string): Rgb | null {
   const rgb = parseRgbColor(color)
   if (rgb) return rgb
   return parseHslColor(color)
-}
-
-function bestTextColor(background: string) {
-  const whiteRatio = contrastRatio('#ffffff', background) || 0
-  const darkRatio = contrastRatio('#111827', background) || 0
-  return whiteRatio >= darkRatio ? '#ffffff' : '#111827'
 }
 
 function parseHexColor(color: string): Rgb | null {
@@ -102,12 +102,12 @@ function parseRgbColor(color: string): Rgb | null {
 }
 
 function parseHslColor(color: string): Rgb | null {
-  const match = color.match(/^hsla?\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%(?:\s*,\s*(0|0?\.\d+|1))?\s*\)$/i)
-  if (!match) return null
+  const normalized = color.match(/^hsla?\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})%\s*,\s*([0-9]{1,3})%(?:\s*,\s*(0|0?\.\d+|1))?\s*\)$/i)
+  if (!normalized) return null
 
-  const h = Number(match[1])
-  const s = Number(match[2]) / 100
-  const l = Number(match[3]) / 100
+  const h = Number(normalized[1])
+  const s = Number(normalized[2]) / 100
+  const l = Number(normalized[3]) / 100
   if (h < 0 || h > 360 || s < 0 || s > 1 || l < 0 || l > 1) return null
 
   const chroma = (1 - Math.abs(2 * l - 1)) * s

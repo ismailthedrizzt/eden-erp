@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       data: preview,
-      message: preview.status === 'preview'
-        ? 'Tema preview olarak dogrulandi. Admin onayi olmadan aktif olmaz.'
+      message: preview.status === 'review'
+        ? 'Tema inceleme durumunda dogrulandi. Lifecycle aktivasyonu olmadan aktif olmaz.'
         : 'Tema paketi validation veya guvenlik kontrollerinden gecemedi.',
     },
     {

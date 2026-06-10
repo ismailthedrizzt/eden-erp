@@ -192,8 +192,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/outbox': 'Sistem Yonetimi > Outbox',
   '/app/sistem/entegrasyonlar': 'Sistem Yonetimi > Entegrasyonlar',
   '/app/sistem/teknik': 'Sistem Yonetimi > Teknik',
-  '/app/design-lab': 'Development > Temalarımız',
-  '/app/development/temalarimiz': 'Development > Temalarımız',
+  '/app/design-lab': 'Sistem Yonetimi > Tasarim Laboratuvari',
   '/app/sistem/ai-copilot': 'Sistem Yonetimi > AI Copilot',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
@@ -1077,7 +1076,7 @@ function UserProfileMenu({
   const activeTheme = themeConcepts.find(theme => theme.id === activeThemeId)
   const activeManagedTheme = activeTheme ? null : managedThemes.find(theme => theme.themeKey === activeThemeId) || findManagedThemeRecord(activeThemeId)
   const activeThemeLabel = activeSystemThemeOption?.name || activeTheme?.name || activeManagedTheme?.displayName || VISUAL_THEME_LABELS[normalizeThemeConceptId(activeThemeId) || DEFAULT_VISUAL_THEME_ID]
-  const activeThemeAccent = activeSystemThemeOption?.accent || activeTheme?.colors.accentWarm || activeManagedTheme?.package.tokens.light.color.accent.primary || '#b88932'
+  const activeThemeAccent = activeSystemThemeOption?.accent || activeTheme?.colors.accentWarm || activeManagedTheme?.package.modes.light.colors.primary || '#b88932'
   const themeOptions = [
     ...SYSTEM_VISUAL_THEME_OPTIONS.map(theme => ({
       id: theme.id,
@@ -1090,7 +1089,7 @@ function UserProfileMenu({
       id: theme.themeKey,
       name: theme.displayName,
       description: `${theme.artDirection || theme.source} / active`,
-      accent: theme.package.tokens.light.color.accent.primary,
+      accent: theme.package.modes.light.colors.primary,
       source: theme.source,
     })),
   ]
