@@ -8,7 +8,7 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logging import log_info, log_warning
+from app.core.logging import log_info
 from app.core.metrics import increment_counter
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
@@ -145,7 +145,7 @@ async def enqueue_many(
     return rows
 
 
-async def enqueue_outbox_event_best_effort(
+async def enqueue_outbox_event_required(
     session: AsyncSession,
     context: dict[str, Any],
     *,
@@ -153,29 +153,16 @@ async def enqueue_outbox_event_best_effort(
     aggregate_type: str,
     aggregate_id: str,
     payload: dict[str, Any],
-) -> str | None:
-    try:
-        async with session.begin_nested():
-            row = await enqueue_event(
-                session,
-                context,
-                event_type=event_type,
-                aggregate_type=aggregate_type,
-                aggregate_id=aggregate_id,
-                payload=payload,
-            )
-        return str(row["id"])
-    except Exception as error:  # pragma: no cover - best-effort safety net
-        increment_counter("outbox_enqueue_failed_count")
-        log_warning(
-            "Outbox enqueue skipped.",
-            logger_name="eden.outbox",
-            exception_type=error.__class__.__name__,
-            event_type=event_type,
-            aggregate_type=aggregate_type,
-        )
-        logger.warning("Outbox enqueue skipped: %s", error)
-        return None
+) -> str:
+    row = await enqueue_event(
+        session,
+        context,
+        event_type=event_type,
+        aggregate_type=aggregate_type,
+        aggregate_id=aggregate_id,
+        payload=payload,
+    )
+    return str(row["id"])
 
 
 async def fetch_pending_batch(session: AsyncSession, *, batch_size: int) -> list[dict[str, Any]]:

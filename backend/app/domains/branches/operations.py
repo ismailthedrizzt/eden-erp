@@ -6,7 +6,7 @@ from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError, map_database_error
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.branches.schemas import BranchClosingRequest, BranchOpeningRequest
 from app.domains.branches.service import (
     assert_branch_active,
@@ -43,7 +43,7 @@ from app.domains.organization.service import (
     reassign_organization_unit,
     set_organization_unit_passive,
 )
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.policies.operation_guards import guard_operation
 
 
@@ -211,7 +211,7 @@ async def open_branch(
                 return duplicate
             context["operation_id"] = str(operation["id"]) if operation else None
 
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_start",
@@ -332,7 +332,7 @@ async def open_branch(
                 event_date=start_date,
                 payload={"branch_id": branch["id"], "transaction_id": transaction["id"]},
             )
-            await enqueue_outbox_event_best_effort(
+            await enqueue_outbox_event_required(
                 session,
                 context,
                 event_type="company.branch_opened",
@@ -352,7 +352,7 @@ async def open_branch(
                 "facility": facility,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
@@ -445,7 +445,7 @@ async def close_branch(
                 return duplicate
             context["operation_id"] = str(operation["id"]) if operation else None
 
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_start",
@@ -555,7 +555,7 @@ async def close_branch(
                 event_date=end_date,
                 payload={"branch_id": request.branch_id, "transaction_id": transaction["id"]},
             )
-            await enqueue_outbox_event_best_effort(
+            await enqueue_outbox_event_required(
                 session,
                 context,
                 event_type="company.branch_closed",
@@ -577,7 +577,7 @@ async def close_branch(
                 "facility": facility,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",

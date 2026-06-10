@@ -6,7 +6,7 @@ from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError, map_database_error
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.company.nace import (
     active_nace_rows,
     load_company_nace_codes,
@@ -45,7 +45,7 @@ from app.domains.operations.service import (
     duplicate_operation_response,
     mark_operation_completed,
 )
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 
 LIFECYCLE_EVENTS = {
     "title_change": "company_title_change_completed",
@@ -205,7 +205,7 @@ async def _record_transaction_and_side_effects(
         event_date=effective_date or registration_date or decision_date,
         payload={"transaction_id": transaction["id"], "changed_fields": changed_fields},
     )
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         context,
         event_type=OUTBOX_EVENTS[change_type],
@@ -294,7 +294,7 @@ async def complete_title_change(
             )
             data = {"company": update["company"], "transaction": transaction, "warnings": warnings}
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
@@ -377,7 +377,7 @@ async def complete_address_change(
             )
             data = {"company": update["company"], "transaction": transaction, "warnings": warnings}
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
@@ -489,7 +489,7 @@ async def complete_public_registration_update(
                 "warnings": warnings,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
@@ -611,7 +611,7 @@ async def complete_nace_change(
                 "warnings": warnings,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
@@ -714,7 +714,7 @@ async def complete_activity_subject_change(
                 "warnings": warnings,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",

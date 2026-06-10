@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.data_quality.duplicate_detection import detect_duplicate_candidates, table_columns
 from app.domains.data_quality.events import (
     DATA_QUALITY_CHECK_COMPLETED,
@@ -41,7 +41,7 @@ from app.domains.data_quality.schemas import (
     RuleUpdateRequest,
 )
 from app.domains.operations.service import table_exists
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 
 DATA_QUALITY_TABLES = [
     "public.data_quality_rules",
@@ -611,7 +611,7 @@ async def _insert_merge_relations(session: AsyncSession, context: dict[str, Any]
 
 
 async def _audit(session: AsyncSession, context: dict[str, Any], action_type: str, action_key: str, summary: str, payload: dict[str, Any]) -> None:
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         context,
         action_type=action_type,
@@ -625,7 +625,7 @@ async def _audit(session: AsyncSession, context: dict[str, Any], action_type: st
 
 
 async def _outbox(session: AsyncSession, context: dict[str, Any], event_type: str, payload: dict[str, Any]) -> None:
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         context,
         event_type=event_type,

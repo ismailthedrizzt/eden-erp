@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.documents.access import assert_company_scope, assert_document_access
 from app.domains.documents.events import (
     DOCUMENT_DELETED,
@@ -43,7 +43,7 @@ from app.domains.documents.storage import (
 )
 from app.domains.documents.versions import next_version_no
 from app.domains.operations.service import table_exists
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 
 
 def service_context(context: Any, tenant_id: str) -> dict[str, Any]:
@@ -902,7 +902,7 @@ async def _log_access(session: AsyncSession, context: dict[str, Any], document_i
 
 
 async def _audit(session: AsyncSession, context: dict[str, Any], action_type: str, action_key: str, summary: str, document: dict[str, Any]) -> None:
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         context,
         action_type=action_type,
@@ -919,7 +919,7 @@ async def _outbox(session: AsyncSession, context: dict[str, Any], event_type: st
     document_id = str(document.get("id") or document.get("document_id") or "")
     if not document_id:
         return
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         context,
         event_type=event_type,

@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError, map_database_error
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.company.service import assert_company_active, get_company_by_id
 from app.domains.operations.service import (
     create_or_get_operation_request,
@@ -17,7 +17,7 @@ from app.domains.operations.service import (
     mark_operation_completed,
     table_exists,
 )
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.ownership.current import (
     build_current_ownership_snapshot,
     get_current_ownership_for_company,
@@ -973,7 +973,7 @@ async def _complete_transaction_response(
         "ownership.current_changed",
         *(extra_events or []),
     ]:
-        await enqueue_outbox_event_best_effort(
+        await enqueue_outbox_event_required(
             session,
             context,
             event_type=event_type,
@@ -986,7 +986,7 @@ async def _complete_transaction_response(
                 "transaction_type": request.transaction_type,
             },
         )
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         context,
         action_type="operation_complete",

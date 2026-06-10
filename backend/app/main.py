@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -12,8 +15,15 @@ from app.core.error_tracking import capture_exception, configure_error_tracking
 from app.core.errors import EdenError, eden_error_response
 from app.core.logging import configure_logging, current_log_context, log_exception
 from app.core.middleware import RequestContextMiddleware, RequestLoggingMiddleware
+from app.core.persistence_contract import verify_persistence_contract
 from app.core.security import validate_security_configuration
 from app.schemas.health import HealthResponse
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    await verify_persistence_contract()
+    yield
 
 
 def create_app() -> FastAPI:
@@ -25,6 +35,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version=settings.version,
         description="Eden ERP core backend API.",
+        lifespan=lifespan,
     )
 
     app.add_middleware(

@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.notifications.schemas import NotificationPreferencePatch
 from app.domains.operations.service import table_exists
 
@@ -79,7 +79,7 @@ async def patch_preferences(
         params,
     )
     row = row_to_dict(result.mappings().one()) or {}
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "notifications"},
         action_type="notification_preference_changed",

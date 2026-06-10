@@ -14,12 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.import_export.error_reports import rows_to_csv
 from app.domains.import_export.events import EXPORT_JOB_COMPLETED
 from app.domains.import_export.import_jobs import ensure_import_tables
 from app.domains.operations.service import table_exists
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 
 MAX_EXPORT_ROWS = 10000
 
@@ -109,7 +109,7 @@ async def create_export_job(
         ),
         {"tenant_id": context["tenant_id"], "job_id": job_id, "row_count": len(rows), "file_ref": json.dumps(file_ref, ensure_ascii=False)},
     )
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "importExport"},
         action_type="export",
@@ -119,7 +119,7 @@ async def create_export_job(
         entity_id=job_id,
         metadata={"entity_type": dataset.entity_type, "row_count": len(rows)},
     )
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         {**context, "module_key": "importExport"},
         event_type=EXPORT_JOB_COMPLETED,
@@ -156,7 +156,7 @@ async def download_export_job(
     encoded = file_ref.get("content_base64")
     if not encoded:
         raise DomainError("Export dosyasi henuz hazir degil.", "EXPORT_FILE_NOT_READY", status.HTTP_409_CONFLICT)
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "importExport"},
         action_type="download",

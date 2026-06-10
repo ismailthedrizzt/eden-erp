@@ -9,7 +9,7 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logging import log_info, log_warning
+from app.core.logging import log_info
 from app.core.metrics import increment_counter, observe_duration
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.audit.diff import changed_fields as detect_changed_fields
@@ -171,7 +171,7 @@ async def record_audit(
     return row
 
 
-async def record_audit_best_effort(
+async def record_audit_required(
     session: AsyncSession,
     context: dict[str, Any],
     *,
@@ -186,37 +186,23 @@ async def record_audit_best_effort(
     old_values: dict[str, Any] | None = None,
     new_values: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
-) -> str | None:
-    try:
-        async with session.begin_nested():
-            row = await record_audit(
-                session,
-                context,
-                action_type=action_type,
-                action_key=action_key,
-                summary=summary,
-                result_status=result_status,
-                severity=severity,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                branch_id=branch_id,
-                old_values=old_values,
-                new_values=new_values,
-                metadata=metadata,
-            )
-        return str(row["id"])
-    except Exception as error:  # pragma: no cover - best-effort safety net
-        increment_counter("audit_write_failed_count")
-        log_warning(
-            "Audit insert skipped.",
-            logger_name="eden.audit",
-            exception_type=error.__class__.__name__,
-            action_key=action_key,
-            entity_type=entity_type,
-            result_status="failed",
-        )
-        logger.warning("Audit insert skipped: %s", error)
-        return None
+) -> str:
+    row = await record_audit(
+        session,
+        context,
+        action_type=action_type,
+        action_key=action_key,
+        summary=summary,
+        result_status=result_status,
+        severity=severity,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        branch_id=branch_id,
+        old_values=old_values,
+        new_values=new_values,
+        metadata=metadata,
+    )
+    return str(row["id"])
 
 
 async def record_view(

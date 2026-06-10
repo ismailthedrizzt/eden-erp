@@ -12,7 +12,7 @@ from app.core.logging import bind_log_context, log_info
 from app.core.metrics import increment_counter
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ async def emit_process_event(
         old_status=old_status,
         new_status=new_status,
     )
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         {
             **context,

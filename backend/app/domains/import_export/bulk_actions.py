@@ -15,7 +15,7 @@ from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.accounting.cari_accounts import update_cari_account
 from app.domains.accounting.schemas import CariAccountUpdateRequest
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.crm.schemas import StakeholderUpdateRequest
 from app.domains.crm.stakeholders import update_stakeholder
 from app.domains.facilities.service import update_facility_card
@@ -24,7 +24,7 @@ from app.domains.hr.schemas import EmployeeUpdateRequest
 from app.domains.import_export.events import BULK_ACTION_COMPLETED
 from app.domains.import_export.import_jobs import ensure_import_tables
 from app.domains.operations.service import table_exists
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.products.catalog import update_product
 from app.domains.products.schemas import ProductUpdateRequest
 from app.domains.projects.schemas import TaskAssignRequest, TaskTransitionRequest
@@ -96,7 +96,7 @@ async def create_bulk_action_job(
     )
     for missing_id in missing:
         await _insert_result(session, context, job_id, missing_id, "failed", "Kayit bulunamadi.", [])
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "importExport"},
         action_type="bulk_precheck",
@@ -176,7 +176,7 @@ async def confirm_bulk_action_job(
             "skipped_count": skipped,
         },
     )
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "importExport"},
         action_type="bulk_operation",
@@ -186,7 +186,7 @@ async def confirm_bulk_action_job(
         entity_id=job_id,
         metadata={"success": success, "failed": failed, "skipped": skipped},
     )
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         {**context, "module_key": "importExport"},
         event_type=BULK_ACTION_COMPLETED,

@@ -436,9 +436,9 @@ async def record_hr_audit_best_effort(
     metadata: dict[str, Any] | None = None,
 ) -> None:
     try:
-        from app.domains.audit.service import record_audit_best_effort
+        from app.domains.audit.service import record_audit_required
 
-        await record_audit_best_effort(
+        await record_audit_required(
             session,
             {**context, "module_key": HR_MODULE_KEY},
             action_type=action_type,

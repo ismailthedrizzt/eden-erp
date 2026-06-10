@@ -32,7 +32,7 @@ from app.domains.admin.schemas import (
 )
 from app.domains.admin.settings import get_workspace_settings, upsert_workspace_settings
 from app.domains.admin.system_health import admin_health, deep_admin_health, outbox_summary
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.operations.service import table_exists
 from app.domains.outbox.service import dispatch_pending_events
 from app.features.registry import list_feature_flags
@@ -437,7 +437,7 @@ async def _audit(
     action: str,
     payload: dict[str, Any],
 ) -> None:
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         context,
         action_type="admin",
@@ -455,9 +455,9 @@ async def _outbox(
     event_type: str,
     payload: dict[str, Any],
 ) -> None:
-    from app.domains.outbox.service import enqueue_outbox_event_best_effort
+    from app.domains.outbox.service import enqueue_outbox_event_required
 
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         context,
         event_type=event_type,

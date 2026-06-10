@@ -17,7 +17,7 @@ from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.accounting.cari_accounts import create_cari_account
 from app.domains.accounting.schemas import CariAccountCreateRequest
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.company.service import create_company_draft
 from app.domains.crm.schemas import (
     CreateCariAccountFromStakeholderRequest,
@@ -57,7 +57,7 @@ from app.domains.import_export.validators import (
 )
 from app.domains.operations.service import table_exists
 from app.domains.organization.service import create_organization_unit
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.partners.service import create_partner_draft
 from app.domains.products.catalog import create_product
 from app.domains.products.schemas import ProductCreateRequest
@@ -459,7 +459,7 @@ async def confirm_import_job(
         },
     )
     await _audit(session, context, "operation_complete", "import.job.completed" if final_status == "completed" else "import.job.failed", "Import job tamamlandi.", {"imported": imported, "skipped": skipped, "failed": failed})
-    await enqueue_outbox_event_best_effort(
+    await enqueue_outbox_event_required(
         session,
         {**context, "module_key": "importExport", "company_id": job.get("company_id")},
         event_type=IMPORT_JOB_COMPLETED if final_status == "completed" else IMPORT_JOB_FAILED,
@@ -698,7 +698,7 @@ async def _audit(
     summary: str,
     payload: dict[str, Any],
 ) -> None:
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "importExport"},
         action_type=action_type,

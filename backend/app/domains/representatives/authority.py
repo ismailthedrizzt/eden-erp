@@ -9,14 +9,14 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError, map_database_error
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.operations.service import (
     create_or_get_operation_request,
     duplicate_operation_response,
     mark_operation_completed,
     table_exists,
 )
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.representatives.schemas import (
     AUTHORITY_TRANSACTION_TYPES,
     RepresentativeAuthorityScope,
@@ -514,7 +514,7 @@ async def perform_authority_transaction(
                 "warnings": warnings,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await enqueue_outbox_event_best_effort(
+            await enqueue_outbox_event_required(
                 session,
                 context,
                 event_type=_outbox_event_type(request.transaction_type),
@@ -533,7 +533,7 @@ async def perform_authority_transaction(
                     "authority_types": authority_types,
                 },
             )
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",

@@ -18,7 +18,7 @@ from app.core.errors import DomainError
 from app.core.logging import log_info, log_warning
 from app.core.metrics import increment_counter
 from app.core.serialization import row_to_dict, rows_to_dicts
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.notifications.preferences import preference_allows_channel
 from app.domains.notifications.schemas import EmailListQuery, EmailMessageCreate, EmailTestRequest
 from app.domains.notifications.templates import render_template
@@ -198,7 +198,7 @@ async def retry_email_message(
     row = row_to_dict(result.mappings().first())
     if not row:
         raise DomainError("E-posta mesaji bulunamadi veya retry icin uygun degil.", "EMAIL_MESSAGE_NOT_RETRYABLE", status.HTTP_404_NOT_FOUND)
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "notifications"},
         action_type="email_retry",
@@ -229,7 +229,7 @@ async def queue_test_email(
             metadata_json={"source": "admin_test"},
         ),
     )
-    await record_audit_best_effort(
+    await record_audit_required(
         session,
         {**context, "module_key": "notifications"},
         action_type="email_test_queued",
@@ -292,7 +292,7 @@ async def send_email_message(
         provider_message_id = _send_smtp(settings, row)
         await _mark_email(session, row, "sent", provider_message_id=provider_message_id)
         increment_counter("emails_sent_count")
-        await record_audit_best_effort(
+        await record_audit_required(
             session,
             {**context, "module_key": "notifications"},
             action_type="email_sent",

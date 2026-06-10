@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError, map_database_error
-from app.domains.audit.service import record_audit_best_effort
+from app.domains.audit.service import record_audit_required
 from app.domains.company.capital_schemas import (
     CapitalIncreasePrecheckResponse,
     CapitalIncreaseRequest,
@@ -29,7 +29,7 @@ from app.domains.operations.service import (
     mark_operation_completed,
     table_exists,
 )
-from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.ownership.schemas import (
     CapitalIncreaseDistributionRow,
     CurrentOwnershipRow,
@@ -623,7 +623,7 @@ async def complete_capital_increase(
                     "new_capital_amount": request.new_capital_amount,
                 },
             )
-            await enqueue_outbox_event_best_effort(
+            await enqueue_outbox_event_required(
                 session,
                 context,
                 event_type="company.capital_increased",
@@ -638,7 +638,7 @@ async def complete_capital_increase(
                     "new_capital_amount": request.new_capital_amount,
                 },
             )
-            await enqueue_outbox_event_best_effort(
+            await enqueue_outbox_event_required(
                 session,
                 context,
                 event_type="ownership.transaction_completed",
@@ -663,7 +663,7 @@ async def complete_capital_increase(
                 "warnings": warnings,
             }
             await mark_operation_completed(session, operation, data, warnings)
-            await record_audit_best_effort(
+            await record_audit_required(
                 session,
                 context,
                 action_type="operation_complete",
