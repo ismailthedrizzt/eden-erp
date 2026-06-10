@@ -21,14 +21,14 @@ def test_representative_record_and_authority_status_are_separate() -> None:
 
 
 def test_authority_hydration_keeps_representative_identity_fields() -> None:
-    representative = {
+    representative: dict[str, Any] = {
         "id": "representative-1",
         "record_status": "active",
         "status": "Aktif",
         "updated_at": "representative-updated",
         "version": 3,
     }
-    authority = {
+    authority: dict[str, Any] = {
         "id": "authority-transaction-1",
         "representative_id": "representative-1",
         "status": "approved",

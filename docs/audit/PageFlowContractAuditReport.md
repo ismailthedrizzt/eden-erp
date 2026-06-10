@@ -26,6 +26,22 @@ sekillendiriyor ve generated typed client henuz zorunlu teslim kriteri degil.
 Bu rapor mevcut akislari P0/P1/P2 riskleriyle kayda alir. Yeni gelistirmelerde
 bu gap'ler kabul edilmez; mevcut akislara dokunuldugunda ilgili gap kapatilmalidir.
 
+## ORM Persistence Decision
+
+Pipeline standardi artik backend-only SQLAlchemy 2.x async ORM ve Unit of Work
+katmanini da icerir.
+
+- Standart dokuman: `docs/architecture/BackendOrmPersistenceStandard.md`
+- Kod giris noktalari:
+  - `backend/app/persistence/orm.py`
+  - `backend/app/persistence/repository.py`
+  - `backend/app/persistence/unit_of_work.py`
+
+Bu karar mevcut tum read projection SQL'lerini tek seferde yeniden yazmak
+anlamina gelmez. Ancak yeni CRUD, wizard, submit ve lifecycle write flow'lari
+frontend payload dict'lerini PostgreSQL'e indiremez. Pydantic normalization,
+typed service command, repository siniri ve acik Unit of Work commit zorunludur.
+
 ## Audit Matrix
 
 | Flow | Route | Status | Main risk | Required fix |

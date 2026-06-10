@@ -35,6 +35,33 @@ Next BFF auth, tenant, workspace ve correlation context ekleyebilir; payload
 contract'i bozmaz, alan adlarini keyfi degistirmez, backend error response'unu
 yutmaz.
 
+## Backend ORM Persistence Standard
+
+Yeni CRUD, wizard, submit ve lifecycle write flow'lari backend tarafinda
+SQLAlchemy 2.x async ORM + Unit of Work standardini kullanir. Bu karar
+backend-only'dir; Next.js, BFF ve frontend componentleri ORM modeli import etmez.
+
+ORM katmani su dosyalarda baslar:
+
+- `backend/app/persistence/orm.py`
+- `backend/app/persistence/repository.py`
+- `backend/app/persistence/unit_of_work.py`
+
+Yeni write flow icin kural:
+
+- Endpoint Pydantic request model alir.
+- Pydantic date/datetime/UUID/enum alanlarini normalize eder.
+- Service typed command/model olusturur.
+- Repository typed ORM entity veya acik projection query ile calisir.
+- `SqlAlchemyUnitOfWork` write transaction siniridir.
+- Service basarili write sonunda `commit()` cagirir.
+- `commit()` cagrilmadan context kapanirsa Unit of Work rollback yapar.
+- Repository frontend form state veya generic raw dict kabul etmez.
+
+Detayli standart:
+
+- `docs/architecture/BackendOrmPersistenceStandard.md`
+
 ## Page Contract
 
 Her yeni sayfa veya flow icin machine-readable contract olmalidir. Eden ERP'de
@@ -118,6 +145,10 @@ Her endpoint Pydantic request model alir.
 - Repository normalize edilmis DB input alir.
 - `operation_requests` gibi ortak servisler operation type'a gore typed payload
   dogrulamasi yapar.
+- Yeni write flow'lar repository sinirinda SQLAlchemy ORM entity veya typed
+  projection input kullanir.
+- Transaction boundary `SqlAlchemyUnitOfWork` ile acik olur; implicit commit
+  kabul edilmez.
 
 Example:
 
