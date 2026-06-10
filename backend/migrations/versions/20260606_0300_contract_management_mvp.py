@@ -3,7 +3,7 @@
 """contract management mvp
 
 Revision ID: 20260606_0300
-Revises: 20260606_0100
+Revises: 20260606_0200
 Create Date: 2026-06-06
 """
 
@@ -16,7 +16,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = "20260606_0300"
-down_revision: str | None = "20260606_0100"
+down_revision: str | None = "20260606_0200"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
