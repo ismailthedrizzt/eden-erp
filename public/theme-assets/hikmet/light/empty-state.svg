@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="280" viewBox="0 0 360 280" role="img" aria-label="Hikmet light empty state ornament">
+  <rect width="360" height="280" fill="#FBF6EC"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1.2" opacity=".22">
+    <path d="M75 230c25-82 60-126 105-126s80 44 105 126"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1.2" opacity=".34">
+    <path d="M180 62l32 32-32 32-32-32z"/>
+  </g>
+</svg>

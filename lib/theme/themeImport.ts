@@ -1,10 +1,11 @@
-import { parseAndValidateThemeJson, validateEdenThemePackage } from './themeValidation'
+import { parseThemeImportTextV2, runtimeThemePackageV2ToInternalTheme, validateRuntimeThemePackageV2 } from './themePackageV2'
 import type { EdenThemePackage, ThemeImportPreviewRecord } from './themeSchema'
 
 export function createThemeImportPreview(input: unknown): ThemeImportPreviewRecord {
-  const { theme, validation } = typeof input === 'string'
-    ? parseAndValidateThemeJson(input)
-    : validateEdenThemePackage(input)
+  const result = typeof input === 'string'
+    ? parseThemeImportTextV2(input)
+    : parseImportedObject(input)
+  const { theme, validation } = result
 
   if (!validation.valid || !theme) {
     const raw = typeof input === 'string' ? safeJson(input) : input
@@ -31,6 +32,16 @@ export function createThemeImportPreview(input: unknown): ThemeImportPreviewReco
     canActivate: !validation.activationBlocked,
     activationRequiresAdmin: true,
     stored: false,
+  }
+}
+
+function parseImportedObject(input: unknown) {
+  const result = validateRuntimeThemePackageV2(input)
+  return {
+    kind: result.theme ? 'eden-theme' as const : 'invalid' as const,
+    runtimeTheme: result.theme,
+    theme: result.theme ? runtimeThemePackageV2ToInternalTheme(result.theme) : null,
+    validation: result.validation,
   }
 }
 

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320" role="img" aria-label="Hikmet light dashboard hero">
+  <rect width="960" height="320" fill="#FAF5EA"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1.2" opacity=".2">
+    <path d="M610 285c35-110 95-172 170-172s135 62 170 172"/>
+    <path d="M662 285c28-76 68-118 118-118s90 42 118 118"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1.1" opacity=".3">
+    <path d="M780 70l35 35-35 35-35-35z"/>
+  </g>
+</svg>

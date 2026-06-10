@@ -1,0 +1,2182 @@
+{
+  "schemaVersion": "2.0.0",
+  "meta": {
+    "id": "hikmet",
+    "themeKey": "hikmet",
+    "displayName": "Hikmet",
+    "slug": "hikmet",
+    "description": "Hikmet, sukunet ve medrese geometrisi hissi tasiyan rafine Eden ERP sistem temasidir.",
+    "author": "EDEN Teknoloji",
+    "version": "1.0.0",
+    "compatibleApp": "eden-erp",
+    "scope": "system",
+    "defaultMode": "light",
+    "supportedModes": [
+      "light",
+      "dark"
+    ],
+    "createdAt": "2026-06-07",
+    "updatedAt": "2026-06-10"
+  },
+  "modes": {
+    "light": {
+      "colors": {
+        "primary": "#0B6B55",
+        "primaryForeground": "#FFFFFF",
+        "secondary": "#1D5C73",
+        "secondaryForeground": "#F8F2E6",
+        "accent": "#B88A2A",
+        "accentForeground": "#1F1605",
+        "background": "#F8F2E6",
+        "foreground": "#102A2C",
+        "surface": "#FFF9EE",
+        "surfaceMuted": "#EFE3CF",
+        "surfaceRaised": "#FFFCF5",
+        "card": "#FFFDF7",
+        "cardForeground": "#102A2C",
+        "muted": "#E8D9BF",
+        "mutedForeground": "#5F6D62",
+        "border": "#D7C39C",
+        "borderStrong": "#B88A2A",
+        "input": "#FFFCF4",
+        "inputForeground": "#102A2C",
+        "ring": "#0B6B55",
+        "success": "#1E7C55",
+        "successForeground": "#FFFFFF",
+        "warning": "#B7791F",
+        "warningForeground": "#1F1605",
+        "danger": "#B84236",
+        "dangerForeground": "#FFFFFF",
+        "info": "#1D5C73",
+        "infoForeground": "#FFFFFF"
+      },
+      "background": {
+        "app": {
+          "type": "gradient",
+          "color": "#F8F2E6",
+          "gradient": {
+            "enabled": true,
+            "from": "#F8F2E6",
+            "to": "#EFE3CF",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "page": {
+          "type": "gradient",
+          "color": "#F8F2E6",
+          "gradient": {
+            "enabled": true,
+            "from": "#F8F2E6",
+            "to": "#FFF9EE",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "surface": {
+          "type": "solid",
+          "color": "#FFF9EE",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFF9EE",
+            "to": "#FFF9EE",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "card": {
+          "type": "solid",
+          "color": "#FFFDF7",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFFDF7",
+            "to": "#FFFDF7",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "sidebar": {
+          "type": "solid",
+          "color": "#0B6B55",
+          "gradient": {
+            "enabled": false,
+            "from": "#0B6B55",
+            "to": "#0B6B55",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "topbar": {
+          "type": "solid",
+          "color": "#FFFCF5",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFFCF5",
+            "to": "#FFFCF5",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "pageBanner": {
+          "type": "mixed",
+          "color": "#0B6B55",
+          "gradient": {
+            "enabled": true,
+            "from": "#0B6B55",
+            "to": "#1D5C73",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "smartList": {
+          "type": "pattern",
+          "color": "#EFE3CF",
+          "gradient": {
+            "enabled": false,
+            "from": "#EFE3CF",
+            "to": "#FFF9EE",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "form": {
+          "type": "solid",
+          "color": "#FFF9EE",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFF9EE",
+            "to": "#FFF9EE",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "wizard": {
+          "type": "mixed",
+          "color": "#FFF9EE",
+          "gradient": {
+            "enabled": true,
+            "from": "#FFF9EE",
+            "to": "#EFE3CF",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "login": {
+          "type": "mixed",
+          "color": "#F8F2E6",
+          "gradient": {
+            "enabled": true,
+            "from": "#F8F2E6",
+            "to": "#EFE3CF",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "dashboard": {
+          "type": "mixed",
+          "color": "#F8F2E6",
+          "gradient": {
+            "enabled": true,
+            "from": "#F8F2E6",
+            "to": "#FFF9EE",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "modal": {
+          "type": "solid",
+          "color": "#FFFCF5",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFFCF5",
+            "to": "#FFFCF5",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "drawer": {
+          "type": "solid",
+          "color": "#FFFCF5",
+          "gradient": {
+            "enabled": false,
+            "from": "#FFFCF5",
+            "to": "#FFFCF5",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#B88A2A",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#F8F2E6",
+            "opacity": 0.14
+          },
+          "border": "#D7C39C",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        }
+      },
+      "illustrations": {
+        "pageBanner": {
+          "enabled": true,
+          "assetId": "hikmet-light-page-banner",
+          "assetName": "Hikmet light pageBanner",
+          "assetType": "illustration",
+          "assetCategory": "pageBanner",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/page-banner.svg",
+          "assetRef": "internal://themes/hikmet/light/page-banner",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light pageBanner medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "banner"
+          ]
+        },
+        "smartList": {
+          "enabled": true,
+          "assetId": "hikmet-light-smart-list-watermark",
+          "assetName": "Hikmet light smartList",
+          "assetType": "watermark",
+          "assetCategory": "smartList",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/smart-list-watermark.svg",
+          "assetRef": "internal://themes/hikmet/light/smart-list-watermark",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light smartList medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "list"
+          ]
+        },
+        "formHero": {
+          "enabled": true,
+          "assetId": "hikmet-light-form-hero",
+          "assetName": "Hikmet light formHero",
+          "assetType": "hero",
+          "assetCategory": "formHero",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/form-hero.svg",
+          "assetRef": "internal://themes/hikmet/light/form-hero",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light formHero medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "form"
+          ]
+        },
+        "detailPanel": {
+          "enabled": true,
+          "assetId": "hikmet-light-detail-panel",
+          "assetName": "Hikmet light detailPanel",
+          "assetType": "illustration",
+          "assetCategory": "detailPanel",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/detail-panel.svg",
+          "assetRef": "internal://themes/hikmet/light/detail-panel",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light detailPanel medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "form"
+          ]
+        },
+        "wizard": {
+          "enabled": true,
+          "assetId": "hikmet-light-wizard",
+          "assetName": "Hikmet light wizard",
+          "assetType": "illustration",
+          "assetCategory": "wizard",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/wizard.svg",
+          "assetRef": "internal://themes/hikmet/light/wizard",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light wizard medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "wizard"
+          ]
+        },
+        "login": {
+          "enabled": true,
+          "assetId": "hikmet-light-login",
+          "assetName": "Hikmet light login",
+          "assetType": "hero",
+          "assetCategory": "login",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/login.svg",
+          "assetRef": "internal://themes/hikmet/light/login",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light login medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "login"
+          ]
+        },
+        "dashboardHero": {
+          "enabled": true,
+          "assetId": "hikmet-light-dashboard-hero",
+          "assetName": "Hikmet light dashboardHero",
+          "assetType": "hero",
+          "assetCategory": "dashboardHero",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/dashboard-hero.svg",
+          "assetRef": "internal://themes/hikmet/light/dashboard-hero",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light dashboardHero medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "dashboard"
+          ]
+        },
+        "emptyState": {
+          "enabled": true,
+          "assetId": "hikmet-light-empty-state",
+          "assetName": "Hikmet light emptyState",
+          "assetType": "illustration",
+          "assetCategory": "emptyState",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/light/empty-state.svg",
+          "assetRef": "internal://themes/hikmet/light/empty-state",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet light emptyState medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.18,
+          "overlayColor": "#F8F2E6",
+          "overlayOpacity": 0.12,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "list"
+          ]
+        }
+      },
+      "typography": {
+        "fontFamily": "system-ui, ui-sans-serif, sans-serif",
+        "headingFontFamily": "system-ui, ui-sans-serif, sans-serif",
+        "monoFontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+        "baseSize": 14,
+        "scale": {
+          "xs": 12,
+          "sm": 13,
+          "md": 14,
+          "lg": 16,
+          "xl": 20,
+          "2xl": 24,
+          "3xl": 30
+        },
+        "weight": {
+          "regular": 400,
+          "medium": 500,
+          "semibold": 600,
+          "bold": 700
+        },
+        "lineHeight": {
+          "tight": 1.2,
+          "normal": 1.5,
+          "relaxed": 1.65
+        },
+        "letterSpacing": {
+          "tight": "-0.01em",
+          "normal": "0",
+          "wide": "0.02em"
+        }
+      },
+      "shape": {
+        "radiusSmall": "8px",
+        "radiusMedium": "10px",
+        "radiusLarge": "12px",
+        "radiusXl": "16px",
+        "radiusCard": "12px",
+        "radiusInput": "10px",
+        "radiusButton": "10px",
+        "radiusBanner": "18px",
+        "radiusWizard": "16px"
+      },
+      "spacing": {
+        "pagePadding": "22px",
+        "sectionGap": "16px",
+        "cardPadding": "18px",
+        "fieldGap": "14px",
+        "tableRowHeight": "50px",
+        "sidebarWidth": "280px",
+        "topbarHeight": "64px"
+      },
+      "shadow": {
+        "shadowSubtle": "0 1px 2px rgba(31, 22, 5, 0.08)",
+        "shadowCard": "0 14px 32px rgba(56, 44, 22, 0.13)",
+        "shadowFloating": "0 24px 56px rgba(31, 22, 5, 0.18)",
+        "shadowFocus": "0 0 0 3px rgba(11, 107, 85, 0.22)",
+        "shadowBanner": "0 18px 42px rgba(11, 107, 85, 0.22)",
+        "modalShadow": "0 28px 70px rgba(31, 22, 5, 0.22)",
+        "dropdownShadow": "0 16px 36px rgba(31, 22, 5, 0.16)"
+      },
+      "components": {
+        "shell": {
+          "navBg": "#0B6B55",
+          "navText": "#FFFFFF",
+          "navMuted": "#5F6D62",
+          "navHoverBg": "#EFE3CF",
+          "navActiveBg": "#FFF9EE",
+          "navActiveText": "#102A2C",
+          "headerBg": "#FFFCF5",
+          "headerBorder": "#D7C39C"
+        },
+        "sidebar": {
+          "background": "#0B6B55",
+          "foreground": "#FFFFFF",
+          "muted": "#5F6D62",
+          "hover": "#EFE3CF",
+          "activeBackground": "#FFF9EE",
+          "activeForeground": "#102A2C"
+        },
+        "topbar": {
+          "background": "#FFFCF5",
+          "foreground": "#102A2C",
+          "border": "#D7C39C"
+        },
+        "pageBanner": {
+          "background": "#0B6B55",
+          "foreground": "#FFFFFF",
+          "muted": "#F8F2E6",
+          "accent": "#B88A2A",
+          "border": "#B88A2A",
+          "shadow": "0 18px 42px rgba(11, 107, 85, 0.22)",
+          "radius": "18px",
+          "illustrationAssetId": "hikmet-light-page-banner",
+          "overlay": "#F8F2E6",
+          "contentPlacement": "left",
+          "actionPlacement": "right"
+        },
+        "smartList": {
+          "containerBg": "#EFE3CF",
+          "headerSurface": "#FFF9EE",
+          "toolbarSurface": "#FFFCF5",
+          "decorativeBackground": "#E8D9BF",
+          "watermarkAssetId": "hikmet-light-smart-list-watermark",
+          "watermarkOpacity": "0.14",
+          "topStripDecoration": "#B88A2A",
+          "panelBorder": "#D7C39C",
+          "rowSeparator": "#D7C39C",
+          "rowHover": "#E8D9BF",
+          "rowSelected": "#FFFCF5",
+          "emptyStateAssetId": "hikmet-light-empty-state",
+          "filterSurface": "#FFF9EE",
+          "searchInputBg": "#FFFCF4",
+          "paginationSurface": "#FFF9EE"
+        },
+        "cards": {
+          "cardBg": "#FFFDF7",
+          "cardBorder": "#D7C39C",
+          "cardShadow": "0 14px 32px rgba(56, 44, 22, 0.13)",
+          "cardHoverBg": "#FFFCF5"
+        },
+        "forms": {
+          "inputBg": "#FFFCF4",
+          "inputForeground": "#102A2C",
+          "inputBorder": "#D7C39C",
+          "inputFocus": "#0B6B55",
+          "inputPlaceholder": "#5F6D62",
+          "inputDisabledBg": "#E8D9BF",
+          "labelText": "#102A2C",
+          "helperText": "#5F6D62",
+          "errorText": "#B84236",
+          "fieldHeight": "44px",
+          "fieldRadius": "10px"
+        },
+        "tables": {
+          "tableHeaderBg": "#EFE3CF",
+          "tableHeaderText": "#102A2C",
+          "tableBorder": "#D7C39C",
+          "tableRowHover": "#E8D9BF",
+          "tableRowSelected": "#FFFCF5"
+        },
+        "badges": {
+          "neutralBg": "#E8D9BF",
+          "neutralText": "#102A2C",
+          "neutralBorder": "#D7C39C",
+          "successBg": "#1E7C55",
+          "successText": "#FFFFFF",
+          "successBorder": "#1E7C55",
+          "warningBg": "#B7791F",
+          "warningText": "#1F1605",
+          "warningBorder": "#B7791F",
+          "dangerBg": "#B84236",
+          "dangerText": "#FFFFFF",
+          "dangerBorder": "#B84236",
+          "infoBg": "#1D5C73",
+          "infoText": "#FFFFFF",
+          "infoBorder": "#1D5C73"
+        },
+        "wizard": {
+          "wizardBg": "#F8F2E6",
+          "panelBg": "#FFF9EE",
+          "panelBorder": "#D7C39C",
+          "stepBg": "#E8D9BF",
+          "stepText": "#102A2C",
+          "stepActiveBg": "#0B6B55",
+          "stepActiveText": "#FFFFFF",
+          "stepCompleteBg": "#1E7C55",
+          "stepCompleteText": "#FFFFFF",
+          "stepLine": "#D7C39C",
+          "summaryBg": "#FFFCF5",
+          "sidebarBg": "#EFE3CF",
+          "sidebarBorder": "#D7C39C",
+          "illustrationAssetId": "hikmet-light-wizard"
+        },
+        "tabs": {
+          "background": "#EFE3CF",
+          "foreground": "#5F6D62",
+          "activeBackground": "#FFF9EE",
+          "activeForeground": "#0B6B55",
+          "border": "#D7C39C"
+        },
+        "modal": {
+          "background": "#FFFCF5",
+          "foreground": "#102A2C",
+          "border": "#D7C39C",
+          "shadow": "0 28px 70px rgba(31, 22, 5, 0.22)"
+        },
+        "drawer": {
+          "background": "#FFFCF5",
+          "foreground": "#102A2C",
+          "border": "#D7C39C"
+        },
+        "buttons": {
+          "primaryBg": "#0B6B55",
+          "primaryText": "#FFFFFF",
+          "primaryHover": "#1D5C73",
+          "secondaryBg": "#EFE3CF",
+          "secondaryText": "#102A2C",
+          "dangerBg": "#B84236",
+          "dangerText": "#FFFFFF"
+        },
+        "alerts": {
+          "alertBg": "#EFE3CF",
+          "alertBorder": "#B88A2A",
+          "alertText": "#102A2C"
+        },
+        "toast": {
+          "toastBg": "#FFFCF5",
+          "toastBorder": "#D7C39C",
+          "toastText": "#102A2C"
+        },
+        "interaction": {
+          "focusRing": "#0B6B55",
+          "hoverOverlay": "#E8D9BF",
+          "selectedOverlay": "#FFFCF5"
+        }
+      },
+      "states": {
+        "hover": {
+          "background": "#E8D9BF",
+          "foreground": "#102A2C",
+          "border": "#D7C39C"
+        },
+        "active": {
+          "background": "#FFFCF5",
+          "foreground": "#102A2C",
+          "border": "#B88A2A"
+        },
+        "selected": {
+          "background": "#FFFCF5",
+          "foreground": "#102A2C",
+          "border": "#0B6B55"
+        },
+        "disabled": {
+          "opacity": 0.45,
+          "background": "#E8D9BF",
+          "foreground": "#5F6D62"
+        },
+        "focus": {
+          "ring": "#0B6B55",
+          "ringOffset": "2px",
+          "shadow": "0 0 0 3px rgba(11, 107, 85, 0.22)"
+        },
+        "loading": {
+          "overlay": "#EFE3CF",
+          "spinner": "#0B6B55"
+        },
+        "skeleton": {
+          "base": "#E8D9BF",
+          "highlight": "#FFFCF5"
+        },
+        "error": {
+          "background": "#B84236",
+          "foreground": "#FFFFFF",
+          "border": "#B84236"
+        },
+        "warning": {
+          "background": "#B7791F",
+          "foreground": "#1F1605",
+          "border": "#B7791F"
+        },
+        "success": {
+          "background": "#1E7C55",
+          "foreground": "#FFFFFF",
+          "border": "#1E7C55"
+        }
+      },
+      "density": {
+        "table": "balanced",
+        "form": "balanced",
+        "dashboard": "balanced"
+      },
+      "icon": {
+        "strokeWidth": 1.8,
+        "containerRadius": "10px",
+        "containerStyle": "soft",
+        "containerBackground": "#ECDFC8",
+        "containerBorder": "#D7C39C",
+        "moduleBackgroundOpacity": 0.16
+      }
+    },
+    "dark": {
+      "colors": {
+        "primary": "#33B893",
+        "primaryForeground": "#061B22",
+        "secondary": "#6EA9B7",
+        "secondaryForeground": "#061B22",
+        "accent": "#C79B43",
+        "accentForeground": "#07110D",
+        "background": "#061319",
+        "foreground": "#F4E8D0",
+        "surface": "#08202A",
+        "surfaceMuted": "#0D2A32",
+        "surfaceRaised": "#0B2530",
+        "card": "#0A222B",
+        "cardForeground": "#F4E8D0",
+        "muted": "#17343D",
+        "mutedForeground": "#B7C6BA",
+        "border": "#24505A",
+        "borderStrong": "#C79B43",
+        "input": "#071A22",
+        "inputForeground": "#F4E8D0",
+        "ring": "#33B893",
+        "success": "#4FD09E",
+        "successForeground": "#061B22",
+        "warning": "#D9A84B",
+        "warningForeground": "#07110D",
+        "danger": "#E0665B",
+        "dangerForeground": "#FFFFFF",
+        "info": "#6EA9B7",
+        "infoForeground": "#061B22"
+      },
+      "background": {
+        "app": {
+          "type": "gradient",
+          "color": "#061319",
+          "gradient": {
+            "enabled": true,
+            "from": "#061319",
+            "to": "#0D2A32",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "page": {
+          "type": "gradient",
+          "color": "#061319",
+          "gradient": {
+            "enabled": true,
+            "from": "#061319",
+            "to": "#08202A",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "surface": {
+          "type": "solid",
+          "color": "#08202A",
+          "gradient": {
+            "enabled": false,
+            "from": "#08202A",
+            "to": "#08202A",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "card": {
+          "type": "solid",
+          "color": "#0A222B",
+          "gradient": {
+            "enabled": false,
+            "from": "#0A222B",
+            "to": "#0A222B",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "sidebar": {
+          "type": "solid",
+          "color": "#33B893",
+          "gradient": {
+            "enabled": false,
+            "from": "#33B893",
+            "to": "#33B893",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "topbar": {
+          "type": "solid",
+          "color": "#0B2530",
+          "gradient": {
+            "enabled": false,
+            "from": "#0B2530",
+            "to": "#0B2530",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "pageBanner": {
+          "type": "mixed",
+          "color": "#33B893",
+          "gradient": {
+            "enabled": true,
+            "from": "#33B893",
+            "to": "#6EA9B7",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "smartList": {
+          "type": "pattern",
+          "color": "#0D2A32",
+          "gradient": {
+            "enabled": false,
+            "from": "#0D2A32",
+            "to": "#08202A",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "form": {
+          "type": "solid",
+          "color": "#08202A",
+          "gradient": {
+            "enabled": false,
+            "from": "#08202A",
+            "to": "#08202A",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "wizard": {
+          "type": "mixed",
+          "color": "#08202A",
+          "gradient": {
+            "enabled": true,
+            "from": "#08202A",
+            "to": "#0D2A32",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "login": {
+          "type": "mixed",
+          "color": "#061319",
+          "gradient": {
+            "enabled": true,
+            "from": "#061319",
+            "to": "#0D2A32",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "dashboard": {
+          "type": "mixed",
+          "color": "#061319",
+          "gradient": {
+            "enabled": true,
+            "from": "#061319",
+            "to": "#08202A",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": true,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": true,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "modal": {
+          "type": "solid",
+          "color": "#0B2530",
+          "gradient": {
+            "enabled": false,
+            "from": "#0B2530",
+            "to": "#0B2530",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        },
+        "drawer": {
+          "type": "solid",
+          "color": "#0B2530",
+          "gradient": {
+            "enabled": false,
+            "from": "#0B2530",
+            "to": "#0B2530",
+            "direction": "135deg"
+          },
+          "pattern": {
+            "enabled": false,
+            "motifType": "medrese_geometry",
+            "color": "#C79B43",
+            "opacity": 0.12,
+            "size": 32,
+            "spacing": 24,
+            "rotation": 0,
+            "lineWidth": 1
+          },
+          "overlay": {
+            "enabled": false,
+            "color": "#061319",
+            "opacity": 0.14
+          },
+          "border": "#24505A",
+          "shadow": "0 1px 2px rgba(31, 22, 5, 0.08)"
+        }
+      },
+      "illustrations": {
+        "pageBanner": {
+          "enabled": true,
+          "assetId": "hikmet-dark-page-banner",
+          "assetName": "Hikmet dark pageBanner",
+          "assetType": "illustration",
+          "assetCategory": "pageBanner",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/page-banner.svg",
+          "assetRef": "internal://themes/hikmet/dark/page-banner",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark pageBanner medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "banner"
+          ]
+        },
+        "smartList": {
+          "enabled": true,
+          "assetId": "hikmet-dark-smart-list-watermark",
+          "assetName": "Hikmet dark smartList",
+          "assetType": "watermark",
+          "assetCategory": "smartList",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/smart-list-watermark.svg",
+          "assetRef": "internal://themes/hikmet/dark/smart-list-watermark",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark smartList medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "list"
+          ]
+        },
+        "formHero": {
+          "enabled": true,
+          "assetId": "hikmet-dark-form-hero",
+          "assetName": "Hikmet dark formHero",
+          "assetType": "hero",
+          "assetCategory": "formHero",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/form-hero.svg",
+          "assetRef": "internal://themes/hikmet/dark/form-hero",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark formHero medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "form"
+          ]
+        },
+        "detailPanel": {
+          "enabled": true,
+          "assetId": "hikmet-dark-detail-panel",
+          "assetName": "Hikmet dark detailPanel",
+          "assetType": "illustration",
+          "assetCategory": "detailPanel",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/detail-panel.svg",
+          "assetRef": "internal://themes/hikmet/dark/detail-panel",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark detailPanel medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "form"
+          ]
+        },
+        "wizard": {
+          "enabled": true,
+          "assetId": "hikmet-dark-wizard",
+          "assetName": "Hikmet dark wizard",
+          "assetType": "illustration",
+          "assetCategory": "wizard",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/wizard.svg",
+          "assetRef": "internal://themes/hikmet/dark/wizard",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark wizard medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "wizard"
+          ]
+        },
+        "login": {
+          "enabled": true,
+          "assetId": "hikmet-dark-login",
+          "assetName": "Hikmet dark login",
+          "assetType": "hero",
+          "assetCategory": "login",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/login.svg",
+          "assetRef": "internal://themes/hikmet/dark/login",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark login medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "login"
+          ]
+        },
+        "dashboardHero": {
+          "enabled": true,
+          "assetId": "hikmet-dark-dashboard-hero",
+          "assetName": "Hikmet dark dashboardHero",
+          "assetType": "hero",
+          "assetCategory": "dashboardHero",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/dashboard-hero.svg",
+          "assetRef": "internal://themes/hikmet/dark/dashboard-hero",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark dashboardHero medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "dashboard"
+          ]
+        },
+        "emptyState": {
+          "enabled": true,
+          "assetId": "hikmet-dark-empty-state",
+          "assetName": "Hikmet dark emptyState",
+          "assetType": "illustration",
+          "assetCategory": "emptyState",
+          "sourceType": "generated-svg",
+          "src": "/theme-assets/hikmet/dark/empty-state.svg",
+          "assetRef": "internal://themes/hikmet/dark/empty-state",
+          "fallbackMotif": "medrese_geometry",
+          "alt": "Hikmet dark emptyState medrese geometry",
+          "position": "right center",
+          "fit": "cover",
+          "focalPointX": 70,
+          "focalPointY": 35,
+          "opacity": 0.14,
+          "overlayColor": "#061319",
+          "overlayOpacity": 0.18,
+          "borderRadius": "18px",
+          "mask": {
+            "enabled": true,
+            "type": "linear-fade-left"
+          },
+          "visibleOn": [
+            "list"
+          ]
+        }
+      },
+      "typography": {
+        "fontFamily": "system-ui, ui-sans-serif, sans-serif",
+        "headingFontFamily": "system-ui, ui-sans-serif, sans-serif",
+        "monoFontFamily": "ui-monospace, SFMono-Regular, Menlo, monospace",
+        "baseSize": 14,
+        "scale": {
+          "xs": 12,
+          "sm": 13,
+          "md": 14,
+          "lg": 16,
+          "xl": 20,
+          "2xl": 24,
+          "3xl": 30
+        },
+        "weight": {
+          "regular": 400,
+          "medium": 500,
+          "semibold": 600,
+          "bold": 700
+        },
+        "lineHeight": {
+          "tight": 1.2,
+          "normal": 1.5,
+          "relaxed": 1.65
+        },
+        "letterSpacing": {
+          "tight": "-0.01em",
+          "normal": "0",
+          "wide": "0.02em"
+        }
+      },
+      "shape": {
+        "radiusSmall": "8px",
+        "radiusMedium": "10px",
+        "radiusLarge": "12px",
+        "radiusXl": "16px",
+        "radiusCard": "12px",
+        "radiusInput": "10px",
+        "radiusButton": "10px",
+        "radiusBanner": "18px",
+        "radiusWizard": "16px"
+      },
+      "spacing": {
+        "pagePadding": "22px",
+        "sectionGap": "16px",
+        "cardPadding": "18px",
+        "fieldGap": "14px",
+        "tableRowHeight": "50px",
+        "sidebarWidth": "280px",
+        "topbarHeight": "64px"
+      },
+      "shadow": {
+        "shadowSubtle": "0 1px 2px rgba(0, 0, 0, 0.22)",
+        "shadowCard": "0 18px 44px rgba(0, 0, 0, 0.36)",
+        "shadowFloating": "0 28px 72px rgba(0, 0, 0, 0.46)",
+        "shadowFocus": "0 0 0 3px rgba(51, 184, 147, 0.24)",
+        "shadowBanner": "0 20px 48px rgba(0, 0, 0, 0.42)",
+        "modalShadow": "0 32px 82px rgba(0, 0, 0, 0.52)",
+        "dropdownShadow": "0 18px 44px rgba(0, 0, 0, 0.38)"
+      },
+      "components": {
+        "shell": {
+          "navBg": "#33B893",
+          "navText": "#061B22",
+          "navMuted": "#B7C6BA",
+          "navHoverBg": "#0D2A32",
+          "navActiveBg": "#08202A",
+          "navActiveText": "#F4E8D0",
+          "headerBg": "#0B2530",
+          "headerBorder": "#24505A"
+        },
+        "sidebar": {
+          "background": "#33B893",
+          "foreground": "#061B22",
+          "muted": "#B7C6BA",
+          "hover": "#0D2A32",
+          "activeBackground": "#08202A",
+          "activeForeground": "#F4E8D0"
+        },
+        "topbar": {
+          "background": "#0B2530",
+          "foreground": "#F4E8D0",
+          "border": "#24505A"
+        },
+        "pageBanner": {
+          "background": "#33B893",
+          "foreground": "#061B22",
+          "muted": "#061B22",
+          "accent": "#C79B43",
+          "border": "#C79B43",
+          "shadow": "0 20px 48px rgba(0, 0, 0, 0.42)",
+          "radius": "18px",
+          "illustrationAssetId": "hikmet-dark-page-banner",
+          "overlay": "#061319",
+          "contentPlacement": "left",
+          "actionPlacement": "right"
+        },
+        "smartList": {
+          "containerBg": "#0D2A32",
+          "headerSurface": "#08202A",
+          "toolbarSurface": "#0B2530",
+          "decorativeBackground": "#17343D",
+          "watermarkAssetId": "hikmet-dark-smart-list-watermark",
+          "watermarkOpacity": "0.14",
+          "topStripDecoration": "#C79B43",
+          "panelBorder": "#24505A",
+          "rowSeparator": "#24505A",
+          "rowHover": "#17343D",
+          "rowSelected": "#0B2530",
+          "emptyStateAssetId": "hikmet-dark-empty-state",
+          "filterSurface": "#08202A",
+          "searchInputBg": "#071A22",
+          "paginationSurface": "#08202A"
+        },
+        "cards": {
+          "cardBg": "#0A222B",
+          "cardBorder": "#24505A",
+          "cardShadow": "0 18px 44px rgba(0, 0, 0, 0.36)",
+          "cardHoverBg": "#0B2530"
+        },
+        "forms": {
+          "inputBg": "#071A22",
+          "inputForeground": "#F4E8D0",
+          "inputBorder": "#24505A",
+          "inputFocus": "#33B893",
+          "inputPlaceholder": "#B7C6BA",
+          "inputDisabledBg": "#17343D",
+          "labelText": "#F4E8D0",
+          "helperText": "#B7C6BA",
+          "errorText": "#E0665B",
+          "fieldHeight": "44px",
+          "fieldRadius": "10px"
+        },
+        "tables": {
+          "tableHeaderBg": "#0D2A32",
+          "tableHeaderText": "#F4E8D0",
+          "tableBorder": "#24505A",
+          "tableRowHover": "#17343D",
+          "tableRowSelected": "#0B2530"
+        },
+        "badges": {
+          "neutralBg": "#17343D",
+          "neutralText": "#F4E8D0",
+          "neutralBorder": "#24505A",
+          "successBg": "#4FD09E",
+          "successText": "#061B22",
+          "successBorder": "#4FD09E",
+          "warningBg": "#D9A84B",
+          "warningText": "#07110D",
+          "warningBorder": "#D9A84B",
+          "dangerBg": "#E0665B",
+          "dangerText": "#FFFFFF",
+          "dangerBorder": "#E0665B",
+          "infoBg": "#6EA9B7",
+          "infoText": "#061B22",
+          "infoBorder": "#6EA9B7"
+        },
+        "wizard": {
+          "wizardBg": "#061319",
+          "panelBg": "#08202A",
+          "panelBorder": "#24505A",
+          "stepBg": "#17343D",
+          "stepText": "#F4E8D0",
+          "stepActiveBg": "#33B893",
+          "stepActiveText": "#061B22",
+          "stepCompleteBg": "#4FD09E",
+          "stepCompleteText": "#061B22",
+          "stepLine": "#24505A",
+          "summaryBg": "#0B2530",
+          "sidebarBg": "#0D2A32",
+          "sidebarBorder": "#24505A",
+          "illustrationAssetId": "hikmet-dark-wizard"
+        },
+        "tabs": {
+          "background": "#0D2A32",
+          "foreground": "#B7C6BA",
+          "activeBackground": "#08202A",
+          "activeForeground": "#33B893",
+          "border": "#24505A"
+        },
+        "modal": {
+          "background": "#0B2530",
+          "foreground": "#F4E8D0",
+          "border": "#24505A",
+          "shadow": "0 32px 82px rgba(0, 0, 0, 0.52)"
+        },
+        "drawer": {
+          "background": "#0B2530",
+          "foreground": "#F4E8D0",
+          "border": "#24505A"
+        },
+        "buttons": {
+          "primaryBg": "#33B893",
+          "primaryText": "#061B22",
+          "primaryHover": "#6EA9B7",
+          "secondaryBg": "#0D2A32",
+          "secondaryText": "#F4E8D0",
+          "dangerBg": "#E0665B",
+          "dangerText": "#FFFFFF"
+        },
+        "alerts": {
+          "alertBg": "#0D2A32",
+          "alertBorder": "#C79B43",
+          "alertText": "#F4E8D0"
+        },
+        "toast": {
+          "toastBg": "#0B2530",
+          "toastBorder": "#24505A",
+          "toastText": "#F4E8D0"
+        },
+        "interaction": {
+          "focusRing": "#33B893",
+          "hoverOverlay": "#17343D",
+          "selectedOverlay": "#0B2530"
+        }
+      },
+      "states": {
+        "hover": {
+          "background": "#17343D",
+          "foreground": "#F4E8D0",
+          "border": "#24505A"
+        },
+        "active": {
+          "background": "#0B2530",
+          "foreground": "#F4E8D0",
+          "border": "#C79B43"
+        },
+        "selected": {
+          "background": "#0B2530",
+          "foreground": "#F4E8D0",
+          "border": "#33B893"
+        },
+        "disabled": {
+          "opacity": 0.45,
+          "background": "#17343D",
+          "foreground": "#B7C6BA"
+        },
+        "focus": {
+          "ring": "#33B893",
+          "ringOffset": "2px",
+          "shadow": "0 0 0 3px rgba(51, 184, 147, 0.24)"
+        },
+        "loading": {
+          "overlay": "#0D2A32",
+          "spinner": "#33B893"
+        },
+        "skeleton": {
+          "base": "#17343D",
+          "highlight": "#0B2530"
+        },
+        "error": {
+          "background": "#E0665B",
+          "foreground": "#FFFFFF",
+          "border": "#E0665B"
+        },
+        "warning": {
+          "background": "#D9A84B",
+          "foreground": "#07110D",
+          "border": "#D9A84B"
+        },
+        "success": {
+          "background": "#4FD09E",
+          "foreground": "#061B22",
+          "border": "#4FD09E"
+        }
+      },
+      "density": {
+        "table": "balanced",
+        "form": "balanced",
+        "dashboard": "balanced"
+      },
+      "icon": {
+        "strokeWidth": 1.8,
+        "containerRadius": "10px",
+        "containerStyle": "soft",
+        "containerBackground": "#12343B",
+        "containerBorder": "#24505A",
+        "moduleBackgroundOpacity": 0.16
+      }
+    }
+  },
+  "cssVariables": {
+    "light": {
+      "--eden-color-background": "#F8F2E6",
+      "--eden-color-foreground": "#102A2C",
+      "--eden-color-primary": "#0B6B55",
+      "--eden-color-primary-foreground": "#FFFFFF",
+      "--eden-color-secondary": "#1D5C73",
+      "--eden-color-accent": "#B88A2A",
+      "--eden-color-card": "#FFFDF7",
+      "--eden-color-card-foreground": "#102A2C",
+      "--eden-color-surface": "#FFF9EE",
+      "--eden-color-border": "#D7C39C",
+      "--eden-color-border-strong": "#B88A2A",
+      "--eden-color-input": "#FFFCF4",
+      "--eden-color-ring": "#0B6B55",
+      "--eden-color-success": "#1E7C55",
+      "--eden-color-warning": "#B7791F",
+      "--eden-color-danger": "#B84236",
+      "--eden-color-info": "#1D5C73",
+      "--eden-sidebar-bg": "#0B6B55",
+      "--eden-sidebar-text": "#FFFFFF",
+      "--eden-topbar-bg": "#FFFCF5",
+      "--eden-topbar-border": "#D7C39C",
+      "--eden-page-banner-bg": "#0B6B55",
+      "--eden-page-banner-text": "#FFFFFF",
+      "--eden-page-banner-muted": "#F8F2E6",
+      "--eden-page-banner-border": "#B88A2A",
+      "--eden-page-banner-shadow": "0 18px 42px rgba(11, 107, 85, 0.22)",
+      "--eden-page-banner-asset": "url(\"/theme-assets/hikmet/light/page-banner.svg\")",
+      "--eden-smart-list-bg": "#EFE3CF",
+      "--eden-smart-list-header-bg": "#FFF9EE",
+      "--eden-smart-list-toolbar-bg": "#FFFCF5",
+      "--eden-smart-list-border": "#D7C39C",
+      "--eden-smart-list-row-hover": "#E8D9BF",
+      "--eden-smart-list-watermark-asset": "url(\"/theme-assets/hikmet/light/smart-list-watermark.svg\")",
+      "--eden-card-bg": "#FFFDF7",
+      "--eden-card-border": "#D7C39C",
+      "--eden-card-shadow": "0 14px 32px rgba(56, 44, 22, 0.13)",
+      "--eden-input-bg": "#FFFCF4",
+      "--eden-input-border": "#D7C39C",
+      "--eden-input-focus": "#0B6B55",
+      "--eden-radius-card": "12px",
+      "--eden-radius-button": "10px",
+      "--eden-radius-input": "10px",
+      "--eden-radius-banner": "18px",
+      "--eden-shadow-card": "0 14px 32px rgba(56, 44, 22, 0.13)",
+      "--eden-shadow-floating": "0 24px 56px rgba(31, 22, 5, 0.18)"
+    },
+    "dark": {
+      "--eden-color-background": "#061319",
+      "--eden-color-foreground": "#F4E8D0",
+      "--eden-color-primary": "#33B893",
+      "--eden-color-primary-foreground": "#061B22",
+      "--eden-color-secondary": "#6EA9B7",
+      "--eden-color-accent": "#C79B43",
+      "--eden-color-card": "#0A222B",
+      "--eden-color-card-foreground": "#F4E8D0",
+      "--eden-color-surface": "#08202A",
+      "--eden-color-border": "#24505A",
+      "--eden-color-border-strong": "#C79B43",
+      "--eden-color-input": "#071A22",
+      "--eden-color-ring": "#33B893",
+      "--eden-color-success": "#4FD09E",
+      "--eden-color-warning": "#D9A84B",
+      "--eden-color-danger": "#E0665B",
+      "--eden-color-info": "#6EA9B7",
+      "--eden-sidebar-bg": "#33B893",
+      "--eden-sidebar-text": "#061B22",
+      "--eden-topbar-bg": "#0B2530",
+      "--eden-topbar-border": "#24505A",
+      "--eden-page-banner-bg": "#33B893",
+      "--eden-page-banner-text": "#061B22",
+      "--eden-page-banner-muted": "#061B22",
+      "--eden-page-banner-border": "#C79B43",
+      "--eden-page-banner-shadow": "0 20px 48px rgba(0, 0, 0, 0.42)",
+      "--eden-page-banner-asset": "url(\"/theme-assets/hikmet/dark/page-banner.svg\")",
+      "--eden-smart-list-bg": "#0D2A32",
+      "--eden-smart-list-header-bg": "#08202A",
+      "--eden-smart-list-toolbar-bg": "#0B2530",
+      "--eden-smart-list-border": "#24505A",
+      "--eden-smart-list-row-hover": "#17343D",
+      "--eden-smart-list-watermark-asset": "url(\"/theme-assets/hikmet/dark/smart-list-watermark.svg\")",
+      "--eden-card-bg": "#0A222B",
+      "--eden-card-border": "#24505A",
+      "--eden-card-shadow": "0 18px 44px rgba(0, 0, 0, 0.36)",
+      "--eden-input-bg": "#071A22",
+      "--eden-input-border": "#24505A",
+      "--eden-input-focus": "#33B893",
+      "--eden-radius-card": "12px",
+      "--eden-radius-button": "10px",
+      "--eden-radius-input": "10px",
+      "--eden-radius-banner": "18px",
+      "--eden-shadow-card": "0 18px 44px rgba(0, 0, 0, 0.36)",
+      "--eden-shadow-floating": "0 28px 72px rgba(0, 0, 0, 0.46)"
+    }
+  },
+  "figmaTokensRef": {
+    "format": "figma-tokens",
+    "filename": "hikmet.figma-tokens.json",
+    "generatedFrom": "hikmet.eden-theme.json",
+    "themeKey": "hikmet"
+  },
+  "lifecycle": {
+    "status": "draft",
+    "isActive": false,
+    "allowedTransitions": [
+      "send_to_review",
+      "approve",
+      "activate",
+      "archive"
+    ],
+    "activationRules": {
+      "singleActiveSystemThemePerWorkspace": true,
+      "activeThemeCannotBeDeleted": true,
+      "activeThemeRequiresVersionCloneForCriticalChanges": true
+    }
+  },
+  "assetRegistry": {
+    "hikmet-light-page-banner": {
+      "assetRef": "internal://themes/hikmet/light/page-banner",
+      "src": "/theme-assets/hikmet/light/page-banner.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "banner"
+      ],
+      "checksum": "sha256-44564508",
+      "safe": true
+    },
+    "hikmet-light-smart-list-watermark": {
+      "assetRef": "internal://themes/hikmet/light/smart-list-watermark",
+      "src": "/theme-assets/hikmet/light/smart-list-watermark.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "list"
+      ],
+      "checksum": "sha256-2a3edf6b",
+      "safe": true
+    },
+    "hikmet-light-form-hero": {
+      "assetRef": "internal://themes/hikmet/light/form-hero",
+      "src": "/theme-assets/hikmet/light/form-hero.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "form"
+      ],
+      "checksum": "sha256-6978fdb1",
+      "safe": true
+    },
+    "hikmet-light-detail-panel": {
+      "assetRef": "internal://themes/hikmet/light/detail-panel",
+      "src": "/theme-assets/hikmet/light/detail-panel.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "form"
+      ],
+      "checksum": "sha256-276b1386",
+      "safe": true
+    },
+    "hikmet-light-wizard": {
+      "assetRef": "internal://themes/hikmet/light/wizard",
+      "src": "/theme-assets/hikmet/light/wizard.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "wizard"
+      ],
+      "checksum": "sha256-52142623",
+      "safe": true
+    },
+    "hikmet-light-login": {
+      "assetRef": "internal://themes/hikmet/light/login",
+      "src": "/theme-assets/hikmet/light/login.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "login"
+      ],
+      "checksum": "sha256-2e4e04b7",
+      "safe": true
+    },
+    "hikmet-light-dashboard-hero": {
+      "assetRef": "internal://themes/hikmet/light/dashboard-hero",
+      "src": "/theme-assets/hikmet/light/dashboard-hero.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "dashboard"
+      ],
+      "checksum": "sha256-149079fb",
+      "safe": true
+    },
+    "hikmet-light-empty-state": {
+      "assetRef": "internal://themes/hikmet/light/empty-state",
+      "src": "/theme-assets/hikmet/light/empty-state.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "light",
+      "usage": [
+        "list"
+      ],
+      "checksum": "sha256-70c9d2df",
+      "safe": true
+    },
+    "hikmet-dark-page-banner": {
+      "assetRef": "internal://themes/hikmet/dark/page-banner",
+      "src": "/theme-assets/hikmet/dark/page-banner.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "banner"
+      ],
+      "checksum": "sha256-4d9b6952",
+      "safe": true
+    },
+    "hikmet-dark-smart-list-watermark": {
+      "assetRef": "internal://themes/hikmet/dark/smart-list-watermark",
+      "src": "/theme-assets/hikmet/dark/smart-list-watermark.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "list"
+      ],
+      "checksum": "sha256-5b3f2f8b",
+      "safe": true
+    },
+    "hikmet-dark-form-hero": {
+      "assetRef": "internal://themes/hikmet/dark/form-hero",
+      "src": "/theme-assets/hikmet/dark/form-hero.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "form"
+      ],
+      "checksum": "sha256-39834ee7",
+      "safe": true
+    },
+    "hikmet-dark-detail-panel": {
+      "assetRef": "internal://themes/hikmet/dark/detail-panel",
+      "src": "/theme-assets/hikmet/dark/detail-panel.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "form"
+      ],
+      "checksum": "sha256-46ca787c",
+      "safe": true
+    },
+    "hikmet-dark-wizard": {
+      "assetRef": "internal://themes/hikmet/dark/wizard",
+      "src": "/theme-assets/hikmet/dark/wizard.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "wizard"
+      ],
+      "checksum": "sha256-4db80467",
+      "safe": true
+    },
+    "hikmet-dark-login": {
+      "assetRef": "internal://themes/hikmet/dark/login",
+      "src": "/theme-assets/hikmet/dark/login.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "login"
+      ],
+      "checksum": "sha256-126d60ed",
+      "safe": true
+    },
+    "hikmet-dark-dashboard-hero": {
+      "assetRef": "internal://themes/hikmet/dark/dashboard-hero",
+      "src": "/theme-assets/hikmet/dark/dashboard-hero.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "dashboard"
+      ],
+      "checksum": "sha256-2655868f",
+      "safe": true
+    },
+    "hikmet-dark-empty-state": {
+      "assetRef": "internal://themes/hikmet/dark/empty-state",
+      "src": "/theme-assets/hikmet/dark/empty-state.svg",
+      "sourceType": "generated-svg",
+      "motif": "medrese_geometry",
+      "mode": "dark",
+      "usage": [
+        "list"
+      ],
+      "checksum": "sha256-6784ae95",
+      "safe": true
+    }
+  },
+  "validation": {
+    "schemaValid": true,
+    "requiredFieldsComplete": true,
+    "assetRefsResolved": true,
+    "cssVariablesComplete": true,
+    "figmaExportReady": true,
+    "contrastWarnings": [],
+    "assetWarnings": [],
+    "unusedAssets": [],
+    "notes": []
+  },
+  "metadata": {
+    "artDirection": "Sukunet, hikmet, medrese geometrisi ve vakur ERP kullanimi.",
+    "inspiration": "Medrese yildiz geometrisi, ince kemer cizgileri, zumrut yesili ve kontrollu altin vurgu.",
+    "category": "system",
+    "personality": [
+      "calm",
+      "wise",
+      "structured",
+      "refined"
+    ],
+    "bestFor": [
+      "system-ui",
+      "erp-operations",
+      "executive-workflows"
+    ],
+    "source": "eden_export",
+    "notes": "Hikmet runtime package is generated from the Eden ERP theme package generator.",
+    "designerNote": "Change token values and asset references only. Keep layout, workflows and Eden logo unchanged."
+  }
+}

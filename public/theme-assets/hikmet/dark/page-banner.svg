@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-label="Hikmet dark page banner medrese geometry">
+  <rect width="960" height="240" fill="#061B22"/>
+  <path d="M0 210h960" stroke="#C79B43" stroke-width="1" opacity=".28"/>
+  <g fill="none" stroke="#33B893" stroke-width="1.2" opacity=".2">
+    <path d="M690 210c40-72 110-112 190-112s150 40 190 112"/>
+    <path d="M735 210c30-48 78-74 145-74s115 26 145 74"/>
+  </g>
+  <g fill="none" stroke="#F2D9A0" stroke-width="1" opacity=".24">
+    <path d="M812 64l28 28-28 28-28-28z"/>
+    <path d="M872 42l22 22-22 22-22-22z"/>
+  </g>
+</svg>

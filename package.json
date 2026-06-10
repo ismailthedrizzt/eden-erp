@@ -38,6 +38,8 @@
     "backend:boundary:enforce": "node scripts/audit-next-backend-boundary.js --fail-on-direct-db",
     "boundaries:check": "node scripts/check-import-boundaries.js",
     "release:check": "node scripts/check-release-registry.js",
+    "theme:hikmet:generate": "node scripts/generate-hikmet-theme-package.mjs",
+    "theme:hikmet:validate": "node scripts/validate-hikmet-theme-package.mjs",
     "env:safety": "node scripts/check-release-env-safety.js",
     "db:target:check": "node scripts/check-database-target.js",
     "db:migrate:check": "COMMAND_CONTEXT=migration node scripts/check-database-target.js",

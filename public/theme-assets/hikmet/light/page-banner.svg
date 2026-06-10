@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-label="Hikmet light page banner medrese geometry">
+  <rect width="960" height="240" fill="#F8F2E6"/>
+  <path d="M0 210h960" stroke="#D9BE7A" stroke-width="1" opacity=".45"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1.4" opacity=".24">
+    <path d="M690 210c40-72 110-112 190-112s150 40 190 112"/>
+    <path d="M735 210c30-48 78-74 145-74s115 26 145 74"/>
+    <path d="M790 210c18-28 48-43 90-43s72 15 90 43"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1.2" opacity=".34">
+    <path d="M812 64l28 28-28 28-28-28z"/>
+    <path d="M812 78l14 14-14 14-14-14z"/>
+    <path d="M872 42l22 22-22 22-22-22z"/>
+  </g>
+</svg>

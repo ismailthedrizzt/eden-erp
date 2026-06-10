@@ -21,8 +21,14 @@ import { Toast, type ToastType } from '@/components/ui/Toast'
 import { ImageSlotUploader, type ImageSlot, type SlotImage } from '@/components/ui/ImageSlotUploader'
 import { DocumentSlotUploader, type DocumentSlot, type SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
-import { parseAndValidateThemeJson, validateEdenThemePackage } from '@/lib/theme/themeValidation'
-import { edenThemeToCssVariables, edenThemeToFigmaTokens, themeTokensToCssVars } from '@/lib/theme/themeTransforms'
+import { validateEdenThemePackage } from '@/lib/theme/themeValidation'
+import { themeTokensToCssVars } from '@/lib/theme/themeTransforms'
+import {
+  edenThemeRuntimePackageV2ToFigmaTokens,
+  parseThemeImportTextV2,
+  runtimeThemePackageV2ToCssVariables,
+  toRuntimeThemePackageV2,
+} from '@/lib/theme/themePackageV2'
 import {
   THEME_MANAGEMENT_CHANGE_EVENT,
   createDraftThemeRecord,
@@ -350,9 +356,12 @@ export default function DevelopmentThemesPage() {
   }
 
   function importTheme() {
-    const result = parseAndValidateThemeJson(importText)
+    const result = parseThemeImportTextV2(importText)
     if (!result.theme) {
-      notify('error', result.validation.errors[0]?.message || 'Tema JSON V2 validation gecemedi.', 'Import reddedildi')
+      const defaultMessage = result.kind === 'figma-tokens'
+        ? 'Figma Tokens dosyasi runtime tema degildir. Eden Theme JSON import edin.'
+        : 'Eden Theme JSON V2 validation gecemedi.'
+      notify('error', result.validation.errors[0]?.message || defaultMessage, 'Import reddedildi')
       return
     }
     const record = createImportedThemeRecord(result.theme, result.validation, 'development_admin')
@@ -366,15 +375,16 @@ export default function DevelopmentThemesPage() {
 
   function exportSelected(format: 'eden' | 'figma' | 'css') {
     if (!selected) return
+    const runtimePackage = toRuntimeThemePackageV2(selected.package)
     if (format === 'eden') {
-      downloadFile(`${selected.themeKey}.eden-theme.v2.json`, JSON.stringify(selected.package, null, 2), 'application/json')
+      downloadFile(`${selected.themeKey}.eden-theme.json`, JSON.stringify(runtimePackage, null, 2), 'application/json')
       return
     }
     if (format === 'figma') {
-      downloadFile(`${selected.themeKey}.figma-tokens.json`, JSON.stringify(edenThemeToFigmaTokens(selected.package), null, 2), 'application/json')
+      downloadFile(`${selected.themeKey}.figma-tokens.json`, JSON.stringify(edenThemeRuntimePackageV2ToFigmaTokens(runtimePackage), null, 2), 'application/json')
       return
     }
-    downloadFile(`${selected.themeKey}.css-variables.css`, edenThemeToCssVariables(selected.package), 'text/css')
+    downloadFile(`${selected.themeKey}.css-variables.css`, runtimeThemePackageV2ToCssVariables(runtimePackage), 'text/css')
   }
 
   if (selected) {
@@ -820,26 +830,33 @@ function ImportExportTab({
   onImport: () => void
   onExport: (format: 'eden' | 'figma' | 'css') => void
 }) {
+  const runtimePackage = toRuntimeThemePackageV2(record.package)
+  const figmaTokens = edenThemeRuntimePackageV2ToFigmaTokens(runtimePackage)
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
         <h3 className="text-sm font-semibold text-[var(--eden-text)]">Export</h3>
-        <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Export sadece tema tokenlari, gorsel referanslari ve tasarim metadata icerir.</p>
+        <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Eden JSON runtime tema contract dosyasidir. Figma Tokens ayri tasarim exportudur ve runtime tema yerine gecmez.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button onClick={() => onExport('eden')} className={secondaryButtonClass}><FileJson size={16} /> Eden JSON</button>
           <button onClick={() => onExport('figma')} className={secondaryButtonClass}><Download size={16} /> Figma Tokens</button>
           <button onClick={() => onExport('css')} className={secondaryButtonClass}><Download size={16} /> CSS Variables</button>
         </div>
-        <pre className="mt-4 max-h-80 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(record.package, null, 2)}</pre>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <Metric label="Runtime schema" value={runtimePackage.schemaVersion} />
+          <Metric label="Asset registry" value={String(Object.keys(runtimePackage.assetRegistry).length)} />
+          <Metric label="Figma groups" value={String(Object.keys(figmaTokens.global).length)} />
+        </div>
+        <pre className="mt-4 max-h-80 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(runtimePackage, null, 2)}</pre>
       </div>
       <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
         <h3 className="text-sm font-semibold text-[var(--eden-text)]">Import</h3>
-        <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Yalniz V2 Eden Theme JSON kabul edilir. Import otomatik aktif olmaz, inceleme durumunda acilir.</p>
+        <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Yalniz Eden Theme JSON runtime paketi kabul edilir. Figma Tokens import edilirse validation raporu verilir ama tema olarak acilmaz.</p>
         <textarea
           value={importText}
           onChange={event => setImportText(event.target.value)}
           className="mt-4 min-h-80 w-full rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] p-3 font-mono text-xs text-[var(--eden-text)] outline-none focus:border-[var(--eden-input-focus)]"
-          placeholder={'{\n  "schemaVersion": "2.0.0",\n  "meta": {...},\n  "modes": {...}\n}'}
+          placeholder={'{\n  "schemaVersion": "2.0.0",\n  "meta": {...},\n  "modes": {...},\n  "cssVariables": {...},\n  "assetRegistry": {...},\n  "validation": {...}\n}'}
         />
         <button onClick={onImport} className={cn(primaryButtonClass, 'mt-3')} disabled={!importText.trim()}>
           <Upload size={16} /> Import Et

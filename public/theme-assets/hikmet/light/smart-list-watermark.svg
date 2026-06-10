@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="360" viewBox="0 0 520 360" role="img" aria-label="Hikmet light smart list watermark">
+  <rect width="520" height="360" fill="#FAF6ED"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1" opacity=".16">
+    <path d="M80 300c42-82 102-122 180-122s138 40 180 122"/>
+    <path d="M130 300c31-56 73-82 130-82s99 26 130 82"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1" opacity=".22">
+    <path d="M260 94l34 34-34 34-34-34z"/>
+    <path d="M260 112l16 16-16 16-16-16z"/>
+  </g>
+</svg>

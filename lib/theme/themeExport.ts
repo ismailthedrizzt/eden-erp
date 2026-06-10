@@ -1,36 +1,44 @@
-import { edenThemeToCssVariables, edenThemeToFigmaTokens, resolveSystemThemePackage } from './themeTransforms'
+import { resolveSystemThemePackage } from './themeTransforms'
+import {
+  edenThemeRuntimePackageV2ToFigmaTokens,
+  runtimeThemePackageV2ToCssVariables,
+  toRuntimeThemePackageV2,
+} from './themePackageV2'
 import type { EdenThemePackage, ThemeExportFormat } from './themeSchema'
 
 export function exportEdenTheme(themeKey: string) {
   const theme = resolveSystemThemePackage(themeKey)
   if (!theme) return null
+  const runtimePackage = toRuntimeThemePackageV2(theme)
 
   return {
-    filename: `${theme.meta.themeKey}.eden-theme.v2.json`,
+    filename: `${theme.meta.themeKey}.eden-theme.json`,
     contentType: 'application/json; charset=utf-8',
-    body: JSON.stringify(theme, null, 2),
+    body: JSON.stringify(runtimePackage, null, 2),
   }
 }
 
 export function exportFigmaTokens(themeKey: string) {
   const theme = resolveSystemThemePackage(themeKey)
   if (!theme) return null
+  const runtimePackage = toRuntimeThemePackageV2(theme)
 
   return {
     filename: `${theme.meta.themeKey}.figma-tokens.json`,
     contentType: 'application/json; charset=utf-8',
-    body: JSON.stringify(edenThemeToFigmaTokens(theme), null, 2),
+    body: JSON.stringify(edenThemeRuntimePackageV2ToFigmaTokens(runtimePackage), null, 2),
   }
 }
 
 export function exportCssVariables(themeKey: string) {
   const theme = resolveSystemThemePackage(themeKey)
   if (!theme) return null
+  const runtimePackage = toRuntimeThemePackageV2(theme)
 
   return {
     filename: `${theme.meta.themeKey}.css-variables.css`,
     contentType: 'text/css; charset=utf-8',
-    body: edenThemeToCssVariables(theme),
+    body: runtimeThemePackageV2ToCssVariables(runtimePackage),
   }
 }
 
@@ -64,7 +72,7 @@ Scope: \`${theme.meta.scope}\`
 ## Designer Scope
 
 - Layout, navigation, workflows and component structure must not change.
-- Edit only V2 token, illustration and asset reference fields in \`eden-theme.v2.json\`.
+- Edit only V2 token, illustration and asset reference fields in \`eden-theme.json\`.
 - Do not add CSS, JavaScript, HTML, external URLs, font files, SVG payloads or executable content.
 - Light and dark mode definitions must be maintained together under \`modes.light\` and \`modes.dark\`.
 - PageBanner, Smart List, form hero, wizard and dashboard visual assets are references, not embedded binaries.
@@ -72,7 +80,7 @@ Scope: \`${theme.meta.scope}\`
 
 ## Expected Files
 
-- \`eden-theme.v2.json\`
+- \`eden-theme.json\`
 - \`figma-tokens.json\`
 - \`css-variables.css\`
 - \`README.md\`

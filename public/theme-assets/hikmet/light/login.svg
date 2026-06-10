@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Hikmet light login geometry">
+  <rect width="960" height="540" fill="#F8F1E4"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1" opacity=".18">
+    <path d="M170 490c88-170 190-260 310-260s222 90 310 260"/>
+    <path d="M250 490c64-112 138-174 230-174s166 62 230 174"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1" opacity=".28">
+    <path d="M480 110l42 42-42 42-42-42z"/>
+    <path d="M372 164l28 28-28 28-28-28zM588 164l28 28-28 28-28-28z"/>
+  </g>
+</svg>

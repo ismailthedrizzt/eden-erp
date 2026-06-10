@@ -1,0 +1,2881 @@
+{
+  "global": {
+    "color": {
+      "light": {
+        "primary": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "primaryForeground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "secondary": {
+          "value": "#1D5C73",
+          "type": "color"
+        },
+        "secondaryForeground": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "accent": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "accentForeground": {
+          "value": "#1F1605",
+          "type": "color"
+        },
+        "background": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "surface": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "surfaceMuted": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "surfaceRaised": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "card": {
+          "value": "#FFFDF7",
+          "type": "color"
+        },
+        "cardForeground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "mutedForeground": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "border": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "borderStrong": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "input": {
+          "value": "#FFFCF4",
+          "type": "color"
+        },
+        "inputForeground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "ring": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "success": {
+          "value": "#1E7C55",
+          "type": "color"
+        },
+        "successForeground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "warning": {
+          "value": "#B7791F",
+          "type": "color"
+        },
+        "warningForeground": {
+          "value": "#1F1605",
+          "type": "color"
+        },
+        "danger": {
+          "value": "#B84236",
+          "type": "color"
+        },
+        "dangerForeground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "info": {
+          "value": "#1D5C73",
+          "type": "color"
+        },
+        "infoForeground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        }
+      },
+      "dark": {
+        "primary": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "primaryForeground": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "secondary": {
+          "value": "#6EA9B7",
+          "type": "color"
+        },
+        "secondaryForeground": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "accent": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "accentForeground": {
+          "value": "#07110D",
+          "type": "color"
+        },
+        "background": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "surface": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "surfaceMuted": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "surfaceRaised": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "card": {
+          "value": "#0A222B",
+          "type": "color"
+        },
+        "cardForeground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "mutedForeground": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "border": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "borderStrong": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "input": {
+          "value": "#071A22",
+          "type": "color"
+        },
+        "inputForeground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "ring": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "success": {
+          "value": "#4FD09E",
+          "type": "color"
+        },
+        "successForeground": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "warning": {
+          "value": "#D9A84B",
+          "type": "color"
+        },
+        "warningForeground": {
+          "value": "#07110D",
+          "type": "color"
+        },
+        "danger": {
+          "value": "#E0665B",
+          "type": "color"
+        },
+        "dangerForeground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "info": {
+          "value": "#6EA9B7",
+          "type": "color"
+        },
+        "infoForeground": {
+          "value": "#061B22",
+          "type": "color"
+        }
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "value": "system-ui, ui-sans-serif, sans-serif",
+        "type": "other"
+      },
+      "headingFontFamily": {
+        "value": "system-ui, ui-sans-serif, sans-serif",
+        "type": "other"
+      },
+      "monoFontFamily": {
+        "value": "ui-monospace, SFMono-Regular, Menlo, monospace",
+        "type": "other"
+      },
+      "baseSize": {
+        "value": 14,
+        "type": "number"
+      },
+      "scale": {
+        "xs": {
+          "value": 12,
+          "type": "number"
+        },
+        "sm": {
+          "value": 13,
+          "type": "number"
+        },
+        "md": {
+          "value": 14,
+          "type": "number"
+        },
+        "lg": {
+          "value": 16,
+          "type": "number"
+        },
+        "xl": {
+          "value": 20,
+          "type": "number"
+        },
+        "2xl": {
+          "value": 24,
+          "type": "number"
+        },
+        "3xl": {
+          "value": 30,
+          "type": "number"
+        }
+      },
+      "weight": {
+        "regular": {
+          "value": 400,
+          "type": "number"
+        },
+        "medium": {
+          "value": 500,
+          "type": "number"
+        },
+        "semibold": {
+          "value": 600,
+          "type": "number"
+        },
+        "bold": {
+          "value": 700,
+          "type": "number"
+        }
+      },
+      "lineHeight": {
+        "tight": {
+          "value": 1.2,
+          "type": "number"
+        },
+        "normal": {
+          "value": 1.5,
+          "type": "number"
+        },
+        "relaxed": {
+          "value": 1.65,
+          "type": "number"
+        }
+      },
+      "letterSpacing": {
+        "tight": {
+          "value": "-0.01em",
+          "type": "dimension"
+        },
+        "normal": {
+          "value": "0",
+          "type": "other"
+        },
+        "wide": {
+          "value": "0.02em",
+          "type": "dimension"
+        }
+      }
+    },
+    "spacing": {
+      "pagePadding": {
+        "value": "22px",
+        "type": "dimension"
+      },
+      "sectionGap": {
+        "value": "16px",
+        "type": "dimension"
+      },
+      "cardPadding": {
+        "value": "18px",
+        "type": "dimension"
+      },
+      "fieldGap": {
+        "value": "14px",
+        "type": "dimension"
+      },
+      "tableRowHeight": {
+        "value": "50px",
+        "type": "dimension"
+      },
+      "sidebarWidth": {
+        "value": "280px",
+        "type": "dimension"
+      },
+      "topbarHeight": {
+        "value": "64px",
+        "type": "dimension"
+      }
+    },
+    "borderRadius": {
+      "radiusSmall": {
+        "value": "8px",
+        "type": "dimension"
+      },
+      "radiusMedium": {
+        "value": "10px",
+        "type": "dimension"
+      },
+      "radiusLarge": {
+        "value": "12px",
+        "type": "dimension"
+      },
+      "radiusXl": {
+        "value": "16px",
+        "type": "dimension"
+      },
+      "radiusCard": {
+        "value": "12px",
+        "type": "dimension"
+      },
+      "radiusInput": {
+        "value": "10px",
+        "type": "dimension"
+      },
+      "radiusButton": {
+        "value": "10px",
+        "type": "dimension"
+      },
+      "radiusBanner": {
+        "value": "18px",
+        "type": "dimension"
+      },
+      "radiusWizard": {
+        "value": "16px",
+        "type": "dimension"
+      }
+    },
+    "boxShadow": {
+      "shadowSubtle": {
+        "value": "0 1px 2px rgba(31, 22, 5, 0.08)",
+        "type": "boxShadow"
+      },
+      "shadowCard": {
+        "value": "0 14px 32px rgba(56, 44, 22, 0.13)",
+        "type": "boxShadow"
+      },
+      "shadowFloating": {
+        "value": "0 24px 56px rgba(31, 22, 5, 0.18)",
+        "type": "boxShadow"
+      },
+      "shadowFocus": {
+        "value": "0 0 0 3px rgba(11, 107, 85, 0.22)",
+        "type": "boxShadow"
+      },
+      "shadowBanner": {
+        "value": "0 18px 42px rgba(11, 107, 85, 0.22)",
+        "type": "boxShadow"
+      },
+      "modalShadow": {
+        "value": "0 28px 70px rgba(31, 22, 5, 0.22)",
+        "type": "boxShadow"
+      },
+      "dropdownShadow": {
+        "value": "0 16px 36px rgba(31, 22, 5, 0.16)",
+        "type": "boxShadow"
+      }
+    }
+  },
+  "components": {
+    "light": {
+      "shell": {
+        "navBg": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "navText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "navMuted": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "navHoverBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "navActiveBg": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "navActiveText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "headerBg": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "headerBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        }
+      },
+      "sidebar": {
+        "background": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "hover": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "activeBackground": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "activeForeground": {
+          "value": "#102A2C",
+          "type": "color"
+        }
+      },
+      "topbar": {
+        "background": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "border": {
+          "value": "#D7C39C",
+          "type": "color"
+        }
+      },
+      "pageBanner": {
+        "background": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "accent": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "border": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "shadow": {
+          "value": "0 18px 42px rgba(11, 107, 85, 0.22)",
+          "type": "boxShadow"
+        },
+        "radius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "illustrationAssetId": {
+          "value": "hikmet-light-page-banner",
+          "type": "other"
+        },
+        "overlay": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "contentPlacement": {
+          "value": "left",
+          "type": "other"
+        },
+        "actionPlacement": {
+          "value": "right",
+          "type": "other"
+        }
+      },
+      "smartList": {
+        "containerBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "headerSurface": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "toolbarSurface": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "decorativeBackground": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "watermarkAssetId": {
+          "value": "hikmet-light-smart-list-watermark",
+          "type": "other"
+        },
+        "watermarkOpacity": {
+          "value": "0.14",
+          "type": "other"
+        },
+        "topStripDecoration": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "panelBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "rowSeparator": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "rowHover": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "rowSelected": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "emptyStateAssetId": {
+          "value": "hikmet-light-empty-state",
+          "type": "other"
+        },
+        "filterSurface": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "searchInputBg": {
+          "value": "#FFFCF4",
+          "type": "color"
+        },
+        "paginationSurface": {
+          "value": "#FFF9EE",
+          "type": "color"
+        }
+      },
+      "cards": {
+        "cardBg": {
+          "value": "#FFFDF7",
+          "type": "color"
+        },
+        "cardBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "cardShadow": {
+          "value": "0 14px 32px rgba(56, 44, 22, 0.13)",
+          "type": "boxShadow"
+        },
+        "cardHoverBg": {
+          "value": "#FFFCF5",
+          "type": "color"
+        }
+      },
+      "forms": {
+        "inputBg": {
+          "value": "#FFFCF4",
+          "type": "color"
+        },
+        "inputForeground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "inputBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "inputFocus": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "inputPlaceholder": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "inputDisabledBg": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "labelText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "helperText": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "errorText": {
+          "value": "#B84236",
+          "type": "color"
+        },
+        "fieldHeight": {
+          "value": "44px",
+          "type": "dimension"
+        },
+        "fieldRadius": {
+          "value": "10px",
+          "type": "dimension"
+        }
+      },
+      "tables": {
+        "tableHeaderBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "tableHeaderText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "tableBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "tableRowHover": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "tableRowSelected": {
+          "value": "#FFFCF5",
+          "type": "color"
+        }
+      },
+      "badges": {
+        "neutralBg": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "neutralText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "neutralBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "successBg": {
+          "value": "#1E7C55",
+          "type": "color"
+        },
+        "successText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "successBorder": {
+          "value": "#1E7C55",
+          "type": "color"
+        },
+        "warningBg": {
+          "value": "#B7791F",
+          "type": "color"
+        },
+        "warningText": {
+          "value": "#1F1605",
+          "type": "color"
+        },
+        "warningBorder": {
+          "value": "#B7791F",
+          "type": "color"
+        },
+        "dangerBg": {
+          "value": "#B84236",
+          "type": "color"
+        },
+        "dangerText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "dangerBorder": {
+          "value": "#B84236",
+          "type": "color"
+        },
+        "infoBg": {
+          "value": "#1D5C73",
+          "type": "color"
+        },
+        "infoText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "infoBorder": {
+          "value": "#1D5C73",
+          "type": "color"
+        }
+      },
+      "wizard": {
+        "wizardBg": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "panelBg": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "panelBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "stepBg": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "stepText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "stepActiveBg": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "stepActiveText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "stepCompleteBg": {
+          "value": "#1E7C55",
+          "type": "color"
+        },
+        "stepCompleteText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "stepLine": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "summaryBg": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "sidebarBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "sidebarBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "illustrationAssetId": {
+          "value": "hikmet-light-wizard",
+          "type": "other"
+        }
+      },
+      "tabs": {
+        "background": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#5F6D62",
+          "type": "color"
+        },
+        "activeBackground": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "activeForeground": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "border": {
+          "value": "#D7C39C",
+          "type": "color"
+        }
+      },
+      "modal": {
+        "background": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "border": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "shadow": {
+          "value": "0 28px 70px rgba(31, 22, 5, 0.22)",
+          "type": "boxShadow"
+        }
+      },
+      "drawer": {
+        "background": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "border": {
+          "value": "#D7C39C",
+          "type": "color"
+        }
+      },
+      "buttons": {
+        "primaryBg": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "primaryText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "primaryHover": {
+          "value": "#1D5C73",
+          "type": "color"
+        },
+        "secondaryBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "secondaryText": {
+          "value": "#102A2C",
+          "type": "color"
+        },
+        "dangerBg": {
+          "value": "#B84236",
+          "type": "color"
+        },
+        "dangerText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        }
+      },
+      "alerts": {
+        "alertBg": {
+          "value": "#EFE3CF",
+          "type": "color"
+        },
+        "alertBorder": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "alertText": {
+          "value": "#102A2C",
+          "type": "color"
+        }
+      },
+      "toast": {
+        "toastBg": {
+          "value": "#FFFCF5",
+          "type": "color"
+        },
+        "toastBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "toastText": {
+          "value": "#102A2C",
+          "type": "color"
+        }
+      },
+      "interaction": {
+        "focusRing": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "hoverOverlay": {
+          "value": "#E8D9BF",
+          "type": "color"
+        },
+        "selectedOverlay": {
+          "value": "#FFFCF5",
+          "type": "color"
+        }
+      }
+    },
+    "dark": {
+      "shell": {
+        "navBg": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "navText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "navMuted": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "navHoverBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "navActiveBg": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "navActiveText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "headerBg": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "headerBorder": {
+          "value": "#24505A",
+          "type": "color"
+        }
+      },
+      "sidebar": {
+        "background": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "hover": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "activeBackground": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "activeForeground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        }
+      },
+      "topbar": {
+        "background": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "border": {
+          "value": "#24505A",
+          "type": "color"
+        }
+      },
+      "pageBanner": {
+        "background": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "muted": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "accent": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "border": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "shadow": {
+          "value": "0 20px 48px rgba(0, 0, 0, 0.42)",
+          "type": "boxShadow"
+        },
+        "radius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "illustrationAssetId": {
+          "value": "hikmet-dark-page-banner",
+          "type": "other"
+        },
+        "overlay": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "contentPlacement": {
+          "value": "left",
+          "type": "other"
+        },
+        "actionPlacement": {
+          "value": "right",
+          "type": "other"
+        }
+      },
+      "smartList": {
+        "containerBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "headerSurface": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "toolbarSurface": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "decorativeBackground": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "watermarkAssetId": {
+          "value": "hikmet-dark-smart-list-watermark",
+          "type": "other"
+        },
+        "watermarkOpacity": {
+          "value": "0.14",
+          "type": "other"
+        },
+        "topStripDecoration": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "panelBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "rowSeparator": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "rowHover": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "rowSelected": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "emptyStateAssetId": {
+          "value": "hikmet-dark-empty-state",
+          "type": "other"
+        },
+        "filterSurface": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "searchInputBg": {
+          "value": "#071A22",
+          "type": "color"
+        },
+        "paginationSurface": {
+          "value": "#08202A",
+          "type": "color"
+        }
+      },
+      "cards": {
+        "cardBg": {
+          "value": "#0A222B",
+          "type": "color"
+        },
+        "cardBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "cardShadow": {
+          "value": "0 18px 44px rgba(0, 0, 0, 0.36)",
+          "type": "boxShadow"
+        },
+        "cardHoverBg": {
+          "value": "#0B2530",
+          "type": "color"
+        }
+      },
+      "forms": {
+        "inputBg": {
+          "value": "#071A22",
+          "type": "color"
+        },
+        "inputForeground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "inputBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "inputFocus": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "inputPlaceholder": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "inputDisabledBg": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "labelText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "helperText": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "errorText": {
+          "value": "#E0665B",
+          "type": "color"
+        },
+        "fieldHeight": {
+          "value": "44px",
+          "type": "dimension"
+        },
+        "fieldRadius": {
+          "value": "10px",
+          "type": "dimension"
+        }
+      },
+      "tables": {
+        "tableHeaderBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "tableHeaderText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "tableBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "tableRowHover": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "tableRowSelected": {
+          "value": "#0B2530",
+          "type": "color"
+        }
+      },
+      "badges": {
+        "neutralBg": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "neutralText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "neutralBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "successBg": {
+          "value": "#4FD09E",
+          "type": "color"
+        },
+        "successText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "successBorder": {
+          "value": "#4FD09E",
+          "type": "color"
+        },
+        "warningBg": {
+          "value": "#D9A84B",
+          "type": "color"
+        },
+        "warningText": {
+          "value": "#07110D",
+          "type": "color"
+        },
+        "warningBorder": {
+          "value": "#D9A84B",
+          "type": "color"
+        },
+        "dangerBg": {
+          "value": "#E0665B",
+          "type": "color"
+        },
+        "dangerText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "dangerBorder": {
+          "value": "#E0665B",
+          "type": "color"
+        },
+        "infoBg": {
+          "value": "#6EA9B7",
+          "type": "color"
+        },
+        "infoText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "infoBorder": {
+          "value": "#6EA9B7",
+          "type": "color"
+        }
+      },
+      "wizard": {
+        "wizardBg": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "panelBg": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "panelBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "stepBg": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "stepText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "stepActiveBg": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "stepActiveText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "stepCompleteBg": {
+          "value": "#4FD09E",
+          "type": "color"
+        },
+        "stepCompleteText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "stepLine": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "summaryBg": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "sidebarBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "sidebarBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "illustrationAssetId": {
+          "value": "hikmet-dark-wizard",
+          "type": "other"
+        }
+      },
+      "tabs": {
+        "background": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#B7C6BA",
+          "type": "color"
+        },
+        "activeBackground": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "activeForeground": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "border": {
+          "value": "#24505A",
+          "type": "color"
+        }
+      },
+      "modal": {
+        "background": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "border": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "shadow": {
+          "value": "0 32px 82px rgba(0, 0, 0, 0.52)",
+          "type": "boxShadow"
+        }
+      },
+      "drawer": {
+        "background": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "border": {
+          "value": "#24505A",
+          "type": "color"
+        }
+      },
+      "buttons": {
+        "primaryBg": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "primaryText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "primaryHover": {
+          "value": "#6EA9B7",
+          "type": "color"
+        },
+        "secondaryBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "secondaryText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        },
+        "dangerBg": {
+          "value": "#E0665B",
+          "type": "color"
+        },
+        "dangerText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        }
+      },
+      "alerts": {
+        "alertBg": {
+          "value": "#0D2A32",
+          "type": "color"
+        },
+        "alertBorder": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "alertText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        }
+      },
+      "toast": {
+        "toastBg": {
+          "value": "#0B2530",
+          "type": "color"
+        },
+        "toastBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "toastText": {
+          "value": "#F4E8D0",
+          "type": "color"
+        }
+      },
+      "interaction": {
+        "focusRing": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "hoverOverlay": {
+          "value": "#17343D",
+          "type": "color"
+        },
+        "selectedOverlay": {
+          "value": "#0B2530",
+          "type": "color"
+        }
+      }
+    }
+  },
+  "illustrations": {
+    "light": {
+      "pageBanner": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-page-banner",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light pageBanner",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "pageBanner",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/page-banner.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/page-banner",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light pageBanner medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "banner",
+          "type": "other"
+        }
+      },
+      "smartList": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-smart-list-watermark",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light smartList",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "watermark",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "smartList",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/smart-list-watermark.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/smart-list-watermark",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light smartList medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "list",
+          "type": "other"
+        }
+      },
+      "formHero": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-form-hero",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light formHero",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "formHero",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/form-hero.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/form-hero",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light formHero medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "form",
+          "type": "other"
+        }
+      },
+      "detailPanel": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-detail-panel",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light detailPanel",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "detailPanel",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/detail-panel.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/detail-panel",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light detailPanel medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "form",
+          "type": "other"
+        }
+      },
+      "wizard": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-wizard",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light wizard",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "wizard",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/wizard.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/wizard",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light wizard medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "wizard",
+          "type": "other"
+        }
+      },
+      "login": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-login",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light login",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "login",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/login.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/login",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light login medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "login",
+          "type": "other"
+        }
+      },
+      "dashboardHero": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-dashboard-hero",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light dashboardHero",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "dashboardHero",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/dashboard-hero.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/dashboard-hero",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light dashboardHero medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "dashboard",
+          "type": "other"
+        }
+      },
+      "emptyState": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-light-empty-state",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet light emptyState",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "emptyState",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/light/empty-state.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/light/empty-state",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet light emptyState medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.12,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "list",
+          "type": "other"
+        }
+      }
+    },
+    "dark": {
+      "pageBanner": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-page-banner",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark pageBanner",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "pageBanner",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/page-banner.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/page-banner",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark pageBanner medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "banner",
+          "type": "other"
+        }
+      },
+      "smartList": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-smart-list-watermark",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark smartList",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "watermark",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "smartList",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/smart-list-watermark.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/smart-list-watermark",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark smartList medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "list",
+          "type": "other"
+        }
+      },
+      "formHero": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-form-hero",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark formHero",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "formHero",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/form-hero.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/form-hero",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark formHero medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "form",
+          "type": "other"
+        }
+      },
+      "detailPanel": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-detail-panel",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark detailPanel",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "detailPanel",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/detail-panel.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/detail-panel",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark detailPanel medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "form",
+          "type": "other"
+        }
+      },
+      "wizard": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-wizard",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark wizard",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "wizard",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/wizard.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/wizard",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark wizard medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "wizard",
+          "type": "other"
+        }
+      },
+      "login": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-login",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark login",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "login",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/login.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/login",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark login medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "login",
+          "type": "other"
+        }
+      },
+      "dashboardHero": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-dashboard-hero",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark dashboardHero",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "hero",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "dashboardHero",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/dashboard-hero.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/dashboard-hero",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark dashboardHero medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "dashboard",
+          "type": "other"
+        }
+      },
+      "emptyState": {
+        "enabled": {
+          "value": true,
+          "type": "boolean"
+        },
+        "assetId": {
+          "value": "hikmet-dark-empty-state",
+          "type": "other"
+        },
+        "assetName": {
+          "value": "Hikmet dark emptyState",
+          "type": "other"
+        },
+        "assetType": {
+          "value": "illustration",
+          "type": "other"
+        },
+        "assetCategory": {
+          "value": "emptyState",
+          "type": "other"
+        },
+        "sourceType": {
+          "value": "generated-svg",
+          "type": "other"
+        },
+        "src": {
+          "value": "/theme-assets/hikmet/dark/empty-state.svg",
+          "type": "other"
+        },
+        "assetRef": {
+          "value": "internal://themes/hikmet/dark/empty-state",
+          "type": "other"
+        },
+        "fallbackMotif": {
+          "value": "medrese_geometry",
+          "type": "other"
+        },
+        "alt": {
+          "value": "Hikmet dark emptyState medrese geometry",
+          "type": "other"
+        },
+        "position": {
+          "value": "right center",
+          "type": "other"
+        },
+        "fit": {
+          "value": "cover",
+          "type": "other"
+        },
+        "focalPointX": {
+          "value": 70,
+          "type": "number"
+        },
+        "focalPointY": {
+          "value": 35,
+          "type": "number"
+        },
+        "opacity": {
+          "value": 0.14,
+          "type": "number"
+        },
+        "overlayColor": {
+          "value": "#061319",
+          "type": "color"
+        },
+        "overlayOpacity": {
+          "value": 0.18,
+          "type": "number"
+        },
+        "borderRadius": {
+          "value": "18px",
+          "type": "dimension"
+        },
+        "mask": {
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "type": {
+            "value": "linear-fade-left",
+            "type": "other"
+          }
+        },
+        "visibleOn": {
+          "value": "list",
+          "type": "other"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "format": "tokens-studio-compatible",
+    "schemaVersion": "2.0.0",
+    "themeKey": "hikmet",
+    "displayName": "Hikmet",
+    "generatedFrom": "hikmet.eden-theme.json"
+  }
+}

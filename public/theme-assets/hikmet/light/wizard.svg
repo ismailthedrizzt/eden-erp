@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="680" viewBox="0 0 460 680" role="img" aria-label="Hikmet light wizard side geometry">
+  <rect width="460" height="680" fill="#F6EFE1"/>
+  <g fill="none" stroke="#0B6B55" stroke-width="1.2" opacity=".22">
+    <path d="M48 620c42-190 112-292 182-292s140 102 182 292"/>
+    <path d="M94 620c33-140 84-216 136-216s103 76 136 216"/>
+  </g>
+  <g fill="none" stroke="#B88A2A" stroke-width="1.1" opacity=".32">
+    <path d="M230 116l46 46-46 46-46-46z"/>
+    <path d="M184 162h92M230 116v92"/>
+  </g>
+</svg>
