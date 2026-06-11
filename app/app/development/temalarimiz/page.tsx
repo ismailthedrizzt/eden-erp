@@ -14,8 +14,21 @@ import {
 } from 'lucide-react'
 import PageBanner from '@/components/ui/PageBanner'
 import { Toast, type ToastType } from '@/components/ui/Toast'
-import { ImageSlotUploader, type ImageSlot, type SlotImage } from '@/components/ui/ImageSlotUploader'
-import { DocumentSlotUploader, type DocumentSlot, type SlotDocument } from '@/components/ui/DocumentSlotUploader'
+import type { ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
+import type { DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
+import {
+  EdenCompactFieldGrid,
+  EdenFormHeader,
+  EdenFormHero,
+  EdenFormShell,
+  EdenFormTabs,
+  EdenHeroDocumentUploader,
+  EdenHeroImageUploader,
+  EdenListPageShell,
+  EdenSmartList,
+  EdenStatusActionButton,
+  EdenTokenTable,
+} from '@/components/ui/eden-standard'
 import { themeConcepts, type ThemeConceptId } from '@/components/design-lab/themeConcepts'
 import { validateEdenThemePackage } from '@/lib/theme/themeValidation'
 import { themeTokensToCssVars } from '@/lib/theme/themeTransforms'
@@ -370,9 +383,9 @@ export default function DevelopmentThemesPage() {
 
   if (selected) {
     return (
-      <div className="space-y-5">
+      <EdenFormShell>
         {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
-        <FormHeader
+        <ThemeFormHeader
           record={selected}
           editable={editable}
           onBack={() => setSelectedId(null)}
@@ -382,30 +395,23 @@ export default function DevelopmentThemesPage() {
           onDeactivate={() => setLifecycle(selected, 'inactive')}
         />
 
-        <section className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4 shadow-sm">
+        <EdenFormHero>
           <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <UploaderBlock title="Resim Uploader">
-                <ImageSlotUploader
-                  slots={IMAGE_SLOTS}
-                  images={selected.images as SlotImage[]}
-                  onChange={handleImagesChange}
-                  allowExtraSlots={false}
-                  readOnly={!editable}
-                  mode={editable ? 'update' : 'view'}
-                />
-              </UploaderBlock>
-              <UploaderBlock title="Belge Uploader">
-                <DocumentSlotUploader
-                  slots={DOCUMENT_SLOTS}
-                  documents={selected.documents as SlotDocument[]}
-                  onChange={handleDocumentsChange}
-                  allowExtraSlots={false}
-                  readOnly={!editable}
-                  mode={editable ? 'update' : 'view'}
-                  defaultTab="documents"
-                />
-              </UploaderBlock>
+              <EdenHeroImageUploader
+                slots={IMAGE_SLOTS}
+                images={selected.images as SlotImage[]}
+                onChange={handleImagesChange}
+                readOnly={!editable}
+                mode={editable ? 'update' : 'view'}
+              />
+              <EdenHeroDocumentUploader
+                slots={DOCUMENT_SLOTS}
+                documents={selected.documents as SlotDocument[]}
+                onChange={handleDocumentsChange}
+                readOnly={!editable}
+                mode={editable ? 'update' : 'view'}
+              />
             </div>
 
             <div className="min-w-0">
@@ -416,7 +422,7 @@ export default function DevelopmentThemesPage() {
                 <InfoChip>{sourceLabel(selected.source)}</InfoChip>
                 {selected.package.meta.isActive && <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">Aktif tema</span>}
               </div>
-              <div className="grid gap-4 lg:grid-cols-2">
+              <EdenCompactFieldGrid>
                 <TextField label="Tema adi" value={selected.displayName} disabled={!editable} onChange={value => patchMeta('displayName', value)} />
                 <TextField label="Tema kodu / slug" value={selected.themeKey} disabled={!editable} onChange={value => patchMeta('themeKey', normalizeManagedThemeKey(value) || selected.themeKey)} />
                 <TextField label="Versiyon" value={selected.version} disabled={!editable} onChange={value => patchMeta('version', value)} />
@@ -424,30 +430,12 @@ export default function DevelopmentThemesPage() {
                 <TextField label="Scope" value="Sistem" disabled />
                 <TextField label="Son guncelleme" value={formatDate(selected.updatedAt)} disabled />
                 <TextArea className="lg:col-span-2" label="Kisa aciklama" value={selected.description} disabled={!editable} onChange={value => patchMeta('description', value)} />
-              </div>
+              </EdenCompactFieldGrid>
             </div>
           </div>
-        </section>
+        </EdenFormHero>
 
-        <section className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] shadow-sm">
-          <div className="flex gap-2 overflow-x-auto border-b border-[var(--eden-border)] px-4 py-3">
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'shrink-0 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-                  activeTab === tab.id
-                    ? 'bg-[var(--eden-accent)] text-[var(--eden-accent-text)]'
-                    : 'text-[var(--eden-text-muted)] hover:bg-[var(--eden-surface-muted)] hover:text-[var(--eden-text)]'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="p-4 sm:p-5">
+        <EdenFormTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab}>
             {activeTab !== 'general' && activeTab !== 'importExport' && activeTab !== 'audit' && activeTab !== 'preview' && (
               <ModeSwitch mode={mode} onChange={setMode} />
             )}
@@ -479,14 +467,13 @@ export default function DevelopmentThemesPage() {
               />
             )}
             {activeTab === 'audit' && <AuditTab record={selected} />}
-          </div>
-        </section>
-      </div>
+        </EdenFormTabs>
+      </EdenFormShell>
     )
   }
 
   return (
-    <div className="space-y-5">
+    <EdenListPageShell>
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
       <PageBanner
         mode="list"
@@ -497,7 +484,7 @@ export default function DevelopmentThemesPage() {
         addButtonText="Ekle"
       />
 
-      <section className="overflow-hidden rounded-xl border border-[var(--eden-smart-list-border,var(--eden-border))] bg-[var(--eden-smart-list-bg,var(--eden-surface))] shadow-sm">
+      <EdenSmartList className="overflow-hidden rounded-xl border border-[var(--eden-smart-list-border,var(--eden-border))] bg-[var(--eden-smart-list-bg,var(--eden-surface))] shadow-sm">
         <div className="flex flex-col gap-3 border-b border-[var(--eden-border)] bg-[var(--eden-smart-list-header-bg,var(--eden-surface-raised))] p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--eden-text-muted)]" size={18} />
@@ -572,12 +559,12 @@ export default function DevelopmentThemesPage() {
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
+      </EdenSmartList>
+    </EdenListPageShell>
   )
 }
 
-function FormHeader({
+function ThemeFormHeader({
   record,
   editable,
   onBack,
@@ -595,7 +582,7 @@ function FormHeader({
   onDeactivate: () => void
 }) {
   return (
-    <section className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-4 py-3 shadow-sm">
+    <EdenFormHeader title={record.displayName} className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-4 py-3 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-[var(--eden-text-muted)]">
@@ -620,12 +607,12 @@ function FormHeader({
             <Save size={16} /> Kaydet
           </button>
           {record.source !== 'system' && record.status === 'draft' && (
-            <button onClick={onActivate} className={primaryButtonClass}>
+            <EdenStatusActionButton onClick={onActivate}>
               <CheckCircle2 size={16} /> Aktifleştir
-            </button>
+            </EdenStatusActionButton>
           )}
           {record.source !== 'system' && record.status === 'active' && (
-            <button onClick={onDeactivate} className={secondaryButtonClass}>Pasife Al</button>
+            <EdenStatusActionButton onClick={onDeactivate} variant="secondary">Pasife Al</EdenStatusActionButton>
           )}
           {record.source === 'system' && (
             <button onClick={onSave} className={secondaryButtonClass}>
@@ -637,16 +624,7 @@ function FormHeader({
       {!editable && record.source !== 'system' && (
         <p className="mt-2 text-xs text-[var(--eden-text-muted)]">Bu kayıt mevcut durumda sınırlı düzenlenebilir.</p>
       )}
-    </section>
-  )
-}
-
-function UploaderBlock({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-3">
-      <h2 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">{title}</h2>
-      {children}
-    </div>
+    </EdenFormHeader>
   )
 }
 
@@ -717,7 +695,7 @@ function ColorsTab({ record, mode, editable, patchMode }: ModeTabProps) {
           </button>
         ))}
       </div>
-      <div className="overflow-x-auto rounded-lg border border-[var(--eden-border)]">
+      <EdenTokenTable>
         <table className="min-w-full text-sm">
           <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
             <tr>
@@ -746,7 +724,7 @@ function ColorsTab({ record, mode, editable, patchMode }: ModeTabProps) {
             })}
           </tbody>
         </table>
-      </div>
+      </EdenTokenTable>
     </div>
   )
 }
@@ -1087,7 +1065,7 @@ function CompactPathTable({
   onChange: (path: string, value: string | number | boolean) => void
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-[var(--eden-border)]">
+    <EdenTokenTable>
       <table className="min-w-full text-sm">
         <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
           <tr>
@@ -1115,7 +1093,7 @@ function CompactPathTable({
           })}
         </tbody>
       </table>
-    </div>
+    </EdenTokenTable>
   )
 }
 
@@ -1131,7 +1109,7 @@ function CompactObjectEditor({
   onChange: (key: string, value: string) => void
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)]">
+    <EdenTokenTable className="bg-[var(--eden-surface-raised)]">
       <div className="border-b border-[var(--eden-border)] px-3 py-2 text-sm font-semibold text-[var(--eden-text)]">{title}</div>
       <table className="min-w-full text-sm">
         <tbody>
@@ -1150,7 +1128,7 @@ function CompactObjectEditor({
           ))}
         </tbody>
       </table>
-    </div>
+    </EdenTokenTable>
   )
 }
 

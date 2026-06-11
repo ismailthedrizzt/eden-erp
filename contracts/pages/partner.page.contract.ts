@@ -1,0 +1,42 @@
+import type { EdenPageContract } from '../core/page.contract'
+import { partnerEntityContract } from '../entities/partner.contract'
+
+export const partnerPageContract = {
+  route: '/app/sirket/companies/partners',
+  pageKind: 'list',
+  owningEntity: partnerEntityContract.entityName,
+  allowedActions: ['create_draft', 'edit_master_data', 'open_lifecycle_wizard'],
+  requiredComponents: ['PageBanner', 'SmartDataTable', 'EntityForm', 'RecordLifecycleWizard'],
+  requiredStates: { empty: true, loading: true, error: true },
+  releaseStatus: 'live',
+  visibleInProduction: true,
+  visibleInStaging: true,
+  visibleInDevelopment: true,
+  debugStatusBadgeAllowed: false,
+  list: {
+    primaryActionLabel: 'Ekle',
+    primaryActionBehavior: 'open_draft_form',
+    emptyState: { title: 'Henuz ortak yok', message: 'Ortak karti olusturmak icin Ekle aksiyonunu kullanin.' },
+    columns: [
+      { key: 'record_status', label: 'Durum' },
+      { key: 'avatar', label: 'Avatar' },
+      { key: 'display_name', label: 'Adi / Unvani', searchable: true },
+      { key: 'partner_type_label', label: 'Turu', filterable: true },
+      { key: 'company_name', label: 'Sirket', searchable: true },
+      { key: 'current_share_ratio', label: 'Hisse %', sortable: true },
+      { key: 'current_voting_ratio', label: 'Oy %', sortable: true },
+      { key: 'current_profit_ratio', label: 'Kar Payi %', sortable: true },
+      { key: 'current_capital_amount', label: 'Taahhut Edilen Sermaye', sortable: true },
+      { key: 'current_share_units', label: 'Pay Adedi', sortable: true },
+      { key: 'ownership_flags', label: 'Imtiyaz / Kontrol' },
+      { key: 'last_ownership_transaction', label: 'Son Islem' },
+      { key: 'start_date', label: 'Baslangic', sortable: true },
+      { key: 'end_date', label: 'Bitis', sortable: true },
+    ],
+    sortableFields: ['display_name', 'current_share_ratio', 'current_capital_amount', 'start_date', 'end_date'],
+    filterableFields: ['record_status', 'partner_type_label', 'company_id'],
+    searchableFields: ['display_name', 'company_name', 'identity_number'],
+    rowActions: ['view', 'edit', 'lifecycle'],
+    bulkActions: [],
+  },
+} as const satisfies EdenPageContract

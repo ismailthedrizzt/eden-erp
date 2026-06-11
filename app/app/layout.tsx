@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
@@ -884,9 +885,12 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 >
                   {workspaceLogoUrl && !workspaceLogoFailed ? (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-eden-navy">
-                      <img
+                      <Image
                         src={workspaceLogoUrl}
                         alt=""
+                        width={20}
+                        height={20}
+                        unoptimized
                         className="h-full w-full object-contain"
                         onError={() => setWorkspaceLogoFailed(true)}
                       />
@@ -922,7 +926,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                             >
                               <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-eden-green dark:border-gray-700 dark:bg-eden-navy">
                                 {optionLogoUrl ? (
-                                  <img src={optionLogoUrl} alt="" className="h-full w-full object-contain" />
+                                  <Image src={optionLogoUrl} alt="" width={32} height={32} unoptimized className="h-full w-full object-contain" />
                                 ) : (
                                   <Building2 size={16} />
                                 )}

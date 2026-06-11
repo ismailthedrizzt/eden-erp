@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import date, datetime
-from datetime import time as datetime_time
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.contracts.datetime_normalization import normalize_optional_datetime
 from app.core.errors import DomainError
 from app.core.logging import bind_log_context, log_info, log_warning
 from app.core.metrics import record_operation
@@ -25,23 +25,7 @@ async def table_exists(session: AsyncSession, table_name: str) -> bool:
 
 
 def _coerce_base_updated_at(value: Any) -> datetime | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, date):
-        return datetime.combine(value, datetime_time.min)
-    if isinstance(value, str):
-        normalized = value.strip()
-        if not normalized:
-            return None
-        if normalized.endswith("Z"):
-            normalized = f"{normalized[:-1]}+00:00"
-        try:
-            return datetime.fromisoformat(normalized)
-        except ValueError:
-            return None
-    return None
+    return normalize_optional_datetime(value, field_name="base_updated_at")
 
 
 async def create_or_get_operation_request(

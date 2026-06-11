@@ -4,7 +4,9 @@ const quick = process.argv.includes('--quick') || process.env.EDEN_QUALITY_GATE_
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 const quickChecks = [
+  ['contract standardization', ['run', 'contracts:check']],
   ['page flow contracts', ['run', 'page-flow:contract:check']],
+  ['frontend standard contracts', ['run', 'frontend:standard:check']],
   ['typecheck', ['run', 'typecheck:local']],
   ['release registry', ['run', 'release:check']],
   ['environment safety', ['run', 'env:safety']],

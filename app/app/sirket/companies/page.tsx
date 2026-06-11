@@ -55,6 +55,8 @@ import { buildOperationToast } from '@/lib/operations/operationClient'
 import { applyFieldControlsToFields, applyFieldControlsToTabs } from '@/lib/field-controls/fieldControlResolver'
 import { getControlledFieldNames, listFieldControls } from '@/lib/field-controls/fieldControlRegistry'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
+import { companyPageContract } from '@/contracts/pages/company.page.contract'
+import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -227,6 +229,7 @@ const columns: ColumnDef[] = [
   { key: 'time_zone', label: FIELD_LABELS.time_zone, type: 'text', width: 170, sortable: true, category: 'Ayarlar', required: false, visible: false },
   { key: 'fiscal_year_start', label: FIELD_LABELS.fiscal_year_start, type: 'text', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false, render: (value) => formatFiscalYearStart(value) },
 ]
+assertListColumnsMatchContract(companyPageContract.route, companyPageContract.list.columns, columns)
 
 const heroFields: FormField[] = [
   { name: 'short_name', label: 'Kısa Ünvan', type: 'text', controlledByOperation: COMPANY_TITLE_REGISTRATION_CONTROL },
@@ -1741,7 +1744,7 @@ export default function SirketlerPage() {
         title: 'Şirketlerimiz',
         subtitle: 'Yönetilen şirket kayıtlarını görüntüleyin',
         onAddClick: formAccess.showAdd ? handleAddClick : undefined,
-        addButtonText: 'Ekle',
+        addButtonText: pagePrimaryActionLabel(companyPageContract),
       }
     : {
         mode: 'form' as const,

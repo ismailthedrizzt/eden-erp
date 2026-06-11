@@ -15,6 +15,17 @@ import {
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef, type SortConfig, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import {
+  EdenFormActionBar,
+  EdenFormHeader,
+  EdenFormHero,
+  EdenFormShell,
+  EdenFormTabs,
+  EdenListPageShell,
+  EdenPageShell,
+  EdenSmartList,
+  EdenWizardShell,
+} from '@/components/ui/eden-standard'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { HR_PERMISSIONS } from '@/lib/modules/hr/shared/hr.permissions'
@@ -278,7 +289,7 @@ export default function HREmployeesPage() {
   }
 
   return (
-    <div className="relative">
+    <EdenPageShell className="relative">
       <PageBanner
         mode={selected ? 'form' : 'list'}
         title={selected ? selected.full_name : 'Calisanlar'}
@@ -291,7 +302,7 @@ export default function HREmployeesPage() {
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       {!selected ? (
-        <>
+        <EdenListPageShell>
           <SummaryBand summary={summary} />
           <FilterBar
             filters={filters}
@@ -302,30 +313,32 @@ export default function HREmployeesPage() {
             onChange={patch => setFilters(prev => ({ ...prev, ...patch, page: 1 }))}
           />
           <div className="mt-5">
-            <SmartDataTable
-              columns={columns}
-              data={tableData}
-              loading={loading}
-              widgets={widgets}
-              defaultView="list"
-              storageKey="hr-employees"
-              emptyText={<EmptyEmployees canCreate={can(HR_PERMISSIONS.employeeCreate)} onCreate={() => setModal('create')} />}
-              onRowClick={row => setSelected(row)}
-              onRefresh={() => { loadEmployees(); loadSummary() }}
-              defaultPageSize={filters.pageSize}
-              pagination={{
-                mode: 'server',
-                page: meta.page,
-                pageSize: meta.pageSize,
-                total: meta.total,
-                onPageChange: page => setFilters(prev => ({ ...prev, page })),
-                onPageSizeChange: pageSize => setFilters(prev => ({ ...prev, page: 1, pageSize })),
-                onSearchChange: search => setFilters(prev => ({ ...prev, page: 1, search })),
-                onSortChange: handleSortChange,
-              }}
-            />
+            <EdenSmartList>
+              <SmartDataTable
+                columns={columns}
+                data={tableData}
+                loading={loading}
+                widgets={widgets}
+                defaultView="list"
+                storageKey="hr-employees"
+                emptyText={<EmptyEmployees canCreate={can(HR_PERMISSIONS.employeeCreate)} onCreate={() => setModal('create')} />}
+                onRowClick={row => setSelected(row)}
+                onRefresh={() => { loadEmployees(); loadSummary() }}
+                defaultPageSize={filters.pageSize}
+                pagination={{
+                  mode: 'server',
+                  page: meta.page,
+                  pageSize: meta.pageSize,
+                  total: meta.total,
+                  onPageChange: page => setFilters(prev => ({ ...prev, page })),
+                  onPageSizeChange: pageSize => setFilters(prev => ({ ...prev, page: 1, pageSize })),
+                  onSearchChange: search => setFilters(prev => ({ ...prev, page: 1, search })),
+                  onSortChange: handleSortChange,
+                }}
+              />
+            </EdenSmartList>
           </div>
-        </>
+        </EdenListPageShell>
       ) : (
         <EmployeeDetail
           employee={selected}
@@ -406,7 +419,7 @@ export default function HREmployeesPage() {
           }}
         />
       )}
-    </div>
+    </EdenPageShell>
   )
 }
 
@@ -504,9 +517,46 @@ function EmployeeDetail({ employee, documents, labels, canStart, canTerminate, c
   const unit = employee.organization_unit_id ? labels.units.get(employee.organization_unit_id) || 'Birim' : '-'
   const position = employee.position_id ? labels.positions.get(employee.position_id) || employee.job_title || 'Pozisyon' : employee.job_title || '-'
   const missingDocuments = documents.filter(document => document.required && ['missing', 'expired', 'rejected'].includes(document.status))
+  const detailTabs = [
+    { id: 'general', label: 'Genel Bilgiler' },
+    { id: 'contact', label: 'Iletisim' },
+    { id: 'employment', label: 'Istihdam Durumu' },
+    { id: 'organization', label: 'Organizasyon / Pozisyon' },
+    { id: 'sgk', label: 'SGK / Kamu' },
+    { id: 'documents', label: 'Belgeler / Ozluk Dosyasi' },
+    { id: 'history', label: 'Gecmis / Denetim' },
+  ]
   return (
-    <div className="mt-5 space-y-5">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+    <EdenFormShell className="mt-5">
+      <EdenFormHeader
+        title={employee.full_name}
+        breadcrumb={(
+          <>
+            <span>Calisanlarimiz</span>
+            <span>/</span>
+            <span>{employee.full_name}</span>
+          </>
+        )}
+        chips={(
+          <>
+            <StatusBadge value={employee.employment_status} labels={EMPLOYMENT_STATUS_LABELS} />
+            <SgkBadge value={employee.sgk_status} />
+          </>
+        )}
+        actions={(
+          <>
+            <ActionButton icon={<UserCheck size={15} />} disabled={!canStart || employee.record_status !== 'draft'} onClick={() => onOpen('start')}>Ise Giris Baslat</ActionButton>
+            <ActionButton icon={<BriefcaseBusiness size={15} />} disabled={!canAssignment || employee.employment_status !== 'active'} onClick={() => onOpen('assignment')}>Pozisyon Degisikligi</ActionButton>
+            <ActionButton icon={<ShieldCheck size={15} />} disabled={!canStart || employee.employment_status !== 'active'} onClick={() => onOpen('sgkEntry')}>SGK Girisi Yapildi</ActionButton>
+            <ActionButton icon={<X size={15} />} disabled={!canTerminate || employee.employment_status !== 'active'} onClick={() => onOpen('terminate')}>Isten Cikis</ActionButton>
+            <ActionButton icon={<FilePlus2 size={15} />} disabled={!canDocuments} onClick={() => onOpen('document')}>Belge Ekle</ActionButton>
+            <button type="button" onClick={onRefresh} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900" title="Yenile">
+              <RefreshCw size={15} />
+            </button>
+          </>
+        )}
+      />
+      <EdenFormHero>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex gap-4">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-xl font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
@@ -531,36 +581,10 @@ function EmployeeDetail({ employee, documents, labels, canStart, canTerminate, c
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <ActionButton icon={<UserCheck size={15} />} disabled={!canStart || employee.record_status !== 'draft'} onClick={() => onOpen('start')}>Ise Giris Baslat</ActionButton>
-            <ActionButton icon={<BriefcaseBusiness size={15} />} disabled={!canAssignment || employee.employment_status !== 'active'} onClick={() => onOpen('assignment')}>Pozisyon Degisikligi</ActionButton>
-            <ActionButton icon={<ShieldCheck size={15} />} disabled={!canStart || employee.employment_status !== 'active'} onClick={() => onOpen('sgkEntry')}>SGK Girisi Yapildi</ActionButton>
-            <ActionButton icon={<X size={15} />} disabled={!canTerminate || employee.employment_status !== 'active'} onClick={() => onOpen('terminate')}>Isten Cikis</ActionButton>
-            <ActionButton icon={<FilePlus2 size={15} />} disabled={!canDocuments} onClick={() => onOpen('document')}>Belge Ekle</ActionButton>
-            <button onClick={onRefresh} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900" title="Yenile">
-              <RefreshCw size={15} />
-            </button>
-          </div>
         </div>
-      </section>
+      </EdenFormHero>
 
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800">
-        {[
-          ['general', 'Genel Bilgiler'],
-          ['contact', 'Iletisim'],
-          ['employment', 'Istihdam Durumu'],
-          ['organization', 'Organizasyon / Pozisyon'],
-          ['sgk', 'SGK / Kamu'],
-          ['documents', 'Belgeler / Ozluk Dosyasi'],
-          ['history', 'Gecmis / Denetim'],
-        ].map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} className={`border-b-2 px-3 py-2 text-sm font-medium ${tab === key ? 'border-blue-600 text-blue-700 dark:text-blue-300' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'}`}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <EdenFormTabs tabs={detailTabs} activeTab={tab} onChange={setTab}>
         {tab === 'general' && <InfoGrid items={[
           ['Calisan No', employee.employee_no],
           ['Ad Soyad', employee.full_name],
@@ -607,8 +631,8 @@ function EmployeeDetail({ employee, documents, labels, canStart, canTerminate, c
             Istihdam transaction gecmisi ve denetim izi FastAPI HR lifecycle kayitlari uzerinden okunacak. Bu ekranda eski calisan detaylari goruntulenebilir kalir.
           </div>
         )}
-      </section>
-    </div>
+      </EdenFormTabs>
+    </EdenFormShell>
   )
 }
 
@@ -727,19 +751,21 @@ function StartEmploymentModal({ employee, companyOptions, branchOptions, unitOpt
     <Modal title="Ise Giris / Istihdam Baslatma" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Hint>Calisan karti taslagi aktif istihdam anlamina gelmez. Bu islem sirket, sube, organizasyon, pozisyon ve SGK baslangic bilgilerini lifecycle kaydi olarak tamamlar.</Hint>
-        <WizardSteps items={['On Kontrol', 'Kart Ozeti', 'Sirket / Sube', 'Organizasyon / Pozisyon', 'Istihdam', 'SGK', 'Belgeler', 'Onay']} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Select label="Sirket" required value={form.company_id} options={companyOptions} onChange={company_id => setForm(prev => ({ ...prev, company_id }))} />
-          <Select label="Sube" value={form.branch_id} options={scopedBranches} onChange={branch_id => setForm(prev => ({ ...prev, branch_id }))} />
-          <Select label="Organizasyon Birimi" value={form.organization_unit_id} options={scopedUnits} onChange={organization_unit_id => setForm(prev => ({ ...prev, organization_unit_id, position_id: '' }))} />
-          <Select label="Pozisyon" value={form.position_id} options={scopedPositions} onChange={position_id => setForm(prev => ({ ...prev, position_id }))} />
-          <Input label="Unvan" value={form.job_title} onChange={job_title => setForm(prev => ({ ...prev, job_title }))} />
-          <Select label="Istihdam Turu" required value={form.employment_type} options={optionsFromLabels(EMPLOYMENT_TYPE_LABELS)} onChange={employment_type => setForm(prev => ({ ...prev, employment_type }))} />
-          <Input label="Ise Giris Tarihi" required type="date" value={form.start_date} onChange={start_date => setForm(prev => ({ ...prev, start_date }))} />
-          <Input label="Deneme Suresi Bitis" type="date" value={form.trial_period_end_date} onChange={trial_period_end_date => setForm(prev => ({ ...prev, trial_period_end_date }))} />
-          <Select label="SGK Durumu" value={form.sgk_status} options={optionsFromLabels(SGK_STATUS_LABELS)} onChange={sgk_status => setForm(prev => ({ ...prev, sgk_status }))} />
-          <Input label="SGK Isyeri Sicil No" required={form.sgk_status !== 'not_required'} value={form.sgk_workplace_registry_no} onChange={sgk_workplace_registry_no => setForm(prev => ({ ...prev, sgk_workplace_registry_no }))} />
-        </div>
+        <EdenWizardShell>
+          <WizardSteps items={['On Kontrol', 'Kart Ozeti', 'Sirket / Sube', 'Organizasyon / Pozisyon', 'Istihdam', 'SGK', 'Belgeler', 'Onay']} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Select label="Sirket" required value={form.company_id} options={companyOptions} onChange={company_id => setForm(prev => ({ ...prev, company_id }))} />
+            <Select label="Sube" value={form.branch_id} options={scopedBranches} onChange={branch_id => setForm(prev => ({ ...prev, branch_id }))} />
+            <Select label="Organizasyon Birimi" value={form.organization_unit_id} options={scopedUnits} onChange={organization_unit_id => setForm(prev => ({ ...prev, organization_unit_id, position_id: '' }))} />
+            <Select label="Pozisyon" value={form.position_id} options={scopedPositions} onChange={position_id => setForm(prev => ({ ...prev, position_id }))} />
+            <Input label="Unvan" value={form.job_title} onChange={job_title => setForm(prev => ({ ...prev, job_title }))} />
+            <Select label="Istihdam Turu" required value={form.employment_type} options={optionsFromLabels(EMPLOYMENT_TYPE_LABELS)} onChange={employment_type => setForm(prev => ({ ...prev, employment_type }))} />
+            <Input label="Ise Giris Tarihi" required type="date" value={form.start_date} onChange={start_date => setForm(prev => ({ ...prev, start_date }))} />
+            <Input label="Deneme Suresi Bitis" type="date" value={form.trial_period_end_date} onChange={trial_period_end_date => setForm(prev => ({ ...prev, trial_period_end_date }))} />
+            <Select label="SGK Durumu" value={form.sgk_status} options={optionsFromLabels(SGK_STATUS_LABELS)} onChange={sgk_status => setForm(prev => ({ ...prev, sgk_status }))} />
+            <Input label="SGK Isyeri Sicil No" required={form.sgk_status !== 'not_required'} value={form.sgk_workplace_registry_no} onChange={sgk_workplace_registry_no => setForm(prev => ({ ...prev, sgk_workplace_registry_no }))} />
+          </div>
+        </EdenWizardShell>
         <ModalActions saving={saving} onClose={onClose} saveLabel="Ise Girisi Tamamla" />
       </form>
     </Modal>
@@ -762,13 +788,15 @@ function TerminateEmploymentModal({ employee, onClose, onSaved }: { employee: HR
     <Modal title="Isten Cikis" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Hint>Temsilci yetkisi, zimmet veya acik gorev etkileri ayrica kontrol edilmelidir. HR isten cikis kaydi temsil yetkisini kendiliginden sonlandirmaz.</Hint>
-        <WizardSteps items={['On Kontrol', 'Calisan Ozeti', 'Ayrilis', 'SGK Cikis', 'Etkiler', 'Belgeler', 'Onay']} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input label="Cikis Tarihi" required type="date" value={form.end_date} onChange={end_date => setForm(prev => ({ ...prev, end_date }))} />
-          <Input label="Ayrilis Nedeni" required value={form.termination_reason} onChange={termination_reason => setForm(prev => ({ ...prev, termination_reason }))} />
-          <Select label="SGK Cikis Durumu" value={form.sgk_status} options={optionsFromLabels(SGK_STATUS_LABELS)} onChange={sgk_status => setForm(prev => ({ ...prev, sgk_status }))} />
-          <Input label="SGK Referans No" value={form.sgk_exit_reference_no} onChange={sgk_exit_reference_no => setForm(prev => ({ ...prev, sgk_exit_reference_no }))} />
-        </div>
+        <EdenWizardShell>
+          <WizardSteps items={['On Kontrol', 'Calisan Ozeti', 'Ayrilis', 'SGK Cikis', 'Etkiler', 'Belgeler', 'Onay']} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input label="Cikis Tarihi" required type="date" value={form.end_date} onChange={end_date => setForm(prev => ({ ...prev, end_date }))} />
+            <Input label="Ayrilis Nedeni" required value={form.termination_reason} onChange={termination_reason => setForm(prev => ({ ...prev, termination_reason }))} />
+            <Select label="SGK Cikis Durumu" value={form.sgk_status} options={optionsFromLabels(SGK_STATUS_LABELS)} onChange={sgk_status => setForm(prev => ({ ...prev, sgk_status }))} />
+            <Input label="SGK Referans No" value={form.sgk_exit_reference_no} onChange={sgk_exit_reference_no => setForm(prev => ({ ...prev, sgk_exit_reference_no }))} />
+          </div>
+        </EdenWizardShell>
         <ModalActions saving={saving} onClose={onClose} saveLabel="Isten Cikisi Tamamla" />
       </form>
     </Modal>
@@ -956,10 +984,10 @@ function Modal({ title, children, onClose }: { title: string; children: ReactNod
 
 function ModalActions({ saving, onClose, saveLabel }: { saving: boolean; onClose: () => void; saveLabel: string }) {
   return (
-    <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+    <EdenFormActionBar>
       <button type="button" onClick={onClose} className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900">Vazgec</button>
       <button type="submit" disabled={saving} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{saving ? 'Kaydediliyor...' : saveLabel}</button>
-    </div>
+    </EdenFormActionBar>
   )
 }
 

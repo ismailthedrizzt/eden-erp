@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 REPRESENTATIVE_AUTHORITY_TRANSACTION_LABELS = {
     'Temsilcilik Başlatma': 'authority_start',
@@ -66,4 +66,7 @@ def operation_payload_model(operation_type: str) -> type[OperationPayload]:
 
 def normalize_operation_payload(operation_type: str, payload: dict[str, Any]) -> dict[str, Any]:
     model = operation_payload_model(operation_type)
-    return model.model_validate(payload).model_dump(mode='python', exclude_none=False)
+    try:
+        return model.model_validate(payload).model_dump(mode='python', exclude_none=False)
+    except ValidationError as exc:
+        raise ValueError(f'Invalid payload for operation type {operation_type}') from exc

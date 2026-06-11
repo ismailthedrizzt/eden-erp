@@ -33,6 +33,8 @@ import { ownershipTransactionsService } from '@/lib/modules/ownership-transactio
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
+import { partnerPageContract } from '@/contracts/pages/partner.page.contract'
+import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import {
   INITIAL_PARTNERSHIP_ENTRY_TYPE,
   getOwnershipTransactionTypeLabel,
@@ -255,6 +257,8 @@ const columns: ColumnDef[] = [
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
 ]
+
+assertListColumnsMatchContract(partnerPageContract.route, partnerPageContract.list.columns, columns)
 
 const heroFields: FormField[] = [
   { name: 'company_id', label: 'Ortağı Olduğu Şirket', type: 'select', required: true, searchable: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
@@ -1053,7 +1057,7 @@ export default function OrtaklarPage() {
           setPageState('create')
           if (!companies.length) loadRelationContext(false).catch(() => undefined)
         },
-        addButtonText: 'Ekle',
+        addButtonText: pagePrimaryActionLabel(partnerPageContract),
       }
     : {
         mode: 'form' as const,

@@ -13,6 +13,7 @@
     "hooks/**/*.tsx",
     "lib/**/*.ts",
     "lib/**/*.tsx",
+    "contracts/**/*.ts",
     "types/**/*.ts",
     "middleware.ts",
     "tailwind.config.ts",

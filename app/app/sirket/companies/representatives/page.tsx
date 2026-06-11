@@ -32,6 +32,8 @@ import { getControlledFieldNames } from '@/lib/field-controls/fieldControlRegist
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
+import { representativePageContract } from '@/contracts/pages/representative.page.contract'
+import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -276,6 +278,8 @@ const columns: ColumnDef[] = [
   { key: 'last_operation_label', label: 'Son İşlem', type: 'enum', width: 180, category: 'Durum', visible: false },
   { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 220, category: 'Durum', visible: false },
 ]
+
+assertListColumnsMatchContract(representativePageContract.route, representativePageContract.list.columns, columns)
 
 const heroFields: FormField[] = [
   {
@@ -972,7 +976,7 @@ export default function TemsilcilerPage() {
           setPageState('create')
           if (!companies.length) loadCompanyOptions().catch(() => setCompanies([]))
         },
-        addButtonText: 'Ekle',
+        addButtonText: pagePrimaryActionLabel(representativePageContract),
       }
     : {
         mode: 'form' as const,

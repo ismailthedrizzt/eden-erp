@@ -1,0 +1,37 @@
+import { auditFieldNames, tenantOwnershipFieldNames } from '../core/field.contract'
+import { standardLifecycleBoundary, type EdenEntityContract } from '../core/entity.contract'
+
+export const companyEntityContract = {
+  entityName: 'company',
+  tableName: 'companies',
+  resourceName: 'companies',
+  primaryKey: 'id',
+  draftStatusField: 'record_status',
+  lifecycleStatusField: 'company_status',
+  allowedStatuses: ['draft', 'active', 'passive', 'liquidation', 'closed'],
+  uniqueKeys: [['tenant_id', 'tax_number'], ['tenant_id', 'trade_name']],
+  requiredFields: ['trade_name', 'short_name', 'tax_number', 'tax_office', 'company_type'],
+  optionalFields: ['mersis_number', 'trade_registry_number', 'website', 'phone', 'email'],
+  readonlyFields: ['id', 'tenant_id', 'created_at', 'created_by'],
+  auditFields: auditFieldNames,
+  ownershipFields: tenantOwnershipFieldNames,
+  listFields: ['lifecycle_status', 'logo_url', 'short_name', 'trade_name', 'tax_number', 'tax_office', 'company_type', 'adres_ozet', 'phone', 'email'],
+  formFields: ['short_name', 'trade_name', 'tax_number', 'tax_office', 'company_type', 'phone', 'email', 'website', 'country', 'city', 'district', 'address'],
+  detailFields: ['trade_name', 'short_name', 'tax_number', 'tax_office', 'company_type', 'address', 'phone', 'email'],
+  fields: [
+    { name: 'id', kind: 'uuid', label: 'ID', readonly: true },
+    { name: 'tenant_id', kind: 'uuid', label: 'Tenant', readonly: true },
+    { name: 'trade_name', kind: 'string', label: 'Ticari Unvan', required: true },
+    { name: 'short_name', kind: 'string', label: 'Kisa Unvan', required: true },
+    { name: 'tax_number', kind: 'string', label: 'VKN', required: true },
+    { name: 'tax_office', kind: 'string', label: 'Vergi Dairesi', required: true },
+    { name: 'company_type', kind: 'enum', label: 'Sirket Turu', required: true },
+    { name: 'record_status', kind: 'enum', label: 'Kayit Durumu', required: true, enumValues: ['draft', 'active', 'passive'] },
+    { name: 'company_status', kind: 'enum', label: 'Sirket Durumu', enumValues: ['draft', 'active', 'liquidation', 'closed'] },
+    { name: 'base_updated_at', kind: 'datetime', label: 'Base Updated At', optional: true },
+  ],
+  allowedOperations: ['create', 'read', 'update', 'soft_delete', 'lifecycle'],
+  forbiddenOperations: ['hard_delete'],
+  deletePolicy: 'draft_only_hard_delete',
+  lifecycleBoundary: standardLifecycleBoundary,
+} as const satisfies EdenEntityContract

@@ -14,6 +14,7 @@
  * @see docs/templates/UserAvatar.md
  */
 
+import Image from 'next/image'
 import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -45,36 +46,42 @@ const sizeConfig: Record<AvatarSize, {
   text: string
   status: string
   statusBorder: string
+  pixels: number
 }> = {
   xs: {
     container: 'w-6 h-6',
     text: 'text-[10px]',
     status: 'w-1.5 h-1.5',
-    statusBorder: 'border-[1.5px]'
+    statusBorder: 'border-[1.5px]',
+    pixels: 24
   },
   sm: {
     container: 'w-8 h-8',
     text: 'text-xs',
     status: 'w-2 h-2',
-    statusBorder: 'border-2'
+    statusBorder: 'border-2',
+    pixels: 32
   },
   md: {
     container: 'w-10 h-10',
     text: 'text-sm',
     status: 'w-2.5 h-2.5',
-    statusBorder: 'border-2'
+    statusBorder: 'border-2',
+    pixels: 40
   },
   lg: {
     container: 'w-12 h-12',
     text: 'text-base',
     status: 'w-3 h-3',
-    statusBorder: 'border-[3px]'
+    statusBorder: 'border-[3px]',
+    pixels: 48
   },
   xl: {
     container: 'w-16 h-16',
     text: 'text-lg',
     status: 'w-4 h-4',
-    statusBorder: 'border-[3px]'
+    statusBorder: 'border-[3px]',
+    pixels: 64
   }
 }
 
@@ -168,9 +175,12 @@ export function UserAvatar({
       >
         {hasImage ? (
           // Image Avatar
-          <img
+          <Image
             src={photoUrl}
             alt={name}
+            width={config.pixels}
+            height={config.pixels}
+            unoptimized
             className="w-full h-full object-cover"
             onError={() => setImageError(true)}
           />

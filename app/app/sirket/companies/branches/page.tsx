@@ -24,6 +24,8 @@ import { applyFieldControlsToFields, applyFieldControlsToTabs } from '@/lib/fiel
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
+import { branchPageContract } from '@/contracts/pages/branch.page.contract'
+import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 
 type PageState = 'list' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -294,7 +296,8 @@ export default function CompanyBranchesPage() {
     return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
   })
 
-  const columns: ColumnDef[] = useMemo(() => [
+  const columns: ColumnDef[] = useMemo(() => {
+    const nextColumns: ColumnDef[] = [
     { key: 'record_status', label: 'Durum', type: 'badge', width: 110, render: (_, row) => <StatusBadge status={row.record_status || row.status} /> },
     { key: 'branch_name', label: 'Şube Adı', type: 'text', width: 220 },
     { key: 'branch_short_name', label: 'Şube Kısa Adı', type: 'text', width: 160 },
@@ -318,7 +321,10 @@ export default function CompanyBranchesPage() {
     { key: 'last_operation', label: 'Son İşlem', type: 'text', width: 150, render: value => operationLabel(value) },
     { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 240 },
     { key: 'actions', label: 'İşlemler', type: 'actions', width: 170, render: (_, row) => <RowActions branch={row} onView={() => openBranch(row)} onCloseBranch={() => openBranchClosing(row)} /> },
-  ], [openBranch, openBranchClosing])
+    ]
+    assertListColumnsMatchContract(branchPageContract.route, branchPageContract.list.columns, nextColumns)
+    return nextColumns
+  }, [openBranch, openBranchClosing])
 
   const widgets: WidgetDef<BranchRow>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Şube', render: () => tableRows.length },
@@ -413,7 +419,7 @@ export default function CompanyBranchesPage() {
         title={pageState === 'list' ? 'Şubelerimiz' : selectedBranch?.branch_name || 'Şube Detayı'}
         subtitle={pageState === 'list' ? 'Şirketlere bağlı resmi şube, ofis ve operasyon noktalarını yönetin.' : selectedBranch?.company_name || 'Bağlı şirket alt resmi/operasyonel birimi'}
         icon={<GitBranch size={24} />}
-        {...(pageState === 'list' ? { onAddClick: () => setCompanyPickerOpen(true), addButtonText: 'Yeni Şube Aç', addButtonTourId: 'quick-actions' } : { onBackClick: () => setPageState('list') })}
+        {...(pageState === 'list' ? { onAddClick: () => setCompanyPickerOpen(true), addButtonText: pagePrimaryActionLabel(branchPageContract), addButtonTourId: 'quick-actions' } : { onBackClick: () => setPageState('list') })}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
       {pageState === 'list' && <div className="mt-6 space-y-4">
