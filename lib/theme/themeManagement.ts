@@ -147,7 +147,7 @@ export function upsertManagedThemeRecord(record: ManagedThemeRecord) {
   const next = records
     .filter(item => item.id !== clean.id && item.themeKey !== clean.themeKey)
     .map(item => clean.status === 'active' && item.status === 'active'
-      ? withThemeLifecycle(item, 'approved', 'Yeni sistem temasi aktiflestigi icin onceki tema onayli duruma alindi.')
+      ? withThemeLifecycle(item, 'inactive', 'Yeni sistem temasi aktiflestigi icin onceki tema pasif duruma alindi.')
       : item
     )
   writeManagedThemeRecords([clean, ...next])
@@ -252,14 +252,14 @@ export function createImportedThemeRecord(themePackage: EdenThemePackage, valida
     ...themePackage,
     meta: {
       ...themePackage.meta,
-      status: validation.valid ? 'review' : 'rejected',
+      status: validation.valid ? 'draft' : 'rejected',
       isActive: false,
       updatedAt: now,
     },
     lifecycle: {
       ...themePackage.lifecycle,
-      status: validation.valid ? 'review' : 'rejected',
-      submittedAt: validation.valid ? now : themePackage.lifecycle.submittedAt,
+      status: validation.valid ? 'draft' : 'rejected',
+      submittedAt: themePackage.lifecycle.submittedAt,
     },
     metadata: {
       ...themePackage.metadata,
@@ -292,7 +292,7 @@ export function createImportedThemeRecord(themePackage: EdenThemePackage, valida
     createdBy,
     images: [],
     documents: [],
-    audit: [{ eventType: 'theme_imported', timestamp: now, summary: validation.valid ? 'Theme imported as review.' : 'Theme import rejected.' }],
+    audit: [{ eventType: 'theme_imported', timestamp: now, summary: validation.valid ? 'Theme imported as draft.' : 'Theme import rejected.' }],
   } satisfies ManagedThemeRecord
 }
 

@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+import base64
+import json
+import re
+from datetime import date
+from pathlib import PurePath
+from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,6 +55,128 @@ router = APIRouter(dependencies=[Depends(require_access_context)])
 RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
+MAX_DOCUMENT_UPLOAD_BYTES = 25 * 1024 * 1024
+ALLOWED_DOCUMENT_MIME_TYPES = {
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'text/plain',
+    'text/csv',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+}
+
+
+async def document_upload_request_from_http(request: Request) -> DocumentUploadRequest:
+    content_type = request.headers.get('content-type') or ''
+    if 'multipart/form-data' not in content_type.lower():
+        return DocumentUploadRequest.model_validate(await request.json())
+
+    form = await request.form()
+    file = form.get('file')
+    if not isinstance(file, UploadFile):
+        raise DomainError('Dosya bulunamadi.', 'DOCUMENT_FILE_REQUIRED', status.HTTP_400_BAD_REQUEST)
+    if _form_string(form, 'storage_path') or _form_string(form, 'storagePath'):
+        raise DomainError(
+            'Storage path istemci tarafindan belirlenemez.',
+            'DOCUMENT_STORAGE_PATH_CLIENT_CONTROLLED',
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    file_name = sanitize_upload_file_name(file.filename or 'document')
+    mime_type = normalize_upload_mime_type(file.content_type)
+    if mime_type not in ALLOWED_DOCUMENT_MIME_TYPES:
+        raise DomainError('Dosya turu kabul edilmiyor.', 'DOCUMENT_MIME_TYPE_DENIED', status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    content = await file.read(MAX_DOCUMENT_UPLOAD_BYTES + 1)
+    if not content:
+        raise DomainError('Bos dosya yuklenemez.', 'DOCUMENT_FILE_EMPTY', status.HTTP_400_BAD_REQUEST)
+    if len(content) > MAX_DOCUMENT_UPLOAD_BYTES:
+        raise DomainError('Dosya boyutu izin verilen siniri asiyor.', 'DOCUMENT_FILE_TOO_LARGE', status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
+    return DocumentUploadRequest(
+        company_id=_form_string(form, 'company_id'),
+        branch_id=_form_string(form, 'branch_id'),
+        owner_entity_type=_form_string(form, 'owner_entity_type') or 'document',
+        owner_entity_id=_form_string(form, 'owner_entity_id') or 'document',
+        document_type=_form_string(form, 'document_type') or _form_string(form, 'slotId') or 'other',
+        document_category=_form_string(form, 'document_category') or 'general',
+        title=_form_string(form, 'title') or file_name,
+        description=_form_string(form, 'description'),
+        file_name=file_name,
+        mime_type=mime_type,
+        file_size=len(content),
+        content_base64=base64.b64encode(content).decode('ascii'),
+        storage_bucket=_form_string(form, 'storage_bucket'),
+        storage_provider=_form_string(form, 'storage_provider') or 'local',
+        required=_form_bool(form, 'required'),
+        verification_required=_form_bool(form, 'verification_required'),
+        issue_date=_form_date(form, 'issue_date'),
+        expiry_date=_form_date(form, 'expiry_date'),
+        relation_type=cast(Any, _form_string(form, 'relation_type') or 'attachment'),
+        module_key=_form_string(form, 'module_key'),
+        operation_key=_form_string(form, 'operation_key'),
+        operation_id=_form_string(form, 'operation_id'),
+        document_slot_key=_form_string(form, 'document_slot_key') or _form_string(form, 'slotId'),
+        tags=_form_list(form, 'tags'),
+        metadata_json=_form_json_object(form, 'metadata_json'),
+    )
+
+
+def sanitize_upload_file_name(value: str) -> str:
+    name = PurePath(value).name.strip().replace('\x00', '')
+    name = re.sub(r'[^A-Za-z0-9._ -]', '_', name)
+    name = re.sub(r'\s+', ' ', name).strip(' .')
+    return name[:180] or 'document'
+
+
+def normalize_upload_mime_type(value: str | None) -> str:
+    return (value or 'application/octet-stream').split(';')[0].strip().lower()
+
+
+def _form_string(form: Any, key: str) -> str | None:
+    value = form.get(key)
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def _form_bool(form: Any, key: str) -> bool:
+    value = form.get(key)
+    return str(value or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _form_date(form: Any, key: str) -> date | None:
+    value = _form_string(form, key)
+    if not value:
+        return None
+    return date.fromisoformat(value)
+
+
+def _form_list(form: Any, key: str) -> list[str]:
+    value = form.get(key)
+    if not isinstance(value, str) or not value.strip():
+        return []
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        parsed = None
+    if isinstance(parsed, list):
+        return [str(item).strip() for item in parsed if str(item).strip()]
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def _form_json_object(form: Any, key: str) -> dict[str, Any]:
+    value = form.get(key)
+    if not isinstance(value, str) or not value.strip():
+        return {}
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
 
 @router.get("/documents", response_model=ApiSuccess[dict[str, Any]])
 async def documents_list(
@@ -92,10 +219,11 @@ async def documents_create(request: DocumentCreateRequest, session: SessionDep, 
 
 
 @router.post("/documents/upload", response_model=ApiSuccess[dict[str, Any]], status_code=201)
-async def documents_upload(request: DocumentUploadRequest, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+async def documents_upload(raw_request: Request, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     ensure_permission(context, "documents.upload")
     tenant_id = require_tenant(context)
     try:
+        request = await document_upload_request_from_http(raw_request)
         async with session.begin():
             row = await upload_document(session, service_context(context, tenant_id), request)
         return ApiSuccess(data=row, message="Belge yuklendi.")
@@ -154,10 +282,11 @@ async def documents_by_entity(entity_type: str, entity_id: str, session: Session
 
 
 @router.post("/documents/by-entity/{entity_type}/{entity_id}/upload", response_model=ApiSuccess[dict[str, Any]], status_code=201)
-async def documents_by_entity_upload(entity_type: str, entity_id: str, request: DocumentUploadRequest, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+async def documents_by_entity_upload(entity_type: str, entity_id: str, raw_request: Request, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     ensure_permission(context, "documents.upload")
     tenant_id = require_tenant(context)
     try:
+        request = await document_upload_request_from_http(raw_request)
         async with session.begin():
             row = await upload_document_for_entity(session, service_context(context, tenant_id), entity_type, entity_id, request)
         return ApiSuccess(data=row, message="Kayda belge yuklendi.")
@@ -265,10 +394,11 @@ async def documents_delete(document_id: str, session: SessionDep, context: Reque
 
 
 @router.post("/documents/{document_id}/new-version", response_model=ApiSuccess[dict[str, Any]], status_code=201)
-async def documents_new_version(document_id: str, request: DocumentUploadRequest, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+async def documents_new_version(document_id: str, raw_request: Request, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     ensure_permission(context, "documents.upload")
     tenant_id = require_tenant(context)
     try:
+        request = await document_upload_request_from_http(raw_request)
         async with session.begin():
             row = await create_new_version(session, service_context(context, tenant_id), document_id, request)
         return ApiSuccess(data=row, message="Belge yeni versiyonu olusturuldu.")

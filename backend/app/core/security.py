@@ -290,28 +290,41 @@ def require_internal_token(request: Request) -> None:
 
 def validate_security_configuration() -> None:
     settings = get_settings()
-    if settings.is_production and not settings.effective_auth_required:
+    if settings.is_remote_environment and not settings.effective_auth_required:
         raise DomainError(
-            "Production ortaminda kimlik dogrulama kapatilamaz.",
-            "AUTH_REQUIRED_MISCONFIGURED",
+            'Remote ortamda kimlik dogrulama kapatilamaz.',
+            'AUTH_REQUIRED_MISCONFIGURED',
             status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    if (
-        settings.is_production
-        and settings.effective_allow_trusted_proxy_headers
-        and not settings.trusted_proxy_secret
-    ):
+    if settings.is_remote_environment and not settings.trusted_proxy_secret:
         raise DomainError(
-            "Production ortaminda proxy header guveni icin proxy secret gereklidir.",
-            "TRUSTED_PROXY_MISCONFIGURED",
+            'Remote ortamda proxy header guveni icin proxy secret gereklidir.',
+            'TRUSTED_PROXY_MISCONFIGURED',
             status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    if settings.is_production and settings.legacy_supabase_jwt_enabled:
+    if settings.is_remote_environment and settings.legacy_supabase_jwt_enabled:
         raise DomainError(
-            "Release ortaminda legacy Supabase JWT dogrulamasi acik olamaz.",
-            "LEGACY_SUPABASE_JWT_MISCONFIGURED",
+            'Remote ortamda legacy Supabase JWT dogrulamasi acik olamaz.',
+            'LEGACY_SUPABASE_JWT_MISCONFIGURED',
             status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+def _is_local_request(request: Request) -> bool:
+    client_host = request.client.host if request.client else ''
+    host_header = (request.headers.get('host') or '').split(':')[0].strip().lower()
+    local_hosts = {'localhost', '127.0.0.1', '0.0.0.0', '::1'}
+    return client_host in local_hosts or host_header in local_hosts
+
+
+def _local_dev_admin_fallback_enabled(request: Request) -> bool:
+    settings = get_settings()
+    return (
+        settings.is_development
+        and settings.local_dev_admin_fallback
+        and not settings.effective_auth_required
+        and _is_local_request(request)
+    )
 
 
 def _is_trusted_proxy(request: Request) -> bool:
@@ -447,7 +460,7 @@ async def get_request_context(request: Request) -> RequestContext:
     trusted_proxy = _is_trusted_proxy(request)
     if not token and settings.effective_auth_required and not is_internal_request(request) and not trusted_proxy:
         raise _auth_http_exception("AUTH_REQUIRED")
-    if not token and not settings.effective_auth_required and settings.is_development:
+    if not token and _local_dev_admin_fallback_enabled(request):
         x_tenant_id = _clean_header_value(request.headers.get("x-tenant-id"))
         x_user_id = _clean_header_value(request.headers.get("x-user-id"))
         x_company_scope = _clean_header_value(request.headers.get("x-company-scope"))

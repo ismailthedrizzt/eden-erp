@@ -10,8 +10,10 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import DomainError
 from app.core.logging import bind_log_context, log_info, log_warning
 from app.core.metrics import record_operation
+from app.domains.operations.payload_registry import normalize_operation_payload
 
 
 async def table_exists(session: AsyncSession, table_name: str) -> bool:
@@ -78,13 +80,26 @@ async def create_or_get_operation_request(
         ]
 
     request_id = client_request_id or str(uuid4())
+    try:
+        payload = normalize_operation_payload(operation_type, payload)
+    except ValueError as exc:
+        raise DomainError(
+            'Operation payload sozlesmesi tanimli degil veya gecersiz.',
+            'OPERATION_PAYLOAD_CONTRACT_INVALID',
+            400,
+        ) from exc
+
     duplicate = await session.execute(
         text(
             """
             select *
             from public.operation_requests
             where tenant_id = :tenant_id
+              and operation_type = :operation_type
+              and entity_type = :entity_type
+              and entity_id = :entity_id
               and client_request_id = :client_request_id
+              and requested_by is not distinct from :requested_by
             limit 1
             """
         ),

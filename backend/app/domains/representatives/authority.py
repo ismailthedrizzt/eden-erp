@@ -54,34 +54,27 @@ def _context(
 
 
 def _effect_status(transaction_type: str) -> str:
-    if transaction_type == "Askıya Alma":
+    if transaction_type == "authority_suspend":
         return "suspended"
-    if transaction_type in {"Sonlandırma", "Ters Kayıt"}:
+    if transaction_type in {"authority_terminate", "authority_reverse"}:
         return "terminated"
     return "active"
 
 
 def _outbox_event_type(transaction_type: str) -> str:
-    if transaction_type == "Temsilcilik Başlatma":
+    if transaction_type == "authority_start":
         return "representative.authority_started"
-    if transaction_type == "Askıya Alma":
+    if transaction_type == "authority_suspend":
         return "representative.authority_suspended"
-    if transaction_type == "Sonlandırma":
+    if transaction_type == "authority_terminate":
         return "representative.authority_terminated"
     return "representative.authority_updated"
 
 
 def _operation_type(transaction_type: str) -> str:
-    return {
-        "Temsilcilik Başlatma": "representative.authority_start",
-        "Yetki Yenileme": "representative.authority_renew",
-        "Yetki Kapsamı Değişikliği": "representative.authority_scope_change",
-        "Limit Değişikliği": "representative.authority_limit_change",
-        "Askıya Alma": "representative.authority_suspend",
-        "Sonlandırma": "representative.authority_terminate",
-        "Düzeltme Kaydı": "representative.authority_correction",
-        "Ters Kayıt": "representative.authority_reverse",
-    }.get(transaction_type, "representative.authority_transaction")
+    if transaction_type not in AUTHORITY_TRANSACTION_TYPES:
+        return 'representative.authority_transaction'
+    return 'representative.' + transaction_type
 
 
 def _required_permission(transaction_type: str) -> str:
@@ -126,9 +119,9 @@ def _scope_for_transaction(
     current_authority: dict[str, Any] | None,
 ) -> RepresentativeAuthorityScope:
     if request.transaction_type in {
-        "Askıya Alma",
-        "Sonlandırma",
-        "Ters Kayıt",
+        "authority_suspend",
+        "authority_terminate",
+        "authority_reverse",
     } and not _request_has_explicit_scope(request):
         return _scope_from_current(current_authority)
     return request.scope_model()
@@ -141,17 +134,17 @@ def validate_transaction_allowed(
 ) -> None:
     card_status = representative_card_status(representative)
     current_status = authority_status(current_authority)
-    if transaction_type == "Temsilcilik Başlatma" and card_status not in DRAFT_CARD_STATUSES:
+    if transaction_type == "authority_start" and card_status not in DRAFT_CARD_STATUSES:
         raise DomainError(
             "Temsilcilik Baslatma yalnizca taslak temsilci kartinda yapilabilir.",
             "REPRESENTATIVE_START_REQUIRES_DRAFT",
             status.HTTP_409_CONFLICT,
         )
     if transaction_type in {
-        "Yetki Yenileme",
-        "Yetki Kapsamı Değişikliği",
-        "Limit Değişikliği",
-        "Düzeltme Kaydı",
+        "authority_renew",
+        "authority_scope_change",
+        "authority_limit_change",
+        "authority_correction",
     }:
         if card_status not in ACTIVE_AUTHORITY_STATUSES:
             raise DomainError(
@@ -165,13 +158,13 @@ def validate_transaction_allowed(
                 "REPRESENTATIVE_AUTHORITY_ACTIVE_REQUIRED",
                 status.HTTP_409_CONFLICT,
             )
-    if transaction_type == "Askıya Alma" and current_status not in ACTIVE_AUTHORITY_STATUSES:
+    if transaction_type == "authority_suspend" and current_status not in ACTIVE_AUTHORITY_STATUSES:
         raise DomainError(
-            "Askıya Alma yalnizca aktif temsil yetkisi icin yapilabilir.",
+            "authority_suspend yalnizca aktif temsil yetkisi icin yapilabilir.",
             "REPRESENTATIVE_SUSPEND_REQUIRES_ACTIVE",
             status.HTTP_409_CONFLICT,
         )
-    if transaction_type == "Sonlandırma" and current_status not in (
+    if transaction_type == "authority_terminate" and current_status not in (
         ACTIVE_AUTHORITY_STATUSES | SUSPENDED_AUTHORITY_STATUSES
     ):
         raise DomainError(
@@ -189,19 +182,23 @@ def _validate_payload(
         raise DomainError("Gecersiz temsil yetkisi islemi.", "INVALID_TRANSACTION_TYPE", 400)
     if not request.effective_date:
         raise DomainError("Yururluk tarihi zorunludur.", "EFFECTIVE_DATE_REQUIRED", 400)
-    if request.transaction_type not in {"Sonlandırma", "Askıya Alma", "Ters Kayıt"}:
+    if request.transaction_type not in {
+        'authority_terminate',
+        'authority_suspend',
+        'authority_reverse',
+    }:
         authority_types = request.authority_types or (
             current_authority.get("authority_types", []) if current_authority else []
         )
         if not authority_types:
             raise DomainError("En az bir yetki tipi secilmelidir.", "AUTHORITY_TYPE_REQUIRED", 400)
-    if request.transaction_type == "Temsilcilik Başlatma" and not request.document_list():
+    if request.transaction_type == "authority_start" and not request.document_list():
         raise DomainError(
             "Aktivasyon icin en az bir yetki belgesi gereklidir.",
             "AUTHORITY_DOCUMENT_REQUIRED",
             400,
         )
-    if request.transaction_type == "Sonlandırma" and not (
+    if request.transaction_type == "authority_terminate" and not (
         request.reason or request.termination_reason or request.notes
     ):
         raise DomainError(
@@ -211,17 +208,40 @@ def _validate_payload(
         )
 
 
-async def _next_transaction_no(session: AsyncSession) -> str:
-    result = await session.execute(
+async def _next_transaction_no(session: AsyncSession, tenant_id: str) -> str:
+    await session.execute(
         text(
             """
-            select count(*) + 1 as next_no
-            from public.company_representative_authority_transactions
+            create table if not exists public.tenant_sequence_counters (
+              tenant_id uuid not null,
+              sequence_key text not null,
+              next_value bigint not null,
+              created_at timestamptz not null default now(),
+              updated_at timestamptz not null default now(),
+              primary key (tenant_id, sequence_key)
+            )
             """
         )
     )
-    next_no = int(result.mappings().one()["next_no"] or 1)
-    return f"RT-{next_no:05d}"
+    await session.execute(
+        text('select pg_advisory_xact_lock(hashtextextended(:lock_key, 0))'),
+        {'lock_key': tenant_id + ':representative_authority_transaction'},
+    )
+    result = await session.execute(
+        text(
+            """
+            insert into public.tenant_sequence_counters (tenant_id, sequence_key, next_value)
+            values (:tenant_id, 'representative_authority_transaction', 1)
+            on conflict (tenant_id, sequence_key)
+            do update set next_value = public.tenant_sequence_counters.next_value + 1,
+                          updated_at = now()
+            returning next_value
+            """
+        ),
+        {'tenant_id': tenant_id},
+    )
+    next_no = int(result.mappings().one()['next_value'] or 1)
+    return f'RT-{next_no:05d}'
 
 
 async def _conflicting_authority_exists(
@@ -385,7 +405,7 @@ async def update_representative_after_authority(
     representative_id: str,
     transaction_type: str,
 ) -> dict[str, Any]:
-    card_status = "passive" if transaction_type == "Sonlandırma" else "active"
+    card_status = "passive" if transaction_type == "authority_terminate" else "active"
     status_label = "Pasif" if card_status == "passive" else "Aktif"
     result = await session.execute(
         text(
@@ -483,7 +503,7 @@ async def perform_authority_transaction(
             authority_types = request.authority_types or (
                 current_authority.get("authority_types", []) if current_authority else []
             )
-            if request.transaction_type in {"Temsilcilik Başlatma", "Yetki Kapsamı Değişikliği"}:
+            if request.transaction_type in {"authority_start", "authority_scope_change"}:
                 if await _conflicting_authority_exists(
                     session, context, representative_id, validated_scope, authority_types
                 ):
@@ -498,7 +518,7 @@ async def perform_authority_transaction(
                 representative,
                 request,
                 validated_scope,
-                transaction_no=await _next_transaction_no(session),
+                transaction_no=await _next_transaction_no(session, context['tenant_id']),
                 effect_status=_effect_status(request.transaction_type),
             )
             updated_representative = await update_representative_after_authority(

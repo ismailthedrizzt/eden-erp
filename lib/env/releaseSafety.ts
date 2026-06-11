@@ -16,45 +16,45 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
   const env = getCurrentReleaseEnvironment(source)
   const violations: string[] = []
 
-  if (env === 'release') {
+  if (['preview', 'staging', 'release'].includes(env)) {
     if (isEnabled(source.EDEN_LOGIN_DISABLED)) {
-      violations.push('EDEN_LOGIN_DISABLED cannot be true in release.')
+      violations.push('EDEN_LOGIN_DISABLED cannot be true in preview/staging/release.')
     }
     if (isEnabled(source.EDEN_ALLOW_LEGACY_API_ACCESS)) {
-      violations.push('EDEN_ALLOW_LEGACY_API_ACCESS cannot be true in release.')
+      violations.push('EDEN_ALLOW_LEGACY_API_ACCESS cannot be true in preview/staging/release.')
     }
     if (isEnabled(source.EDEN_ENABLE_LEGACY_SUPABASE_AUTH)) {
-      violations.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH cannot be true in release.')
+      violations.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH cannot be true in preview/staging/release.')
     }
     if (isEnabled(source.LEGACY_SUPABASE_JWT_ENABLED)) {
-      violations.push('LEGACY_SUPABASE_JWT_ENABLED cannot be true in release.')
+      violations.push('LEGACY_SUPABASE_JWT_ENABLED cannot be true in preview/staging/release.')
     }
     if (isDisabled(source.AUTH_REQUIRED)) {
-      violations.push('AUTH_REQUIRED cannot be false in release.')
+      violations.push('AUTH_REQUIRED cannot be false in preview/staging/release.')
     }
     if (isEnabled(source.NEXT_PUBLIC_DEMO_MODE)) {
-      violations.push('NEXT_PUBLIC_DEMO_MODE cannot be true in release.')
+      violations.push('NEXT_PUBLIC_DEMO_MODE cannot be true in preview/staging/release.')
     }
     if (isEnabled(source.ALLOW_RELEASE_DB_SEED)) {
-      violations.push('ALLOW_RELEASE_DB_SEED cannot be true in release.')
+      violations.push('ALLOW_RELEASE_DB_SEED cannot be true in preview/staging/release.')
     }
     if (isEnabled(source.ALLOW_RELEASE_DB_RESET)) {
-      violations.push('ALLOW_RELEASE_DB_RESET cannot be true in release.')
+      violations.push('ALLOW_RELEASE_DB_RESET cannot be true in preview/staging/release.')
     }
     if (!source.DATABASE_URL) {
-      violations.push('DATABASE_URL is required in release.')
+      violations.push('DATABASE_URL is required in preview/staging/release.')
     }
     if (!source.APP_SESSION_SECRET) {
-      violations.push('APP_SESSION_SECRET is required in release.')
+      violations.push('APP_SESSION_SECRET is required in preview/staging/release.')
     }
     if (!source.INTERNAL_BACKEND_TOKEN) {
-      violations.push('INTERNAL_BACKEND_TOKEN is required in release.')
+      violations.push('INTERNAL_BACKEND_TOKEN is required in preview/staging/release.')
     }
     if (!source.FASTAPI_BASE_URL) {
-      violations.push('FASTAPI_BASE_URL is required in release.')
+      violations.push('FASTAPI_BASE_URL is required in preview/staging/release.')
     }
-    if (isEnabled(source.ALLOW_TRUSTED_PROXY_HEADERS) && !source.TRUSTED_PROXY_SECRET) {
-      violations.push('TRUSTED_PROXY_SECRET is required when ALLOW_TRUSTED_PROXY_HEADERS=true in release.')
+    if (!source.TRUSTED_PROXY_SECRET) {
+      violations.push('TRUSTED_PROXY_SECRET is required in preview/staging/release.')
     }
   }
 

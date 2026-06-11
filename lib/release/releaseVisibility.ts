@@ -133,7 +133,7 @@ export function getRouteReleaseDecision(
     }
   }
 
-  if (isDevelopmentSurface && userContext.tenantEntitlements && !canSeeInternalSurface) {
+  if (isDevelopmentSurface && !canSeeInternalSurface) {
     return {
       visible: false,
       enabled: false,

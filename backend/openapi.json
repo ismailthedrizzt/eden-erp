@@ -22019,16 +22019,6 @@
         ],
         "summary": "Documents Upload",
         "operationId": "documents_upload_api_v1_documents_upload_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentUploadRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -22036,16 +22026,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -22305,16 +22285,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentUploadRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -22648,16 +22618,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentUploadRequest"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -40837,260 +40797,6 @@
         "type": "object",
         "title": "DocumentUpdateRequest"
       },
-      "DocumentUploadRequest": {
-        "properties": {
-          "company_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Company Id"
-          },
-          "branch_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Branch Id"
-          },
-          "owner_entity_type": {
-            "type": "string",
-            "maxLength": 80,
-            "minLength": 1,
-            "title": "Owner Entity Type"
-          },
-          "owner_entity_id": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 1,
-            "title": "Owner Entity Id"
-          },
-          "document_type": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 1,
-            "title": "Document Type"
-          },
-          "document_category": {
-            "type": "string",
-            "maxLength": 80,
-            "title": "Document Category",
-            "default": "general"
-          },
-          "title": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 240
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Title"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 1000
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "file_name": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "File Name"
-          },
-          "mime_type": {
-            "type": "string",
-            "maxLength": 180,
-            "title": "Mime Type",
-            "default": "application/octet-stream"
-          },
-          "file_size": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "File Size",
-            "default": 0
-          },
-          "content_base64": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Content Base64"
-          },
-          "storage_bucket": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Storage Bucket"
-          },
-          "storage_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Storage Path"
-          },
-          "storage_provider": {
-            "type": "string",
-            "title": "Storage Provider",
-            "default": "local"
-          },
-          "required": {
-            "type": "boolean",
-            "title": "Required",
-            "default": false
-          },
-          "verification_required": {
-            "type": "boolean",
-            "title": "Verification Required",
-            "default": false
-          },
-          "issue_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Issue Date"
-          },
-          "expiry_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expiry Date"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "metadata_json": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Metadata Json"
-          },
-          "relation_type": {
-            "type": "string",
-            "enum": [
-              "primary",
-              "supporting",
-              "evidence",
-              "attachment",
-              "card_document",
-              "operation_evidence",
-              "required_evidence",
-              "supporting_document",
-              "generated_report",
-              "import_file",
-              "export_file",
-              "service_photo",
-              "service_report",
-              "contract_document",
-              "identity_document"
-            ],
-            "title": "Relation Type",
-            "default": "attachment"
-          },
-          "module_key": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 120
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Module Key"
-          },
-          "operation_key": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 120
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Operation Key"
-          },
-          "operation_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 120
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Operation Id"
-          },
-          "document_slot_key": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 160
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Document Slot Key"
-          }
-        },
-        "type": "object",
-        "required": [
-          "owner_entity_type",
-          "owner_entity_id",
-          "document_type",
-          "file_name"
-        ],
-        "title": "DocumentUploadRequest"
-      },
       "DuplicateDetectRequest": {
         "properties": {
           "entity_types": {
@@ -53368,14 +53074,14 @@
           "transaction_type": {
             "type": "string",
             "enum": [
-              "Temsilcilik Başlatma",
-              "Yetki Yenileme",
-              "Yetki Kapsamı Değişikliği",
-              "Limit Değişikliği",
-              "Askıya Alma",
-              "Sonlandırma",
-              "Düzeltme Kaydı",
-              "Ters Kayıt"
+              "authority_start",
+              "authority_renew",
+              "authority_scope_change",
+              "authority_limit_change",
+              "authority_suspend",
+              "authority_terminate",
+              "authority_correction",
+              "authority_reverse"
             ],
             "title": "Transaction Type"
           },
@@ -53750,7 +53456,8 @@
           "base_updated_at": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
@@ -54012,7 +53719,8 @@
           "base_updated_at": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"

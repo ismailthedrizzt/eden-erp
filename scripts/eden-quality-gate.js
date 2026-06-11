@@ -1,9 +1,9 @@
 const { spawnSync } = require('child_process')
 
-const full = process.argv.includes('--full') || process.env.EDEN_QUALITY_GATE_PROFILE === 'full'
+const quick = process.argv.includes('--quick') || process.env.EDEN_QUALITY_GATE_PROFILE === 'quick'
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
-const coreChecks = [
+const quickChecks = [
   ['page flow contracts', ['run', 'page-flow:contract:check']],
   ['typecheck', ['run', 'typecheck:local']],
   ['release registry', ['run', 'release:check']],
@@ -13,17 +13,19 @@ const coreChecks = [
   ['OpenAPI drift', ['run', 'openapi:drift']],
 ]
 
-const fullChecks = [
-  ['frontend build', ['run', 'build']],
-  ['ESLint', ['run', 'lint']],
+const releaseOnlyChecks = [
+  ['security guard', ['run', 'security:guard']],
+  ['performance guard', ['run', 'perf:guard']],
   ['backend lint', ['run', 'backend:lint']],
   ['backend typecheck', ['run', 'backend:typecheck']],
   ['backend tests', ['run', 'backend:test']],
+  ['frontend build', ['run', 'build']],
   ['smoke test dry run', ['run', 'smoke:test:dry']],
+  ['theme validation', ['run', 'theme:hikmet:validate']],
 ]
 
 function runCheck(name, args) {
-  console.log(`\n==> ${name}`)
+  console.log('\n==> ' + name)
   const result = spawnSync(npmCommand, args, {
     cwd: process.cwd(),
     env: process.env,
@@ -31,14 +33,12 @@ function runCheck(name, args) {
     stdio: 'inherit',
   })
   if (result.status !== 0) {
-    console.error(`\nQuality gate failed at: ${name}`)
+    console.error('\nQuality gate failed at: ' + name)
     process.exit(result.status || 1)
   }
 }
 
-for (const [name, args] of coreChecks) runCheck(name, args)
-if (full) {
-  for (const [name, args] of fullChecks) runCheck(name, args)
-} else {
-  console.log('\nCore quality gate passed. Run `npm run eden:quality-gate -- --full` before release handoff.')
-}
+const checks = quick ? quickChecks : [...quickChecks, ...releaseOnlyChecks]
+for (const [name, args] of checks) runCheck(name, args)
+
+console.log('\n' + (quick ? 'Quick' : 'Release-grade') + ' quality gate passed.')

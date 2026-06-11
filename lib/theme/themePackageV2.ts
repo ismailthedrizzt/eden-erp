@@ -145,7 +145,7 @@ export type EdenThemeRuntimePackageV2 = {
     themeKey: string
   }
   lifecycle: {
-    status: 'draft' | 'review' | 'approved' | 'active' | 'archived' | 'rejected'
+    status: 'draft' | 'inactive' | 'active' | 'review' | 'approved' | 'archived' | 'rejected'
     isActive: boolean
     allowedTransitions: Array<'send_to_review' | 'approve' | 'activate' | 'archive'>
     activationRules: {
@@ -309,7 +309,7 @@ export const edenThemeRuntimePackageV2Schema = z.object({
     themeKey: z.string().min(1),
   }).strict(),
   lifecycle: z.object({
-    status: z.enum(['draft', 'review', 'approved', 'active', 'archived', 'rejected']),
+    status: z.enum(['draft', 'inactive', 'active', 'review', 'approved', 'archived', 'rejected']),
     isActive: z.boolean(),
     allowedTransitions: z.array(z.enum(['send_to_review', 'approve', 'activate', 'archive'])).min(1),
     activationRules: z.object({

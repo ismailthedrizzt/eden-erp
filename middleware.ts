@@ -6,6 +6,8 @@ import { getRouteNotAvailableHref, getRouteReleaseDecision } from '@/lib/release
 import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 
 const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
+const LOCAL_DEV_ADMIN_FALLBACK_ENABLED = process.env.EDEN_LOCAL_DEV_ADMIN_FALLBACK === 'true'
+const REMOTE_PROTECTED_ENVS = new Set(['preview', 'staging', 'release', 'production', 'prod'])
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 const PUBLIC_API_PREFIXES = [
   '/api/auth',
@@ -55,6 +57,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (LOGIN_BYPASS_ENABLED && !isPwaAsset) {
+    if (!isLocalDevAdminFallbackRequest(request)) {
+      return withSecurityHeaders(
+        NextResponse.json(
+          { error: 'Login bypass is only allowed on localhost with EDEN_LOCAL_DEV_ADMIN_FALLBACK=true.', code: 'LOGIN_BYPASS_FORBIDDEN' },
+          { status: 500 }
+        ),
+        request
+      )
+    }
     if (isAuthPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/app'
@@ -168,6 +179,18 @@ function shouldApplyReleaseRouteGuard(pathname: string, isApiRoute: boolean, isP
     || pathname.startsWith('/muhasebe')
     || pathname.startsWith('/ik/')
     || pathname.startsWith('/ayarlar/')
+}
+
+function isLocalDevAdminFallbackRequest(request: NextRequest) {
+  if (!LOCAL_DEV_ADMIN_FALLBACK_ENABLED) return false
+  const appEnv = getAppEnv()
+  if (REMOTE_PROTECTED_ENVS.has(appEnv)) return false
+  const localHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '::1'])
+  return localHosts.has(request.nextUrl.hostname)
+}
+
+function getAppEnv() {
+  return String(process.env.NEXT_PUBLIC_APP_ENV || process.env.APP_ENV || process.env.NEXT_PUBLIC_RELEASE_CHANNEL || process.env.NODE_ENV || '').trim().toLowerCase()
 }
 
 function isAllowedRequestOrigin(request: NextRequest) {

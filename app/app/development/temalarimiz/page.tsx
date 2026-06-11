@@ -1,18 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
-  Archive,
   CheckCircle2,
   Download,
   FileJson,
-  Image as ImageIcon,
   Layers,
   Palette,
   Save,
   Search,
-  Send,
-  ShieldCheck,
   Upload,
   XCircle,
 } from 'lucide-react'
@@ -45,68 +41,78 @@ import {
   type ManagedThemeRecord,
   type ManagedThemeStatus,
 } from '@/lib/theme/themeManagement'
-import type { EdenThemePackage, ThemeAppearance, ThemeModeTokens, ThemeValidationIssue } from '@/lib/theme/themeSchema'
+import type { EdenThemePackage, ThemeAppearance, ThemeValidationIssue } from '@/lib/theme/themeSchema'
 import { cn } from '@/lib/utils'
 
 type ToastState = { type: ToastType; title?: string; message: string }
-type ThemeTab = 'general' | 'surface' | 'colors' | 'background' | 'illustrations' | 'components' | 'states' | 'preview' | 'importExport' | 'audit'
-type ThemeFilter = 'all' | 'active' | 'draft' | 'review' | 'approved' | 'archived' | 'invalid'
+type ThemeTab = 'general' | 'colors' | 'components' | 'background' | 'typography' | 'audit' | 'importExport' | 'preview'
+type ThemeFilter = 'all' | 'active' | 'draft' | 'inactive' | 'invalid'
 
 const STATUS_LABELS: Record<ManagedThemeStatus, string> = {
   draft: 'Taslak',
-  review: 'Incelemede',
-  approved: 'Onaylandi',
+  review: 'Pasif',
+  approved: 'Pasif',
+  inactive: 'Pasif',
   active: 'Aktif',
-  archived: 'Arsivlendi',
-  rejected: 'Reddedildi',
+  archived: 'Pasif',
+  rejected: 'Pasif',
 }
 
 const STATUS_CLASS: Record<ManagedThemeStatus, string> = {
   draft: 'border-slate-200 bg-slate-50 text-slate-700',
-  review: 'border-amber-200 bg-amber-50 text-amber-800',
-  approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  review: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+  approved: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+  inactive: 'border-zinc-200 bg-zinc-50 text-zinc-700',
   active: 'border-teal-200 bg-teal-50 text-teal-800',
   archived: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-  rejected: 'border-red-200 bg-red-50 text-red-700',
+  rejected: 'border-zinc-200 bg-zinc-50 text-zinc-700',
 }
 
 const FILTERS: { id: ThemeFilter; label: string }[] = [
   { id: 'all', label: 'Tumu' },
   { id: 'active', label: 'Aktif' },
   { id: 'draft', label: 'Taslak' },
-  { id: 'review', label: 'Incelemede' },
-  { id: 'approved', label: 'Onaylandi' },
-  { id: 'archived', label: 'Arsiv' },
+  { id: 'inactive', label: 'Pasif' },
   { id: 'invalid', label: 'Hata' },
 ]
 
 const TABS: { id: ThemeTab; label: string }[] = [
   { id: 'general', label: 'Genel Bilgiler' },
-  { id: 'surface', label: 'Ana Ekran / Uygulama Yuzeyi' },
   { id: 'colors', label: 'Renkler' },
-  { id: 'background', label: 'Arka Plan / Pattern' },
-  { id: 'illustrations', label: 'Gorseller / Illustrasyonlar' },
   { id: 'components', label: 'Bilesen Kurallari' },
-  { id: 'states', label: 'Kurallar / State' },
-  { id: 'preview', label: 'Preview' },
+  { id: 'background', label: 'Arka Plan / Pattern' },
+  { id: 'typography', label: 'Tipografi ve Olculer' },
+  { id: 'audit', label: 'Durum Gecmisi' },
   { id: 'importExport', label: 'Export / Import' },
-  { id: 'audit', label: 'Audit' },
+  { id: 'preview', label: 'Onizleme' },
 ]
 
 const IMAGE_SLOTS: ImageSlot[] = [
-  { id: 'light_banner', title: 'Light Banner', description: 'PageBanner light gorseli', required: true },
-  { id: 'dark_banner', title: 'Dark Banner', description: 'PageBanner dark gorseli', required: true },
-  { id: 'form_hero', title: 'Form Hero', description: 'Detay form sol/hero gorseli' },
-  { id: 'list_watermark', title: 'Liste Watermark', description: 'Smart List yuzey gorseli' },
-  { id: 'wizard_side', title: 'Wizard Side', description: 'Sihirbaz yan panel gorseli' },
-  { id: 'dashboard_hero', title: 'Dashboard Hero', description: 'Ana sayfa karsilama gorseli' },
+  { id: 'light_page_banner', title: 'Light Page Banner', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_page_banner', title: 'Dark Page Banner', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_smart_list_watermark', title: 'Light Smart List Watermark', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_smart_list_watermark', title: 'Dark Smart List Watermark', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_form_hero', title: 'Light Form Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_form_hero', title: 'Dark Form Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_detail_panel', title: 'Light Detail Panel', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_detail_panel', title: 'Dark Detail Panel', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_wizard', title: 'Light Wizard', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_wizard', title: 'Dark Wizard', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_login', title: 'Light Login', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_login', title: 'Dark Login', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_dashboard_hero', title: 'Light Dashboard Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_dashboard_hero', title: 'Dark Dashboard Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'light_empty_state', title: 'Light Empty State', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
+  { id: 'dark_empty_state', title: 'Dark Empty State', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
 ]
 
 const DOCUMENT_SLOTS: DocumentSlot[] = [
-  { id: 'designer_brief', title: 'Tasarimci Notlari', acceptedTypes: ['application/pdf', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
-  { id: 'figma_tokens', title: 'Figma Tokens', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
-  { id: 'theme_readme', title: 'README', acceptedTypes: ['text/markdown', 'text/plain'], maxSizeMB: 5 },
-  { id: 'validation_notes', title: 'Validation Notlari', acceptedTypes: ['application/pdf', 'text/plain'], maxSizeMB: 10 },
+  { id: 'designer_note', title: 'Tasarimci Notu', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
+  { id: 'technical_document', title: 'Tema Teknik Dokumani', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
+  { id: 'figma_token_export', title: 'Figma Token Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
+  { id: 'css_variable_export', title: 'CSS Variable Export', acceptedTypes: ['text/css', 'text/plain'], maxSizeMB: 5 },
+  { id: 'theme_json_export', title: 'Tema JSON Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
+  { id: 'validation_report', title: 'Validation Report', acceptedTypes: ['application/pdf', 'application/json', 'text/plain', 'text/markdown'], maxSizeMB: 10 },
 ]
 
 const COLOR_FIELDS: { path: string; label: string; helper: string }[] = [
@@ -133,39 +139,6 @@ const COLOR_FIELDS: { path: string; label: string; helper: string }[] = [
   { path: 'colors.info', label: 'Info', helper: 'Bilgi durumu' },
 ]
 
-const SURFACE_FIELDS = [
-  ['background.page.color', 'Sayfa arka plani'],
-  ['background.app.gradientTo', 'Ana icerik ikinci renk'],
-  ['background.sidebar.color', 'Sidebar arka plani'],
-  ['background.topbar.color', 'Topbar arka plani'],
-  ['background.form.color', 'Form yuzeyi'],
-  ['background.list.color', 'Liste yuzeyi'],
-  ['background.login.color', 'Login arka plani'],
-  ['background.dashboard.color', 'Dashboard yuzeyi'],
-] as const
-
-const COMPONENT_GROUPS = ['shell', 'pageBanner', 'smartList', 'cards', 'forms', 'tables', 'badges', 'wizard', 'tabs', 'modal', 'drawer', 'buttons', 'alerts', 'toast', 'interaction'] as const
-
-const STATE_FIELDS = [
-  ['states.hoverBackground', 'Hover background'],
-  ['states.activeBackground', 'Active background'],
-  ['states.selectedBackground', 'Selected background'],
-  ['states.selectedBorder', 'Selected border'],
-  ['states.disabledOpacity', 'Disabled opacity'],
-  ['states.focusRing', 'Focus ring'],
-  ['states.errorState', 'Error state'],
-  ['states.warningState', 'Warning state'],
-  ['states.successState', 'Success state'],
-  ['spacing.pagePadding', 'Page padding'],
-  ['spacing.sectionGap', 'Section gap'],
-  ['spacing.cardPadding', 'Card padding'],
-  ['spacing.tableRowHeight', 'Table row height'],
-  ['shape.radiusCard', 'Card radius'],
-  ['shape.radiusBanner', 'Banner radius'],
-  ['shadow.shadowCard', 'Card shadow'],
-  ['shadow.shadowBanner', 'Banner shadow'],
-] as const
-
 export default function DevelopmentThemesPage() {
   const [records, setRecords] = useState<ManagedThemeRecord[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -187,10 +160,18 @@ export default function DevelopmentThemesPage() {
   }, [])
 
   const systemRecords = useMemo(() => getSystemThemeRecords(), [])
-  const allRecords = useMemo(() => [...systemRecords, ...records], [records, systemRecords])
+  const hasManagedActiveTheme = records.some(record => record.status === 'active')
+  const visibleSystemRecords = useMemo(
+    () => systemRecords.map(record => hasManagedActiveTheme && record.status === 'active'
+      ? withThemeLifecycle(record, 'inactive', 'Kullanici tarafindan aktif edilen sistem temasi nedeniyle pasif gorunur.')
+      : record
+    ),
+    [hasManagedActiveTheme, systemRecords]
+  )
+  const allRecords = useMemo(() => [...visibleSystemRecords, ...records], [records, visibleSystemRecords])
   const selected = allRecords.find(record => record.id === selectedId) || null
   const listRecords = allRecords.filter(record => filterRecord(record, filter, search))
-  const editable = Boolean(selected && selected.source !== 'system' && selected.status !== 'active' && selected.status !== 'archived')
+  const editable = Boolean(selected && selected.source !== 'system' && selected.status !== 'inactive')
 
   function notify(type: ToastType, message: string, title?: string) {
     setToast({ type, message, title })
@@ -204,7 +185,7 @@ export default function DevelopmentThemesPage() {
       themeKey,
       description: 'Eden ERP sistem temasi V2 taslagi.',
       artDirection: 'Kurumsal sistem temasi',
-      inspiration: 'Tema tokenlari, gorselleri ve bilesen kurallari bu formdan yonetilir.',
+      inspiration: 'Kurumsal sistem temasi icin sade ve yonetilebilir gorsel dil.',
       category: 'system',
       baseThemeId,
       createdBy: 'development_admin',
@@ -245,7 +226,7 @@ export default function DevelopmentThemesPage() {
           version: '0.1.0',
           updatedAt: new Date().toISOString(),
         },
-        lifecycle: { status: 'draft', reason: 'Editable copy created from system theme.' },
+        lifecycle: { status: 'draft', reason: 'Sistem temasindan duzenlenebilir taslak olusturuldu.' },
         metadata: { ...record.package.metadata, source: 'user_created' },
       }),
       images: record.images || [],
@@ -283,7 +264,7 @@ export default function DevelopmentThemesPage() {
 
   function setLifecycle(record: ManagedThemeRecord, status: ManagedThemeStatus) {
     if (record.source === 'system') {
-      notify('warning', 'Sistem seed temalari dogrudan lifecycle degistirmez; once kopya olusturun.')
+      notify('warning', 'Sistem temalari dogrudan degistirilemez; once duzenlenebilir kopya olusturun.')
       return
     }
     const validation = validateEdenThemePackage(record.package).validation
@@ -370,7 +351,7 @@ export default function DevelopmentThemesPage() {
     setSelectedId(record.id)
     setActiveTab('general')
     setImportText('')
-    notify('success', 'Tema inceleme durumunda import edildi.')
+    notify('success', 'Tema taslak olarak import edildi.')
   }
 
   function exportSelected(format: 'eden' | 'figma' | 'css') {
@@ -391,84 +372,60 @@ export default function DevelopmentThemesPage() {
     return (
       <div className="space-y-5">
         {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
-        <PageBanner
-          mode="form"
-          formMode={editable ? 'edit' : 'view'}
-          title="Temalarımız"
-          subtitle="Sistem temasi V2 token, gorsel ve lifecycle formu."
-          icon={<Palette size={24} />}
-          onBackClick={() => setSelectedId(null)}
-          backButtonText="Listeye Don"
+        <FormHeader
+          record={selected}
+          editable={editable}
+          onBack={() => setSelectedId(null)}
+          onCancel={() => setSelectedId(null)}
+          onSave={selected.source === 'system' ? () => makeEditableCopy(selected) : saveSelected}
+          onActivate={() => setLifecycle(selected, 'active')}
+          onDeactivate={() => setLifecycle(selected, 'inactive')}
         />
 
-        <section className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <div className="space-y-4 rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4 shadow-sm">
-            <div>
-              <h2 className="text-base font-semibold text-[var(--eden-text)]">Tema gorsel ve belge slotlari</h2>
-              <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Banner, liste, form ve wizard gorselleri V2 tema varligi olarak tutulur.</p>
+        <section className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] p-4 shadow-sm">
+          <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+              <UploaderBlock title="Resim Uploader">
+                <ImageSlotUploader
+                  slots={IMAGE_SLOTS}
+                  images={selected.images as SlotImage[]}
+                  onChange={handleImagesChange}
+                  allowExtraSlots={false}
+                  readOnly={!editable}
+                  mode={editable ? 'update' : 'view'}
+                />
+              </UploaderBlock>
+              <UploaderBlock title="Belge Uploader">
+                <DocumentSlotUploader
+                  slots={DOCUMENT_SLOTS}
+                  documents={selected.documents as SlotDocument[]}
+                  onChange={handleDocumentsChange}
+                  allowExtraSlots={false}
+                  readOnly={!editable}
+                  mode={editable ? 'update' : 'view'}
+                  defaultTab="documents"
+                />
+              </UploaderBlock>
             </div>
-            <ImageSlotUploader
-              slots={IMAGE_SLOTS}
-              images={selected.images as SlotImage[]}
-              onChange={handleImagesChange}
-              allowExtraSlots={false}
-              readOnly={!editable}
-              mode={editable ? 'update' : 'view'}
-            />
-            <DocumentSlotUploader
-              slots={DOCUMENT_SLOTS}
-              documents={selected.documents as SlotDocument[]}
-              onChange={handleDocumentsChange}
-              allowExtraSlots={false}
-              readOnly={!editable}
-              mode={editable ? 'update' : 'view'}
-              defaultTab="upload"
-            />
-          </div>
 
-          <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface)] p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <StatusBadge status={selected.status} />
-                  <span className="rounded-full border border-[var(--eden-border)] px-2.5 py-1 text-xs font-semibold text-[var(--eden-text-muted)]">scope: system</span>
-                  <span className="rounded-full border border-[var(--eden-border)] px-2.5 py-1 text-xs font-semibold text-[var(--eden-text-muted)]">{selected.source}</span>
-                  {selected.package.meta.isActive && <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">Aktif sistem temasi</span>}
-                </div>
-                <h1 className="truncate text-2xl font-semibold text-[var(--eden-text)]">{selected.displayName}</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--eden-text-muted)]">{selected.description || 'Açıklama girilmedi.'}</p>
+            <div className="min-w-0">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <StatusBadge status={selected.status} />
+                <InfoChip>Sistem Teması</InfoChip>
+                <InfoChip>Light/Dark destekli</InfoChip>
+                <InfoChip>{sourceLabel(selected.source)}</InfoChip>
+                {selected.package.meta.isActive && <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">Aktif tema</span>}
               </div>
-              <div className="flex flex-wrap gap-2">
-                {selected.source === 'system' ? (
-                  <button onClick={() => makeEditableCopy(selected)} className={primaryButtonClass}>
-                    <Layers size={16} /> Duzenlenebilir Kopya
-                  </button>
-                ) : (
-                  <button onClick={saveSelected} className={primaryButtonClass}>
-                    <Save size={16} /> Kaydet
-                  </button>
-                )}
-                <button onClick={() => exportSelected('eden')} className={secondaryButtonClass}><FileJson size={16} /> JSON</button>
-                <button onClick={() => exportSelected('figma')} className={secondaryButtonClass}><Download size={16} /> Figma</button>
-                <button onClick={() => exportSelected('css')} className={secondaryButtonClass}><Download size={16} /> CSS</button>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <TextField label="Tema adi" value={selected.displayName} disabled={!editable} onChange={value => patchMeta('displayName', value)} />
+                <TextField label="Tema kodu / slug" value={selected.themeKey} disabled={!editable} onChange={value => patchMeta('themeKey', normalizeManagedThemeKey(value) || selected.themeKey)} />
+                <TextField label="Versiyon" value={selected.version} disabled={!editable} onChange={value => patchMeta('version', value)} />
+                <TextField label="Author" value={selected.author} disabled={!editable} onChange={value => patchMeta('author', value)} />
+                <TextField label="Scope" value="Sistem" disabled />
+                <TextField label="Son guncelleme" value={formatDate(selected.updatedAt)} disabled />
+                <TextArea className="lg:col-span-2" label="Kisa aciklama" value={selected.description} disabled={!editable} onChange={value => patchMeta('description', value)} />
               </div>
             </div>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <TextField label="Tema adi" value={selected.displayName} disabled={!editable} onChange={value => patchMeta('displayName', value)} />
-              <TextField label="Tema kodu / slug" value={selected.themeKey} disabled={!editable} onChange={value => patchMeta('themeKey', normalizeManagedThemeKey(value) || selected.themeKey)} />
-              <TextField label="Versiyon" value={selected.version} disabled={!editable} onChange={value => patchMeta('version', value)} />
-              <TextField label="Author" value={selected.author} disabled={!editable} onChange={value => patchMeta('author', value)} />
-              <TextArea className="lg:col-span-2" label="Açıklama" value={selected.description} disabled={!editable} onChange={value => patchMeta('description', value)} />
-            </div>
-
-            <LifecyclePanel
-              record={selected}
-              onReview={() => setLifecycle(selected, 'review')}
-              onApprove={() => setLifecycle(selected, 'approved')}
-              onActivate={() => setLifecycle(selected, 'active')}
-              onArchive={() => setLifecycle(selected, 'archived')}
-            />
           </div>
         </section>
 
@@ -495,10 +452,7 @@ export default function DevelopmentThemesPage() {
               <ModeSwitch mode={mode} onChange={setMode} />
             )}
             {activeTab === 'general' && (
-              <GeneralTab record={selected} editable={editable} patchMetadata={patchMetadata} />
-            )}
-            {activeTab === 'surface' && (
-              <SurfaceTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
+              <GeneralTab record={selected} editable={editable} patchMeta={patchMeta} patchMetadata={patchMetadata} />
             )}
             {activeTab === 'colors' && (
               <ColorsTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
@@ -506,14 +460,11 @@ export default function DevelopmentThemesPage() {
             {activeTab === 'background' && (
               <BackgroundTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
             )}
-            {activeTab === 'illustrations' && (
-              <IllustrationsTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
-            )}
             {activeTab === 'components' && (
               <ComponentsTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
             )}
-            {activeTab === 'states' && (
-              <StatesTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
+            {activeTab === 'typography' && (
+              <TypographyTab record={selected} mode={mode} editable={editable} patchMode={patchMode} />
             )}
             {activeTab === 'preview' && (
               <PreviewTab record={selected} mode={mode} onModeChange={setMode} />
@@ -626,123 +577,254 @@ export default function DevelopmentThemesPage() {
   )
 }
 
+function FormHeader({
+  record,
+  editable,
+  onBack,
+  onCancel,
+  onSave,
+  onActivate,
+  onDeactivate,
+}: {
+  record: ManagedThemeRecord
+  editable: boolean
+  onBack: () => void
+  onCancel: () => void
+  onSave: () => void
+  onActivate: () => void
+  onDeactivate: () => void
+}) {
+  return (
+    <section className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-4 py-3 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-[var(--eden-text-muted)]">
+            <button onClick={onBack} className="rounded-md border border-[var(--eden-border)] px-2.5 py-1 font-semibold text-[var(--eden-text)] hover:bg-[var(--eden-surface-muted)]">
+              Geri
+            </button>
+            <span>Temalarımız</span>
+            <span>/</span>
+            <span className="truncate text-[var(--eden-text)]">{record.displayName}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="mr-2 truncate text-xl font-semibold text-[var(--eden-text)]">{record.displayName}</h1>
+            <StatusBadge status={record.status} />
+            <InfoChip>Sistem Teması</InfoChip>
+            <InfoChip>Light/Dark</InfoChip>
+            <InfoChip>{sourceLabel(record.source)}</InfoChip>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={onCancel} className={secondaryButtonClass}>İptal</button>
+          <button onClick={onSave} className={primaryButtonClass}>
+            <Save size={16} /> Kaydet
+          </button>
+          {record.source !== 'system' && record.status === 'draft' && (
+            <button onClick={onActivate} className={primaryButtonClass}>
+              <CheckCircle2 size={16} /> Aktifleştir
+            </button>
+          )}
+          {record.source !== 'system' && record.status === 'active' && (
+            <button onClick={onDeactivate} className={secondaryButtonClass}>Pasife Al</button>
+          )}
+          {record.source === 'system' && (
+            <button onClick={onSave} className={secondaryButtonClass}>
+              <Layers size={16} /> Düzenlenebilir Kopya
+            </button>
+          )}
+        </div>
+      </div>
+      {!editable && record.source !== 'system' && (
+        <p className="mt-2 text-xs text-[var(--eden-text-muted)]">Bu kayıt mevcut durumda sınırlı düzenlenebilir.</p>
+      )}
+    </section>
+  )
+}
+
+function UploaderBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-3">
+      <h2 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function InfoChip({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-full border border-[var(--eden-border)] px-2.5 py-1 text-xs font-semibold text-[var(--eden-text-muted)]">
+      {children}
+    </span>
+  )
+}
+
 function GeneralTab({
   record,
   editable,
+  patchMeta,
   patchMetadata,
 }: {
   record: ManagedThemeRecord
   editable: boolean
+  patchMeta: (path: string, value: string | boolean) => void
   patchMetadata: (path: keyof EdenThemePackage['metadata'], value: string) => void
 }) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      <TextField label="Tema adi" value={record.displayName} disabled={!editable} onChange={value => patchMeta('displayName', value)} />
+      <TextField label="Tema kodu / slug" value={record.themeKey} disabled={!editable} onChange={value => patchMeta('themeKey', normalizeManagedThemeKey(value) || record.themeKey)} />
+      <TextField label="Versiyon" value={record.version} disabled={!editable} onChange={value => patchMeta('version', value)} />
+      <TextField label="Author" value={record.author} disabled={!editable} onChange={value => patchMeta('author', value)} />
+      <TextField label="Scope" value="Sistem" disabled />
+      <TextField label="Default mode" value={record.package.meta.defaultMode} disabled />
+      <TextField label="Supported modes" value={record.package.meta.supportedModes.join(', ')} disabled />
+      <TextField label="Kaynak" value={sourceLabel(record.source)} disabled />
+      <TextArea className="lg:col-span-2" label="Açıklama" value={record.description} disabled={!editable} onChange={value => patchMeta('description', value)} />
       <TextArea label="Sanat yonu" value={record.artDirection} disabled={!editable} onChange={value => patchMetadata('artDirection', value)} />
       <TextArea label="Ilham notu" value={record.inspiration} disabled={!editable} onChange={value => patchMetadata('inspiration', value)} />
-      <TextField label="Kategori" value={record.category} disabled={!editable} onChange={value => patchMetadata('category', value)} />
-      <TextField label="Light / Dark / System mode" value={record.package.meta.supportedModes.join(', ')} disabled />
       <TextArea className="lg:col-span-2" label="Notlar" value={record.notes} disabled={!editable} onChange={value => patchMetadata('notes', value)} />
       <ValidationSummary record={record} />
     </div>
   )
 }
 
-function SurfaceTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {SURFACE_FIELDS.map(([path, label]) => (
-        <ColorTextField
-          key={path}
-          label={label}
-          value={String(getPath(record.package.modes[mode], path) || '')}
-          disabled={!editable}
-          onChange={value => patchMode(path, value)}
-        />
-      ))}
-      <SurfacePreview modeTokens={record.package.modes[mode]} />
-    </div>
-  )
-}
-
 function ColorsTab({ record, mode, editable, patchMode }: ModeTabProps) {
+  const groups = [
+    { id: 'core', label: 'Core', fields: COLOR_FIELDS.slice(0, 4) },
+    { id: 'surface', label: 'Surface', fields: COLOR_FIELDS.slice(4, 11) },
+    { id: 'text', label: 'Text', fields: COLOR_FIELDS.slice(11, 12).concat(COLOR_FIELDS.slice(5, 6), COLOR_FIELDS.slice(9, 12)) },
+    { id: 'border', label: 'Border', fields: COLOR_FIELDS.slice(12, 16) },
+    { id: 'semantic', label: 'Semantic', fields: COLOR_FIELDS.slice(17, 21) },
+    { id: 'interaction', label: 'Interaction', fields: COLOR_FIELDS.slice(16, 17).concat(COLOR_FIELDS.slice(0, 3)) },
+  ]
+  const [activeGroup, setActiveGroup] = useState(groups[0].id)
+  const group = groups.find(item => item.id === activeGroup) || groups[0]
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {COLOR_FIELDS.map(field => (
-        <ColorTextField
-          key={field.path}
-          label={field.label}
-          helper={field.helper}
-          value={String(getPath(record.package.modes[mode], field.path) || '')}
-          disabled={!editable}
-          onChange={value => patchMode(field.path, value)}
-        />
-      ))}
+    <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-2">
+        {groups.map(item => (
+          <button
+            key={item.id}
+            onClick={() => setActiveGroup(item.id)}
+            className={cn(
+              'mb-1 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-semibold last:mb-0',
+              activeGroup === item.id ? 'bg-[var(--eden-accent-soft)] text-[var(--eden-accent)]' : 'text-[var(--eden-text-muted)] hover:bg-[var(--eden-surface-muted)]'
+            )}
+          >
+            <span>{item.label}</span>
+            <span className="text-xs">{item.fields.length}</span>
+          </button>
+        ))}
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-[var(--eden-border)]">
+        <table className="min-w-full text-sm">
+          <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
+            <tr>
+              <th className="px-3 py-2 text-left font-semibold">Token adi</th>
+              <th className="px-3 py-2 text-left font-semibold">Light renk</th>
+              <th className="px-3 py-2 text-left font-semibold">Dark renk</th>
+              <th className="px-3 py-2 text-left font-semibold">Foreground</th>
+              <th className="px-3 py-2 text-left font-semibold">Kullanim</th>
+              <th className="px-3 py-2 text-left font-semibold">Kontrast uyarisi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {group.fields.map(field => {
+              const lightValue = String(getPath(record.package.modes.light, field.path) || '')
+              const darkValue = String(getPath(record.package.modes.dark, field.path) || '')
+              return (
+                <tr key={field.path} className="border-t border-[var(--eden-border)] bg-[var(--eden-surface)]">
+                  <td className="px-3 py-2 font-mono text-xs text-[var(--eden-text)]">{field.path.replace('colors.', '')}</td>
+                  <td className="px-3 py-2"><CompactColorInput value={lightValue} disabled={!editable || mode !== 'light'} onChange={value => patchMode(field.path, value)} /></td>
+                  <td className="px-3 py-2"><CompactColorInput value={darkValue} disabled={!editable || mode !== 'dark'} onChange={value => patchMode(field.path, value)} /></td>
+                  <td className="px-3 py-2 text-xs text-[var(--eden-text-muted)]">{foregroundHint(field.path)}</td>
+                  <td className="px-3 py-2 text-xs text-[var(--eden-text-muted)]">{field.helper}</td>
+                  <td className="px-3 py-2 text-xs text-[var(--eden-text-muted)]">{contrastHint(record, field.path)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
 
 function BackgroundTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  const backgrounds = record.package.modes[mode].background
+  const rows = [
+    ['background.app.color', 'App background'],
+    ['background.page.color', 'Page background'],
+    ['background.pageBanner.color', 'Page Banner background'],
+    ['background.smartList.color', 'Smart List background'],
+    ['background.login.color', 'Login background'],
+    ['background.dashboard.color', 'Dashboard background'],
+    ['motif.type', 'Motif type'],
+    ['motif.opacity', 'Pattern opacity'],
+    ['motif.size', 'Pattern size'],
+    ['motif.spacing', 'Pattern spacing'],
+    ['background.pageBanner.overlayOpacity', 'Overlay'],
+  ] as const
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      {Object.entries(backgrounds).map(([key, value]) => (
-        <div key={key} className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
-          <h3 className="mb-3 text-sm font-semibold capitalize text-[var(--eden-text)]">{key}</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <TextField label="Type" value={value.type} disabled />
-            <ColorTextField label="Color" value={value.color || ''} disabled={!editable} onChange={next => patchMode(`background.${key}.color`, next)} />
-            <ColorTextField label="Gradient From" value={value.gradientFrom || ''} disabled={!editable} onChange={next => patchMode(`background.${key}.gradientFrom`, next)} />
-            <ColorTextField label="Gradient To" value={value.gradientTo || ''} disabled={!editable} onChange={next => patchMode(`background.${key}.gradientTo`, next)} />
-            <TextField label="Pattern opacity" value={String(value.patternOpacity)} disabled={!editable} onChange={next => patchMode(`background.${key}.patternOpacity`, Number(next))} />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function IllustrationsTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  const illustrations = record.package.modes[mode].illustrations
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <AssetCard title="Page Banner Light" asset={illustrations.pageBanner.light} editable={editable} onOpacity={value => patchMode('illustrations.pageBanner.light.opacity', value)} />
-      <AssetCard title="Page Banner Dark" asset={illustrations.pageBanner.dark} editable={editable} onOpacity={value => patchMode('illustrations.pageBanner.dark.opacity', value)} />
-      <AssetCard title="Liste Watermark" asset={illustrations.listArea.watermark} editable={editable} onOpacity={value => patchMode('illustrations.listArea.watermark.opacity', value)} />
-      <AssetCard title="Form Hero" asset={illustrations.formArea.heroIllustration} editable={editable} onOpacity={value => patchMode('illustrations.formArea.heroIllustration.opacity', value)} />
-      <AssetCard title="Wizard Side" asset={illustrations.wizardArea.sideIllustration} editable={editable} onOpacity={value => patchMode('illustrations.wizardArea.sideIllustration.opacity', value)} />
-      <AssetCard title="Dashboard Hero" asset={illustrations.dashboardArea.dashboardHeroIllustration} editable={editable} onOpacity={value => patchMode('illustrations.dashboardArea.dashboardHeroIllustration.opacity', value)} />
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <CompactPathTable rows={rows} source={record.package.modes[mode]} editable={editable} onChange={patchMode} />
+      <div className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
+        <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Arka plan preview</h3>
+        <div
+          className="h-52 rounded-lg border border-[var(--eden-border)]"
+          style={{
+            background: String(getPath(record.package.modes[mode], 'background.page.color') || 'var(--eden-bg)'),
+          }}
+        />
+      </div>
     </div>
   )
 }
 
 function ComponentsTab({ record, mode, editable, patchMode }: ModeTabProps) {
+  const sections = [
+    { title: 'Shell / Sidebar / Topbar', groups: ['shell'] },
+    { title: 'Page Banner', groups: ['pageBanner'] },
+    { title: 'Smart List', groups: ['smartList'] },
+    { title: 'Form', groups: ['forms'] },
+    { title: 'Table', groups: ['tables'] },
+    { title: 'Button', groups: ['buttons'] },
+    { title: 'Badge', groups: ['badges'] },
+    { title: 'Wizard', groups: ['wizard'] },
+    { title: 'Modal / Drawer', groups: ['modal', 'drawer'] },
+    { title: 'Toast / Alert', groups: ['toast', 'alerts'] },
+  ]
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      {COMPONENT_GROUPS.map(group => (
-        <TokenGroupEditor
-          key={group}
-          title={group}
-          tokens={record.package.modes[mode].components[group]}
-          editable={editable}
-          onChange={(key, value) => patchMode(`components.${group}.${key}`, value)}
-        />
+    <div className="space-y-3">
+      {sections.map(section => (
+        <details key={section.title} className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)]" open={section.title === 'Page Banner'}>
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--eden-text)]">{section.title}</summary>
+          <div className="border-t border-[var(--eden-border)] p-3">
+            {section.groups.map(group => (
+              <TokenGroupEditor
+                key={group}
+                title={group}
+                tokens={record.package.modes[mode].components[group as keyof typeof record.package.modes.light.components] || {}}
+                editable={editable}
+                onChange={(key, value) => patchMode(`components.${group}.${key}`, value)}
+              />
+            ))}
+          </div>
+        </details>
       ))}
     </div>
   )
 }
 
-function StatesTab({ record, mode, editable, patchMode }: ModeTabProps) {
+function TypographyTab({ record, mode, editable, patchMode }: ModeTabProps) {
+  const tokens = record.package.modes[mode]
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {STATE_FIELDS.map(([path, label]) => (
-        <TextField
-          key={path}
-          label={label}
-          value={String(getPath(record.package.modes[mode], path) || '')}
-          disabled={!editable}
-          onChange={value => patchMode(path, path === 'states.disabledOpacity' ? Number(value) : value)}
-        />
-      ))}
+    <div className="grid gap-4 xl:grid-cols-2">
+      <CompactObjectEditor title="Fontlar" tokens={tokens.typography} editable={editable} onChange={(key, value) => patchMode(`typography.${key}`, value)} />
+      <CompactObjectEditor title="Spacing" tokens={tokens.spacing} editable={editable} onChange={(key, value) => patchMode(`spacing.${key}`, value)} />
+      <CompactObjectEditor title="Radius" tokens={tokens.shape} editable={editable} onChange={(key, value) => patchMode(`shape.${key}`, value)} />
+      <CompactObjectEditor title="Shadow" tokens={tokens.shadow} editable={editable} onChange={(key, value) => patchMode(`shadow.${key}`, value)} />
+      <CompactObjectEditor title="Density" tokens={tokens.density} editable={editable} onChange={(key, value) => patchMode(`density.${key}`, value)} />
     </div>
   )
 }
@@ -888,38 +970,6 @@ type ModeTabProps = {
   patchMode: (path: string, value: string | number | boolean) => void
 }
 
-function LifecyclePanel({
-  record,
-  onReview,
-  onApprove,
-  onActivate,
-  onArchive,
-}: {
-  record: ManagedThemeRecord
-  onReview: () => void
-  onApprove: () => void
-  onActivate: () => void
-  onArchive: () => void
-}) {
-  const blocked = record.validation?.activationBlocked
-  return (
-    <div className="mt-5 rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-[var(--eden-text)]">Lifecycle</h3>
-          <p className="mt-1 text-sm text-[var(--eden-text-muted)]">Aktivasyon liste aksiyonu degil; inceleme, onay ve aktiflestirme gecisleriyle yonetilir.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button disabled={record.source === 'system' || record.status !== 'draft'} onClick={onReview} className={secondaryButtonClass}><Send size={16} /> Incelemeye Gonder</button>
-          <button disabled={record.source === 'system' || record.status !== 'review'} onClick={onApprove} className={secondaryButtonClass}><ShieldCheck size={16} /> Onayla</button>
-          <button disabled={record.source === 'system' || record.status !== 'approved' || blocked} onClick={onActivate} className={primaryButtonClass}><CheckCircle2 size={16} /> Aktiflestir</button>
-          <button disabled={record.source === 'system' || record.status === 'active'} onClick={onArchive} className={dangerButtonClass}><Archive size={16} /> Arsivle</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ValidationSummary({ record }: { record: ManagedThemeRecord }) {
   const validation = record.validation || validateEdenThemePackage(record.package).validation
   const errors = validation.errors
@@ -1009,77 +1059,103 @@ function TextArea({ label, value, disabled, onChange, className }: { label: stri
   )
 }
 
-function ColorTextField({ label, value, helper, disabled, onChange }: { label: string; value: string; helper?: string; disabled?: boolean; onChange: (value: string) => void }) {
+function CompactColorInput({ value, disabled, onChange }: { value: string; disabled?: boolean; onChange: (value: string) => void }) {
   const canUsePicker = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)
   return (
-    <label className="block rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-3">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--eden-text-muted)]">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="h-9 w-9 rounded-lg border border-[var(--eden-border)]" style={{ backgroundColor: value || 'transparent' }} />
-        <input
-          type={canUsePicker ? 'color' : 'text'}
-          value={value}
-          disabled={disabled}
-          onChange={event => onChange(event.target.value)}
-          className="h-9 min-w-0 flex-1 rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-2 text-sm text-[var(--eden-text)] outline-none disabled:opacity-60 focus:border-[var(--eden-input-focus)]"
-        />
-      </div>
-      {helper && <span className="mt-2 block text-xs text-[var(--eden-text-muted)]">{helper}</span>}
-    </label>
+    <div className="flex min-w-[150px] items-center gap-2">
+      <span className="h-7 w-7 shrink-0 rounded-md border border-[var(--eden-border)]" style={{ backgroundColor: value || 'transparent' }} />
+      <input
+        type={canUsePicker ? 'color' : 'text'}
+        value={value}
+        disabled={disabled}
+        onChange={event => onChange(event.target.value)}
+        className="h-8 min-w-0 flex-1 rounded-md border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-2 text-xs text-[var(--eden-text)] outline-none disabled:opacity-60 focus:border-[var(--eden-input-focus)]"
+      />
+    </div>
+  )
+}
+
+function CompactPathTable({
+  rows,
+  source,
+  editable,
+  onChange,
+}: {
+  rows: readonly (readonly [string, string])[]
+  source: unknown
+  editable: boolean
+  onChange: (path: string, value: string | number | boolean) => void
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-[var(--eden-border)]">
+      <table className="min-w-full text-sm">
+        <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
+          <tr>
+            <th className="px-3 py-2 text-left font-semibold">Alan</th>
+            <th className="px-3 py-2 text-left font-semibold">Deger</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([path, label]) => {
+            const raw = getPath(source, path)
+            const value = raw === undefined || raw === null ? '' : String(raw)
+            return (
+              <tr key={path} className="border-t border-[var(--eden-border)] bg-[var(--eden-surface)]">
+                <td className="px-3 py-2 text-[var(--eden-text)]">{label}</td>
+                <td className="px-3 py-2">
+                  <input
+                    value={value}
+                    disabled={!editable}
+                    onChange={event => onChange(path, numericLike(raw) ? Number(event.target.value) : event.target.value)}
+                    className="h-8 w-full min-w-[180px] rounded-md border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-2 text-sm text-[var(--eden-text)] outline-none disabled:opacity-60 focus:border-[var(--eden-input-focus)]"
+                  />
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function CompactObjectEditor({
+  title,
+  tokens,
+  editable,
+  onChange,
+}: {
+  title: string
+  tokens: Record<string, unknown>
+  editable: boolean
+  onChange: (key: string, value: string) => void
+}) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)]">
+      <div className="border-b border-[var(--eden-border)] px-3 py-2 text-sm font-semibold text-[var(--eden-text)]">{title}</div>
+      <table className="min-w-full text-sm">
+        <tbody>
+          {Object.entries(tokens).map(([key, value]) => (
+            <tr key={key} className="border-b border-[var(--eden-border)] last:border-0">
+              <td className="w-44 px-3 py-2 font-mono text-xs text-[var(--eden-text-muted)]">{key}</td>
+              <td className="px-3 py-2">
+                <input
+                  value={String(value ?? '')}
+                  disabled={!editable}
+                  onChange={event => onChange(key, event.target.value)}
+                  className="h-8 w-full rounded-md border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] px-2 text-sm text-[var(--eden-text)] outline-none disabled:opacity-60 focus:border-[var(--eden-input-focus)]"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
 function TokenGroupEditor({ title, tokens, editable, onChange }: { title: string; tokens: Record<string, string>; editable: boolean; onChange: (key: string, value: string) => void }) {
-  return (
-    <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
-      <h3 className="mb-3 text-sm font-semibold capitalize text-[var(--eden-text)]">{title}</h3>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Object.entries(tokens).map(([key, value]) => (
-          <TextField key={key} label={key} value={String(value)} disabled={!editable} onChange={next => onChange(key, next)} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function AssetCard({ title, asset, editable, onOpacity }: { title: string; asset: ThemeModeTokens['illustrations']['formArea']['heroIllustration']; editable: boolean; onOpacity: (value: number) => void }) {
-  return (
-    <div className="rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
-      <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--eden-accent-soft)] text-[var(--eden-accent)]">
-          <ImageIcon size={18} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-[var(--eden-text)]">{title}</h3>
-          <p className="mt-1 truncate text-xs text-[var(--eden-text-muted)]">{asset.assetName || asset.assetId || 'Asset tanimli degil'}</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <TextField label="Source type" value={asset.sourceType} disabled />
-            <TextField label="Fit" value={asset.fit} disabled />
-            <TextField label="Opacity" value={String(asset.opacity)} disabled={!editable} onChange={value => onOpacity(Number(value))} />
-            <TextField label="Enabled" value={asset.enabled ? 'true' : 'false'} disabled />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SurfacePreview({ modeTokens }: { modeTokens: ThemeModeTokens }) {
-  const vars = themeTokensToCssVars(modeTokens)
-  return (
-    <div className="lg:col-span-2 rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
-      <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Canli yuzey onizleme</h3>
-      <div className="rounded-xl border border-[var(--eden-border)] p-4" style={vars as CSSProperties}>
-        <div className="rounded-lg bg-[var(--eden-bg)] p-4 text-[var(--eden-text)]">
-          <div className="rounded-lg bg-[var(--eden-header-bg)] p-3">Topbar</div>
-          <div className="mt-3 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
-            <div className="rounded-lg bg-[var(--eden-nav-bg)] p-3 text-[var(--eden-nav-text)]">Sidebar</div>
-            <div className="rounded-lg border border-[var(--eden-card-border)] bg-[var(--eden-card-bg)] p-3">Card / Smart List / Form alanlari</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return <CompactObjectEditor title={title} tokens={tokens} editable={editable} onChange={onChange} />
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -1095,6 +1171,33 @@ function StatusBadge({ status }: { status: ManagedThemeStatus }) {
   return <span className={cn('inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold', STATUS_CLASS[status])}>{STATUS_LABELS[status]}</span>
 }
 
+function sourceLabel(source: ManagedThemeRecord['source']) {
+  if (source === 'system') return 'Sistem teması'
+  if (source === 'imported') return 'Import edildi'
+  if (source === 'generated') return 'Oluşturuldu'
+  return 'Kullanıcı oluşturdu'
+}
+
+function foregroundHint(path: string) {
+  if (path.toLowerCase().includes('primary')) return 'primaryForeground'
+  if (path.toLowerCase().includes('card')) return 'cardForeground'
+  if (path.toLowerCase().includes('input')) return 'inputForeground'
+  if (path.toLowerCase().includes('muted')) return 'mutedForeground'
+  return 'foreground'
+}
+
+function contrastHint(record: ManagedThemeRecord, path: string) {
+  const validation = record.validation || validateEdenThemePackage(record.package).validation
+  const issues = validation.contrast.light.concat(validation.contrast.dark)
+  const issue = issues.find(item => item.path.includes(path.replace('colors.', '')))
+  if (!issue) return 'Uygun'
+  return issue.severity === 'critical' ? 'Kritik' : 'Uyari'
+}
+
+function numericLike(value: unknown) {
+  return typeof value === 'number'
+}
+
 function filterRecord(record: ManagedThemeRecord, filter: ThemeFilter, search: string) {
   const query = search.trim().toLowerCase()
   const matchesSearch = !query
@@ -1104,6 +1207,7 @@ function filterRecord(record: ManagedThemeRecord, filter: ThemeFilter, search: s
   if (!matchesSearch) return false
   if (filter === 'all') return true
   if (filter === 'invalid') return Boolean(record.validation && !record.validation.valid)
+  if (filter === 'inactive') return record.status !== 'draft' && record.status !== 'active'
   return record.status === filter
 }
 
@@ -1147,43 +1251,48 @@ function applyImageAssets(packageValue: EdenThemePackage, images: ManagedThemeAs
       visibleOn: slotVisibility(image.slotId),
       enabled: true,
     }
-    if (image.slotId === 'light_banner') next = setPackagePath(next, 'modes.light.illustrations.pageBanner.light', asset)
-    if (image.slotId === 'dark_banner') next = setPackagePath(next, 'modes.dark.illustrations.pageBanner.dark', asset)
-    if (image.slotId === 'form_hero') {
-      next = setPackagePath(next, 'modes.light.illustrations.formArea.heroIllustration', asset)
-      next = setPackagePath(next, 'modes.dark.illustrations.formArea.heroIllustration', asset)
-    }
-    if (image.slotId === 'list_watermark') {
-      next = setPackagePath(next, 'modes.light.illustrations.listArea.watermark', asset)
-      next = setPackagePath(next, 'modes.dark.illustrations.listArea.watermark', asset)
-    }
-    if (image.slotId === 'wizard_side') {
-      next = setPackagePath(next, 'modes.light.illustrations.wizardArea.sideIllustration', asset)
-      next = setPackagePath(next, 'modes.dark.illustrations.wizardArea.sideIllustration', asset)
-    }
-    if (image.slotId === 'dashboard_hero') {
-      next = setPackagePath(next, 'modes.light.illustrations.dashboardArea.dashboardHeroIllustration', asset)
-      next = setPackagePath(next, 'modes.dark.illustrations.dashboardArea.dashboardHeroIllustration', asset)
-    }
+    const target = imageSlotPackagePath(image.slotId)
+    if (target) next = setPackagePath(next, target, asset)
   }
   return next
 }
 
 function slotVisibility(slotId: string) {
   if (slotId.includes('banner')) return ['banner']
-  if (slotId.includes('list')) return ['list']
-  if (slotId.includes('form')) return ['form']
+  if (slotId.includes('smart_list')) return ['list']
+  if (slotId.includes('form') || slotId.includes('detail_panel')) return ['form']
   if (slotId.includes('wizard')) return ['wizard']
+  if (slotId.includes('login')) return ['login']
   if (slotId.includes('dashboard')) return ['dashboard']
   return []
 }
 
+function imageSlotPackagePath(slotId: string) {
+  const paths: Record<string, string> = {
+    light_page_banner: 'modes.light.illustrations.pageBanner.light',
+    dark_page_banner: 'modes.dark.illustrations.pageBanner.dark',
+    light_smart_list_watermark: 'modes.light.illustrations.listArea.watermark',
+    dark_smart_list_watermark: 'modes.dark.illustrations.listArea.watermark',
+    light_form_hero: 'modes.light.illustrations.formArea.heroIllustration',
+    dark_form_hero: 'modes.dark.illustrations.formArea.heroIllustration',
+    light_detail_panel: 'modes.light.illustrations.formArea.sideImage',
+    dark_detail_panel: 'modes.dark.illustrations.formArea.sideImage',
+    light_wizard: 'modes.light.illustrations.wizardArea.sideIllustration',
+    dark_wizard: 'modes.dark.illustrations.wizardArea.sideIllustration',
+    light_login: 'modes.light.illustrations.loginArea.heroImage',
+    dark_login: 'modes.dark.illustrations.loginArea.heroImage',
+    light_dashboard_hero: 'modes.light.illustrations.dashboardArea.dashboardHeroIllustration',
+    dark_dashboard_hero: 'modes.dark.illustrations.dashboardArea.dashboardHeroIllustration',
+    light_empty_state: 'modes.light.illustrations.listArea.emptyState',
+    dark_empty_state: 'modes.dark.illustrations.listArea.emptyState',
+  }
+  return paths[slotId] || null
+}
+
 function lifecycleSummary(status: ManagedThemeStatus) {
-  if (status === 'review') return 'Tema incelemeye gonderildi.'
-  if (status === 'approved') return 'Tema onaylandi.'
   if (status === 'active') return 'Tema aktiflestirildi.'
-  if (status === 'archived') return 'Tema arsivlendi.'
-  if (status === 'rejected') return 'Tema reddedildi.'
+  if (status === 'inactive') return 'Tema pasife alindi.'
+  if (status === 'review' || status === 'approved' || status === 'archived' || status === 'rejected') return 'Tema pasif duruma alindi.'
   return 'Tema taslak durumuna alindi.'
 }
 

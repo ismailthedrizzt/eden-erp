@@ -443,7 +443,7 @@
           "type": "color"
         },
         "navActiveBg": {
-          "value": "#FFF9EE",
+          "value": "rgba(11, 107, 85, 0.28)",
           "type": "color"
         },
         "navActiveText": {
@@ -533,8 +533,18 @@
           "type": "other"
         },
         "overlay": {
-          "value": "#F8F2E6",
-          "type": "color"
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "color": {
+            "value": "#F8F2E6",
+            "type": "color"
+          },
+          "opacity": {
+            "value": 0.1,
+            "type": "number"
+          }
         },
         "contentPlacement": {
           "value": "left",
@@ -543,6 +553,30 @@
         "actionPlacement": {
           "value": "right",
           "type": "other"
+        },
+        "pageBannerBg": {
+          "value": "#0B6B55",
+          "type": "color"
+        },
+        "pageBannerText": {
+          "value": "#FFFFFF",
+          "type": "color"
+        },
+        "pageBannerMuted": {
+          "value": "#F8F2E6",
+          "type": "color"
+        },
+        "pageBannerAccent": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "pageBannerBorder": {
+          "value": "#B88A2A",
+          "type": "color"
+        },
+        "pageBannerShadow": {
+          "value": "0 18px 42px rgba(11, 107, 85, 0.22)",
+          "type": "boxShadow"
         }
       },
       "smartList": {
@@ -567,7 +601,11 @@
           "type": "other"
         },
         "watermarkOpacity": {
-          "value": "0.14",
+          "value": 0.14,
+          "type": "number"
+        },
+        "emptyStateAssetId": {
+          "value": "hikmet-light-empty-state",
           "type": "other"
         },
         "topStripDecoration": {
@@ -583,16 +621,12 @@
           "type": "color"
         },
         "rowHover": {
-          "value": "#E8D9BF",
+          "value": "rgba(11, 107, 85, 0.1)",
           "type": "color"
         },
         "rowSelected": {
           "value": "#FFFCF5",
           "type": "color"
-        },
-        "emptyStateAssetId": {
-          "value": "hikmet-light-empty-state",
-          "type": "other"
         },
         "filterSurface": {
           "value": "#FFF9EE",
@@ -604,6 +638,18 @@
         },
         "paginationSurface": {
           "value": "#FFF9EE",
+          "type": "color"
+        },
+        "listHeaderSurface": {
+          "value": "#FFF9EE",
+          "type": "color"
+        },
+        "listPanelBorder": {
+          "value": "#D7C39C",
+          "type": "color"
+        },
+        "listHoverVisualEffect": {
+          "value": "rgba(11, 107, 85, 0.08)",
           "type": "color"
         }
       },
@@ -685,7 +731,7 @@
           "type": "color"
         },
         "tableRowHover": {
-          "value": "#E8D9BF",
+          "value": "rgba(11, 107, 85, 0.1)",
           "type": "color"
         },
         "tableRowSelected": {
@@ -927,7 +973,7 @@
       },
       "interaction": {
         "focusRing": {
-          "value": "#0B6B55",
+          "value": "rgba(11, 107, 85, 0.28)",
           "type": "color"
         },
         "hoverOverlay": {
@@ -959,7 +1005,7 @@
           "type": "color"
         },
         "navActiveBg": {
-          "value": "#08202A",
+          "value": "rgba(51, 184, 147, 0.28)",
           "type": "color"
         },
         "navActiveText": {
@@ -1049,8 +1095,18 @@
           "type": "other"
         },
         "overlay": {
-          "value": "#061319",
-          "type": "color"
+          "enabled": {
+            "value": true,
+            "type": "boolean"
+          },
+          "color": {
+            "value": "#061319",
+            "type": "color"
+          },
+          "opacity": {
+            "value": 0.16,
+            "type": "number"
+          }
         },
         "contentPlacement": {
           "value": "left",
@@ -1059,6 +1115,30 @@
         "actionPlacement": {
           "value": "right",
           "type": "other"
+        },
+        "pageBannerBg": {
+          "value": "#33B893",
+          "type": "color"
+        },
+        "pageBannerText": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "pageBannerMuted": {
+          "value": "#061B22",
+          "type": "color"
+        },
+        "pageBannerAccent": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "pageBannerBorder": {
+          "value": "#C79B43",
+          "type": "color"
+        },
+        "pageBannerShadow": {
+          "value": "0 20px 48px rgba(0, 0, 0, 0.42)",
+          "type": "boxShadow"
         }
       },
       "smartList": {
@@ -1083,7 +1163,11 @@
           "type": "other"
         },
         "watermarkOpacity": {
-          "value": "0.14",
+          "value": 0.12,
+          "type": "number"
+        },
+        "emptyStateAssetId": {
+          "value": "hikmet-dark-empty-state",
           "type": "other"
         },
         "topStripDecoration": {
@@ -1099,16 +1183,12 @@
           "type": "color"
         },
         "rowHover": {
-          "value": "#17343D",
+          "value": "rgba(51, 184, 147, 0.1)",
           "type": "color"
         },
         "rowSelected": {
           "value": "#0B2530",
           "type": "color"
-        },
-        "emptyStateAssetId": {
-          "value": "hikmet-dark-empty-state",
-          "type": "other"
         },
         "filterSurface": {
           "value": "#08202A",
@@ -1120,6 +1200,18 @@
         },
         "paginationSurface": {
           "value": "#08202A",
+          "type": "color"
+        },
+        "listHeaderSurface": {
+          "value": "#08202A",
+          "type": "color"
+        },
+        "listPanelBorder": {
+          "value": "#24505A",
+          "type": "color"
+        },
+        "listHoverVisualEffect": {
+          "value": "rgba(51, 184, 147, 0.08)",
           "type": "color"
         }
       },
@@ -1201,7 +1293,7 @@
           "type": "color"
         },
         "tableRowHover": {
-          "value": "#17343D",
+          "value": "rgba(51, 184, 147, 0.1)",
           "type": "color"
         },
         "tableRowSelected": {
@@ -1443,7 +1535,7 @@
       },
       "interaction": {
         "focusRing": {
-          "value": "#33B893",
+          "value": "rgba(51, 184, 147, 0.28)",
           "type": "color"
         },
         "hoverOverlay": {
@@ -1543,7 +1635,9 @@
           }
         },
         "visibleOn": {
-          "value": "banner",
+          "value": [
+            "banner"
+          ],
           "type": "other"
         }
       },
@@ -1631,7 +1725,9 @@
           }
         },
         "visibleOn": {
-          "value": "list",
+          "value": [
+            "list"
+          ],
           "type": "other"
         }
       },
@@ -1719,7 +1815,9 @@
           }
         },
         "visibleOn": {
-          "value": "form",
+          "value": [
+            "form"
+          ],
           "type": "other"
         }
       },
@@ -1807,7 +1905,9 @@
           }
         },
         "visibleOn": {
-          "value": "form",
+          "value": [
+            "form"
+          ],
           "type": "other"
         }
       },
@@ -1895,7 +1995,9 @@
           }
         },
         "visibleOn": {
-          "value": "wizard",
+          "value": [
+            "wizard"
+          ],
           "type": "other"
         }
       },
@@ -1983,7 +2085,9 @@
           }
         },
         "visibleOn": {
-          "value": "login",
+          "value": [
+            "login"
+          ],
           "type": "other"
         }
       },
@@ -2071,7 +2175,9 @@
           }
         },
         "visibleOn": {
-          "value": "dashboard",
+          "value": [
+            "dashboard"
+          ],
           "type": "other"
         }
       },
@@ -2159,7 +2265,9 @@
           }
         },
         "visibleOn": {
-          "value": "list",
+          "value": [
+            "list"
+          ],
           "type": "other"
         }
       }
@@ -2249,7 +2357,9 @@
           }
         },
         "visibleOn": {
-          "value": "banner",
+          "value": [
+            "banner"
+          ],
           "type": "other"
         }
       },
@@ -2337,7 +2447,9 @@
           }
         },
         "visibleOn": {
-          "value": "list",
+          "value": [
+            "list"
+          ],
           "type": "other"
         }
       },
@@ -2425,7 +2537,9 @@
           }
         },
         "visibleOn": {
-          "value": "form",
+          "value": [
+            "form"
+          ],
           "type": "other"
         }
       },
@@ -2513,7 +2627,9 @@
           }
         },
         "visibleOn": {
-          "value": "form",
+          "value": [
+            "form"
+          ],
           "type": "other"
         }
       },
@@ -2601,7 +2717,9 @@
           }
         },
         "visibleOn": {
-          "value": "wizard",
+          "value": [
+            "wizard"
+          ],
           "type": "other"
         }
       },
@@ -2689,7 +2807,9 @@
           }
         },
         "visibleOn": {
-          "value": "login",
+          "value": [
+            "login"
+          ],
           "type": "other"
         }
       },
@@ -2777,7 +2897,9 @@
           }
         },
         "visibleOn": {
-          "value": "dashboard",
+          "value": [
+            "dashboard"
+          ],
           "type": "other"
         }
       },
@@ -2865,7 +2987,9 @@
           }
         },
         "visibleOn": {
-          "value": "list",
+          "value": [
+            "list"
+          ],
           "type": "other"
         }
       }

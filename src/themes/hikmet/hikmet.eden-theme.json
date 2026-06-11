@@ -714,7 +714,7 @@
           "navText": "#FFFFFF",
           "navMuted": "#5F6D62",
           "navHoverBg": "#EFE3CF",
-          "navActiveBg": "#FFF9EE",
+          "navActiveBg": "rgba(11, 107, 85, 0.28)",
           "navActiveText": "#102A2C",
           "headerBg": "#FFFCF5",
           "headerBorder": "#D7C39C"
@@ -741,9 +741,19 @@
           "shadow": "0 18px 42px rgba(11, 107, 85, 0.22)",
           "radius": "18px",
           "illustrationAssetId": "hikmet-light-page-banner",
-          "overlay": "#F8F2E6",
+          "overlay": {
+            "enabled": true,
+            "color": "#F8F2E6",
+            "opacity": 0.1
+          },
           "contentPlacement": "left",
-          "actionPlacement": "right"
+          "actionPlacement": "right",
+          "pageBannerBg": "#0B6B55",
+          "pageBannerText": "#FFFFFF",
+          "pageBannerMuted": "#F8F2E6",
+          "pageBannerAccent": "#B88A2A",
+          "pageBannerBorder": "#B88A2A",
+          "pageBannerShadow": "0 18px 42px rgba(11, 107, 85, 0.22)"
         },
         "smartList": {
           "containerBg": "#EFE3CF",
@@ -751,16 +761,19 @@
           "toolbarSurface": "#FFFCF5",
           "decorativeBackground": "#E8D9BF",
           "watermarkAssetId": "hikmet-light-smart-list-watermark",
-          "watermarkOpacity": "0.14",
+          "watermarkOpacity": 0.14,
+          "emptyStateAssetId": "hikmet-light-empty-state",
           "topStripDecoration": "#B88A2A",
           "panelBorder": "#D7C39C",
           "rowSeparator": "#D7C39C",
-          "rowHover": "#E8D9BF",
+          "rowHover": "rgba(11, 107, 85, 0.1)",
           "rowSelected": "#FFFCF5",
-          "emptyStateAssetId": "hikmet-light-empty-state",
           "filterSurface": "#FFF9EE",
           "searchInputBg": "#FFFCF4",
-          "paginationSurface": "#FFF9EE"
+          "paginationSurface": "#FFF9EE",
+          "listHeaderSurface": "#FFF9EE",
+          "listPanelBorder": "#D7C39C",
+          "listHoverVisualEffect": "rgba(11, 107, 85, 0.08)"
         },
         "cards": {
           "cardBg": "#FFFDF7",
@@ -785,7 +798,7 @@
           "tableHeaderBg": "#EFE3CF",
           "tableHeaderText": "#102A2C",
           "tableBorder": "#D7C39C",
-          "tableRowHover": "#E8D9BF",
+          "tableRowHover": "rgba(11, 107, 85, 0.1)",
           "tableRowSelected": "#FFFCF5"
         },
         "badges": {
@@ -859,7 +872,7 @@
           "toastText": "#102A2C"
         },
         "interaction": {
-          "focusRing": "#0B6B55",
+          "focusRing": "rgba(11, 107, 85, 0.28)",
           "hoverOverlay": "#E8D9BF",
           "selectedOverlay": "#FFFCF5"
         }
@@ -1623,7 +1636,7 @@
           "navText": "#061B22",
           "navMuted": "#B7C6BA",
           "navHoverBg": "#0D2A32",
-          "navActiveBg": "#08202A",
+          "navActiveBg": "rgba(51, 184, 147, 0.28)",
           "navActiveText": "#F4E8D0",
           "headerBg": "#0B2530",
           "headerBorder": "#24505A"
@@ -1650,9 +1663,19 @@
           "shadow": "0 20px 48px rgba(0, 0, 0, 0.42)",
           "radius": "18px",
           "illustrationAssetId": "hikmet-dark-page-banner",
-          "overlay": "#061319",
+          "overlay": {
+            "enabled": true,
+            "color": "#061319",
+            "opacity": 0.16
+          },
           "contentPlacement": "left",
-          "actionPlacement": "right"
+          "actionPlacement": "right",
+          "pageBannerBg": "#33B893",
+          "pageBannerText": "#061B22",
+          "pageBannerMuted": "#061B22",
+          "pageBannerAccent": "#C79B43",
+          "pageBannerBorder": "#C79B43",
+          "pageBannerShadow": "0 20px 48px rgba(0, 0, 0, 0.42)"
         },
         "smartList": {
           "containerBg": "#0D2A32",
@@ -1660,16 +1683,19 @@
           "toolbarSurface": "#0B2530",
           "decorativeBackground": "#17343D",
           "watermarkAssetId": "hikmet-dark-smart-list-watermark",
-          "watermarkOpacity": "0.14",
+          "watermarkOpacity": 0.12,
+          "emptyStateAssetId": "hikmet-dark-empty-state",
           "topStripDecoration": "#C79B43",
           "panelBorder": "#24505A",
           "rowSeparator": "#24505A",
-          "rowHover": "#17343D",
+          "rowHover": "rgba(51, 184, 147, 0.1)",
           "rowSelected": "#0B2530",
-          "emptyStateAssetId": "hikmet-dark-empty-state",
           "filterSurface": "#08202A",
           "searchInputBg": "#071A22",
-          "paginationSurface": "#08202A"
+          "paginationSurface": "#08202A",
+          "listHeaderSurface": "#08202A",
+          "listPanelBorder": "#24505A",
+          "listHoverVisualEffect": "rgba(51, 184, 147, 0.08)"
         },
         "cards": {
           "cardBg": "#0A222B",
@@ -1694,7 +1720,7 @@
           "tableHeaderBg": "#0D2A32",
           "tableHeaderText": "#F4E8D0",
           "tableBorder": "#24505A",
-          "tableRowHover": "#17343D",
+          "tableRowHover": "rgba(51, 184, 147, 0.1)",
           "tableRowSelected": "#0B2530"
         },
         "badges": {
@@ -1768,7 +1794,7 @@
           "toastText": "#F4E8D0"
         },
         "interaction": {
-          "focusRing": "#33B893",
+          "focusRing": "rgba(51, 184, 147, 0.28)",
           "hoverOverlay": "#17343D",
           "selectedOverlay": "#0B2530"
         }
@@ -1859,6 +1885,8 @@
       "--eden-color-info": "#1D5C73",
       "--eden-sidebar-bg": "#0B6B55",
       "--eden-sidebar-text": "#FFFFFF",
+      "--eden-nav-active-bg": "color-mix(in srgb, #0B6B55 28%, transparent)",
+      "--eden-nav-active-bg-resolved": "rgba(11, 107, 85, 0.28)",
       "--eden-topbar-bg": "#FFFCF5",
       "--eden-topbar-border": "#D7C39C",
       "--eden-page-banner-bg": "#0B6B55",
@@ -1872,19 +1900,27 @@
       "--eden-smart-list-toolbar-bg": "#FFFCF5",
       "--eden-smart-list-border": "#D7C39C",
       "--eden-smart-list-row-hover": "#E8D9BF",
+      "--eden-smart-list-hover": "color-mix(in srgb, #0B6B55 8%, transparent)",
+      "--eden-smart-list-hover-resolved": "rgba(11, 107, 85, 0.08)",
       "--eden-smart-list-watermark-asset": "url(\"/theme-assets/hikmet/light/smart-list-watermark.svg\")",
+      "--eden-table-row-hover": "color-mix(in srgb, #0B6B55 10%, transparent)",
+      "--eden-table-row-hover-resolved": "rgba(11, 107, 85, 0.1)",
       "--eden-card-bg": "#FFFDF7",
       "--eden-card-border": "#D7C39C",
       "--eden-card-shadow": "0 14px 32px rgba(56, 44, 22, 0.13)",
       "--eden-input-bg": "#FFFCF4",
       "--eden-input-border": "#D7C39C",
       "--eden-input-focus": "#0B6B55",
+      "--eden-focus-ring": "color-mix(in srgb, #0B6B55 28%, transparent)",
+      "--eden-focus-ring-resolved": "rgba(11, 107, 85, 0.28)",
       "--eden-radius-card": "12px",
       "--eden-radius-button": "10px",
       "--eden-radius-input": "10px",
       "--eden-radius-banner": "18px",
       "--eden-shadow-card": "0 14px 32px rgba(56, 44, 22, 0.13)",
-      "--eden-shadow-floating": "0 24px 56px rgba(31, 22, 5, 0.18)"
+      "--eden-shadow-floating": "0 24px 56px rgba(31, 22, 5, 0.18)",
+      "--eden-shadow-focus": "0 0 0 3px color-mix(in srgb, #0B6B55 24%, transparent)",
+      "--eden-shadow-focus-resolved": "0 0 0 3px rgba(11, 107, 85, 0.24)"
     },
     "dark": {
       "--eden-color-background": "#061319",
@@ -1906,6 +1942,8 @@
       "--eden-color-info": "#6EA9B7",
       "--eden-sidebar-bg": "#33B893",
       "--eden-sidebar-text": "#061B22",
+      "--eden-nav-active-bg": "color-mix(in srgb, #33B893 28%, transparent)",
+      "--eden-nav-active-bg-resolved": "rgba(51, 184, 147, 0.28)",
       "--eden-topbar-bg": "#0B2530",
       "--eden-topbar-border": "#24505A",
       "--eden-page-banner-bg": "#33B893",
@@ -1919,19 +1957,27 @@
       "--eden-smart-list-toolbar-bg": "#0B2530",
       "--eden-smart-list-border": "#24505A",
       "--eden-smart-list-row-hover": "#17343D",
+      "--eden-smart-list-hover": "color-mix(in srgb, #33B893 8%, transparent)",
+      "--eden-smart-list-hover-resolved": "rgba(51, 184, 147, 0.08)",
       "--eden-smart-list-watermark-asset": "url(\"/theme-assets/hikmet/dark/smart-list-watermark.svg\")",
+      "--eden-table-row-hover": "color-mix(in srgb, #33B893 10%, transparent)",
+      "--eden-table-row-hover-resolved": "rgba(51, 184, 147, 0.1)",
       "--eden-card-bg": "#0A222B",
       "--eden-card-border": "#24505A",
       "--eden-card-shadow": "0 18px 44px rgba(0, 0, 0, 0.36)",
       "--eden-input-bg": "#071A22",
       "--eden-input-border": "#24505A",
       "--eden-input-focus": "#33B893",
+      "--eden-focus-ring": "color-mix(in srgb, #33B893 28%, transparent)",
+      "--eden-focus-ring-resolved": "rgba(51, 184, 147, 0.28)",
       "--eden-radius-card": "12px",
       "--eden-radius-button": "10px",
       "--eden-radius-input": "10px",
       "--eden-radius-banner": "18px",
       "--eden-shadow-card": "0 18px 44px rgba(0, 0, 0, 0.36)",
-      "--eden-shadow-floating": "0 28px 72px rgba(0, 0, 0, 0.46)"
+      "--eden-shadow-floating": "0 28px 72px rgba(0, 0, 0, 0.46)",
+      "--eden-shadow-focus": "0 0 0 3px color-mix(in srgb, #33B893 24%, transparent)",
+      "--eden-shadow-focus-resolved": "0 0 0 3px rgba(51, 184, 147, 0.24)"
     }
   },
   "figmaTokensRef": {
@@ -2149,17 +2195,6 @@
       "safe": true
     }
   },
-  "validation": {
-    "schemaValid": true,
-    "requiredFieldsComplete": true,
-    "assetRefsResolved": true,
-    "cssVariablesComplete": true,
-    "figmaExportReady": true,
-    "contrastWarnings": [],
-    "assetWarnings": [],
-    "unusedAssets": [],
-    "notes": []
-  },
   "metadata": {
     "artDirection": "Sukunet, hikmet, medrese geometrisi ve vakur ERP kullanimi.",
     "inspiration": "Medrese yildiz geometrisi, ince kemer cizgileri, zumrut yesili ve kontrollu altin vurgu.",
@@ -2178,5 +2213,16 @@
     "source": "eden_export",
     "notes": "Hikmet runtime package is generated from the Eden ERP theme package generator.",
     "designerNote": "Change token values and asset references only. Keep layout, workflows and Eden logo unchanged."
+  },
+  "validation": {
+    "schemaValid": true,
+    "requiredFieldsComplete": true,
+    "assetRefsResolved": true,
+    "cssVariablesComplete": true,
+    "figmaExportReady": true,
+    "contrastWarnings": [],
+    "assetWarnings": [],
+    "unusedAssets": [],
+    "notes": []
   }
 }

@@ -1,31 +1,35 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 ScopeType = Literal["company_wide", "branch", "organization_unit", "facility"]
 RepresentativeAuthorityTransactionType = Literal[
-    "Temsilcilik Başlatma",
-    "Yetki Yenileme",
-    "Yetki Kapsamı Değişikliği",
-    "Limit Değişikliği",
-    "Askıya Alma",
-    "Sonlandırma",
-    "Düzeltme Kaydı",
-    "Ters Kayıt",
+    'authority_start',
+    'authority_renew',
+    'authority_scope_change',
+    'authority_limit_change',
+    'authority_suspend',
+    'authority_terminate',
+    'authority_correction',
+    'authority_reverse',
 ]
 
-AUTHORITY_TRANSACTION_TYPES: set[str] = {
-    "Temsilcilik Başlatma",
-    "Yetki Yenileme",
-    "Yetki Kapsamı Değişikliği",
-    "Limit Değişikliği",
-    "Askıya Alma",
-    "Sonlandırma",
-    "Düzeltme Kaydı",
-    "Ters Kayıt",
+AUTHORITY_TRANSACTION_LABELS: dict[str, str] = {
+    'Temsilcilik Başlatma': 'authority_start',
+    'Yetki Yenileme': 'authority_renew',
+    'Yetki Kapsamı Değişikliği': 'authority_scope_change',
+    'Limit Değişikliği': 'authority_limit_change',
+    'Askıya Alma': 'authority_suspend',
+    'Sonlandırma': 'authority_terminate',
+    'Düzeltme Kaydı': 'authority_correction',
+    'Ters Kayıt': 'authority_reverse',
+}
+AUTHORITY_TRANSACTION_TYPES: set[str] = set(AUTHORITY_TRANSACTION_LABELS.values())
+AUTHORITY_TRANSACTION_DISPLAY_LABELS: dict[str, str] = {
+    value: label for label, value in AUTHORITY_TRANSACTION_LABELS.items()
 }
 
 AUTHORITY_CONTROLLED_FIELDS: set[str] = {
@@ -132,7 +136,13 @@ class RepresentativeAuthorityTransactionRequest(BaseModel):
     correction_transaction_id: str | None = None
     client_request_id: str | None = None
     base_version: int | None = None
-    base_updated_at: str | None = None
+    base_updated_at: datetime | None = None
+
+    @field_validator('transaction_type', mode='before')
+    @classmethod
+    def normalize_transaction_type(cls, value: Any) -> str:
+        raw = str(value or '').strip()
+        return AUTHORITY_TRANSACTION_LABELS.get(raw, raw)
 
     @field_validator("authority_types", mode="before")
     @classmethod
@@ -225,7 +235,7 @@ class RepresentativeCardUpdateRequest(BaseModel):
     contact_points: list[dict[str, Any]] | None = None
     entity_bank_accounts: list[dict[str, Any]] | None = None
     base_version: int | None = None
-    base_updated_at: str | None = None
+    base_updated_at: datetime | None = None
 
 
 class RepresentativeCreateDraftRequest(BaseModel):

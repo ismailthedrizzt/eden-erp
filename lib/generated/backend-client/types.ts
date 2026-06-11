@@ -10253,85 +10253,6 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        /** DocumentUploadRequest */
-        DocumentUploadRequest: {
-            /** Company Id */
-            company_id?: string | null;
-            /** Branch Id */
-            branch_id?: string | null;
-            /** Owner Entity Type */
-            owner_entity_type: string;
-            /** Owner Entity Id */
-            owner_entity_id: string;
-            /** Document Type */
-            document_type: string;
-            /**
-             * Document Category
-             * @default general
-             */
-            document_category: string;
-            /** Title */
-            title?: string | null;
-            /** Description */
-            description?: string | null;
-            /** File Name */
-            file_name: string;
-            /**
-             * Mime Type
-             * @default application/octet-stream
-             */
-            mime_type: string;
-            /**
-             * File Size
-             * @default 0
-             */
-            file_size: number;
-            /** Content Base64 */
-            content_base64?: string | null;
-            /** Storage Bucket */
-            storage_bucket?: string | null;
-            /** Storage Path */
-            storage_path?: string | null;
-            /**
-             * Storage Provider
-             * @default local
-             */
-            storage_provider: string;
-            /**
-             * Required
-             * @default false
-             */
-            required: boolean;
-            /**
-             * Verification Required
-             * @default false
-             */
-            verification_required: boolean;
-            /** Issue Date */
-            issue_date?: string | null;
-            /** Expiry Date */
-            expiry_date?: string | null;
-            /** Tags */
-            tags?: string[];
-            /** Metadata Json */
-            metadata_json?: {
-                [key: string]: unknown;
-            };
-            /**
-             * Relation Type
-             * @default attachment
-             * @enum {string}
-             */
-            relation_type: "primary" | "supporting" | "evidence" | "attachment" | "card_document" | "operation_evidence" | "required_evidence" | "supporting_document" | "generated_report" | "import_file" | "export_file" | "service_photo" | "service_report" | "contract_document" | "identity_document";
-            /** Module Key */
-            module_key?: string | null;
-            /** Operation Key */
-            operation_key?: string | null;
-            /** Operation Id */
-            operation_id?: string | null;
-            /** Document Slot Key */
-            document_slot_key?: string | null;
-        };
         /** DuplicateDetectRequest */
         DuplicateDetectRequest: {
             /** Entity Types */
@@ -13506,7 +13427,7 @@ export interface components {
              * Transaction Type
              * @enum {string}
              */
-            transaction_type: "Temsilcilik Başlatma" | "Yetki Yenileme" | "Yetki Kapsamı Değişikliği" | "Limit Değişikliği" | "Askıya Alma" | "Sonlandırma" | "Düzeltme Kaydı" | "Ters Kayıt";
+            transaction_type: "authority_start" | "authority_renew" | "authority_scope_change" | "authority_limit_change" | "authority_suspend" | "authority_terminate" | "authority_correction" | "authority_reverse";
             /**
              * Authority Action
              * @default true
@@ -27315,11 +27236,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DocumentUploadRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {
@@ -27328,15 +27245,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -27488,11 +27396,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DocumentUploadRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {
@@ -27724,11 +27628,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DocumentUploadRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {

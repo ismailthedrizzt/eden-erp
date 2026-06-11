@@ -33,14 +33,15 @@ function assertPermissionTenantContract() {
   assertIncludes('lib/security/serverPermissions.ts', 'userHasPermissionSafe', 'permission checks must be resolved server-side')
   assertIncludes('lib/security/serverPermissions.ts', 'TENANT_ACCESS_DENIED', 'tenant mismatch must fail closed')
 
-  assertIncludes('lib/crud/safeCrudService.ts', 'applyTenantQueryScope(query, options.tableName, tenantContext)', 'read/list operations must apply tenant scope')
-  assertIncludes('lib/crud/safeCrudService.ts', 'withTenantInsertScopeForTable(options.values, options.tableName, tenantContext)', 'create operations must stamp tenant scope')
-  assertIncludes('lib/crud/safeCrudService.ts', 'applyTenantQueryScope(updateQuery, options.tableName, tenantContext)', 'update operations must be tenant scoped')
+  assertIncludes('lib/crud/entityCrudClient.ts', 'apiClient.get', 'CRUD reads must go through the canonical API client')
+  assertIncludes('lib/crud/entityCrudClient.ts', 'apiClient.post', 'CRUD creates must go through the canonical API client')
+  assertIncludes('lib/crud/entityCrudClient.ts', 'apiClient.patch', 'CRUD updates must go through the canonical API client')
+  assertIncludes('lib/crud/entityCrudClient.ts', 'validateContractPayload', 'CRUD mutations must validate entity contracts before submit')
 
-  assertIncludes('lib/workflow/safeHardDeleteDraftRecord.ts', 'resolveTenantContext(options.request)', 'hard delete flow must resolve tenant context')
-  assertIncludes('lib/workflow/safeHardDeleteDraftRecord.ts', 'applyTenantQueryScope(recordQuery, options.tableName, tenantContext)', 'hard delete record fetch must be tenant scoped')
-  assertIncludes('lib/workflow/safeHardDeleteDraftRecord.ts', 'applyTenantQueryScope(deleteQuery, options.tableName, tenantContext)', 'hard delete mutation must be tenant scoped')
-  assertBefore('lib/workflow/safeHardDeleteDraftRecord.ts', 'const permission = await resolvePermission(options)', 'let recordQuery = options.supabase', 'hard delete must check permission before fetching records')
+  assertIncludes('backend/app/policies/delete_guards.py', 'tenant_id: str', 'hard delete guards must be tenant-scoped')
+  assertIncludes('backend/app/policies/delete_guards.py', 'has_related_records', 'hard delete guards must block records with related history')
+  assertIncludes('backend/app/policies/delete_guards.py', 'can_hard_delete_representative_draft', 'representative hard delete must use backend policy')
+  assertIncludes('backend/app/tests/test_hard_delete_draft_guard.py', 'can_hard_delete_representative_draft', 'hard delete policy must have backend tests')
 }
 
 function assertCacheContract() {
@@ -70,10 +71,11 @@ function assertApiSurfaceHardeningContract() {
   assertIncludes('middleware.ts', 'X-Frame-Options', 'responses must include frame protection')
   assertIncludes('middleware.ts', 'Content-Security-Policy', 'responses must include baseline CSP protection')
   assertIncludes('middleware.ts', 'X-Content-Type-Options', 'responses must disable MIME sniffing')
-  assertIncludes('app/api/uploads/documents/route.ts', 'requirePermission', 'document uploads must require permission')
-  assertIncludes('app/api/uploads/documents/route.ts', 'MAX_DOCUMENT_BYTES', 'document uploads must have a size limit')
-  assertIncludes('app/api/uploads/documents/route.ts', 'ALLOWED_DOCUMENT_TYPES', 'document uploads must restrict MIME types')
-  assertIncludes('app/api/uploads/documents/route.ts', 'tenantContext.tenantId', 'document storage paths must be tenant-scoped')
+  assertIncludes('app/api/documents/_upload.ts', 'proxyToFastApiDocuments', 'document uploads must stream/proxy multipart to FastAPI')
+  assertNotIncludes('app/api/documents/_upload.ts', 'content_base64', 'Next document proxy must not convert files to base64 JSON')
+  assertIncludes('backend/app/api/v1/documents.py', 'MAX_DOCUMENT_UPLOAD_BYTES', 'FastAPI document uploads must have a size limit')
+  assertIncludes('backend/app/api/v1/documents.py', 'ALLOWED_DOCUMENT_MIME_TYPES', 'FastAPI document uploads must restrict MIME types')
+  assertIncludes('backend/app/api/v1/documents.py', 'DOCUMENT_STORAGE_PATH_CLIENT_CONTROLLED', 'client-controlled storage paths must be rejected')
   assertIncludes('app/api/uploads/documents/signed-url/route.ts', 'STORAGE_PATH_FORBIDDEN', 'signed URL creation must reject paths outside the tenant scope')
   assertIncludes('app/api/uploads/image-variants/route.ts', 'requirePermission', 'image processing endpoint must require permission')
   assertIncludes('app/api/ai/cv-extract/route.ts', 'requirePermission', 'AI CV extraction must require permission')

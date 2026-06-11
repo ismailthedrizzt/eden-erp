@@ -49,6 +49,10 @@ class Settings(BaseSettings):
         alias="ALLOW_TRUSTED_PROXY_HEADERS",
     )
     auth_required: bool | None = Field(default=None, alias="AUTH_REQUIRED")
+    local_dev_admin_fallback: bool = Field(
+        default=False,
+        alias="EDEN_LOCAL_DEV_ADMIN_FALLBACK",
+    )
     cron_secret: str | None = Field(default=None, alias="CRON_SECRET")
     outbox_batch_size: int = Field(default=25, alias="OUTBOX_BATCH_SIZE")
     outbox_max_runtime_ms: int = Field(default=25000, alias="OUTBOX_MAX_RUNTIME_MS")
@@ -120,19 +124,27 @@ class Settings(BaseSettings):
 
     @property
     def is_development(self) -> bool:
-        return self.app_env in {"local", "development", "dev", "test", "preview"}
+        return self.app_env in {'local', 'development', 'dev', 'test'}
+
+    @property
+    def is_preview_or_staging(self) -> bool:
+        return self.app_env in {'preview', 'staging'}
+
+    @property
+    def is_remote_environment(self) -> bool:
+        return self.is_production or self.is_preview_or_staging
 
     @property
     def effective_auth_required(self) -> bool:
         if self.auth_required is not None:
             return self.auth_required
-        return self.is_production or self.app_env == "staging"
+        return self.is_remote_environment
 
     @property
     def effective_allow_trusted_proxy_headers(self) -> bool:
         if self.allow_trusted_proxy_headers is not None:
             return self.allow_trusted_proxy_headers
-        return self.is_development
+        return self.is_development or self.is_remote_environment
 
     @property
     def effective_supabase_jwks_url(self) -> str | None:

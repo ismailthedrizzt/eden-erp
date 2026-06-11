@@ -122,17 +122,6 @@ const packageJson = {
     },
   },
   assetRegistry: assetRegistry(),
-  validation: {
-    schemaValid: true,
-    requiredFieldsComplete: true,
-    assetRefsResolved: true,
-    cssVariablesComplete: true,
-    figmaExportReady: true,
-    contrastWarnings: [],
-    assetWarnings: [],
-    unusedAssets: [],
-    notes: [],
-  },
   metadata: {
     artDirection: 'Sukunet, hikmet, medrese geometrisi ve vakur ERP kullanimi.',
     inspiration: 'Medrese yildiz geometrisi, ince kemer cizgileri, zumrut yesili ve kontrollu altin vurgu.',
@@ -146,9 +135,11 @@ const packageJson = {
 }
 
 const figmaTokens = edenThemeToFigma(packageJson)
+packageJson.validation = buildValidationResult(packageJson, figmaTokens)
 
 validateNoEmpty(packageJson)
 validateNoEmpty(figmaTokens)
+assertThemeStrict(packageJson, figmaTokens)
 
 fs.mkdirSync(outputDir, { recursive: true })
 fs.writeFileSync(path.join(outputDir, 'hikmet.eden-theme.json'), `${JSON.stringify(packageJson, null, 2)}\n`)
@@ -310,15 +301,56 @@ function shadows(modeName) {
 }
 
 function components(colors, modeName) {
+  const navActiveResolved = hexToRgba(colors.primary, 0.28)
+  const hoverResolved = hexToRgba(colors.primary, 0.08)
+  const tableHoverResolved = hexToRgba(colors.primary, 0.1)
+  const focusResolved = hexToRgba(colors.ring, 0.28)
   return {
-    shell: { navBg: colors.primary, navText: colors.primaryForeground, navMuted: colors.mutedForeground, navHoverBg: colors.surfaceMuted, navActiveBg: colors.surface, navActiveText: colors.foreground, headerBg: colors.surfaceRaised, headerBorder: colors.border },
+    shell: { navBg: colors.primary, navText: colors.primaryForeground, navMuted: colors.mutedForeground, navHoverBg: colors.surfaceMuted, navActiveBg: navActiveResolved, navActiveText: colors.foreground, headerBg: colors.surfaceRaised, headerBorder: colors.border },
     sidebar: { background: colors.primary, foreground: colors.primaryForeground, muted: colors.mutedForeground, hover: colors.surfaceMuted, activeBackground: colors.surface, activeForeground: colors.foreground },
     topbar: { background: colors.surfaceRaised, foreground: colors.foreground, border: colors.border },
-    pageBanner: { background: colors.primary, foreground: colors.primaryForeground, muted: colors.secondaryForeground, accent: colors.accent, border: colors.borderStrong, shadow: shadows(modeName).shadowBanner, radius: '18px', illustrationAssetId: `hikmet-${modeName}-page-banner`, overlay: colors.background, contentPlacement: 'left', actionPlacement: 'right' },
-    smartList: { containerBg: colors.surfaceMuted, headerSurface: colors.surface, toolbarSurface: colors.surfaceRaised, decorativeBackground: colors.muted, watermarkAssetId: `hikmet-${modeName}-smart-list-watermark`, watermarkOpacity: '0.14', topStripDecoration: colors.accent, panelBorder: colors.border, rowSeparator: colors.border, rowHover: colors.muted, rowSelected: colors.surfaceRaised, emptyStateAssetId: `hikmet-${modeName}-empty-state`, filterSurface: colors.surface, searchInputBg: colors.input, paginationSurface: colors.surface },
+    pageBanner: {
+      background: colors.primary,
+      foreground: colors.primaryForeground,
+      muted: colors.secondaryForeground,
+      accent: colors.accent,
+      border: colors.borderStrong,
+      shadow: shadows(modeName).shadowBanner,
+      radius: '18px',
+      illustrationAssetId: `hikmet-${modeName}-page-banner`,
+      overlay: { enabled: true, color: colors.background, opacity: modeName === 'light' ? 0.1 : 0.16 },
+      contentPlacement: 'left',
+      actionPlacement: 'right',
+      pageBannerBg: colors.primary,
+      pageBannerText: colors.primaryForeground,
+      pageBannerMuted: colors.secondaryForeground,
+      pageBannerAccent: colors.accent,
+      pageBannerBorder: colors.borderStrong,
+      pageBannerShadow: shadows(modeName).shadowBanner,
+    },
+    smartList: {
+      containerBg: colors.surfaceMuted,
+      headerSurface: colors.surface,
+      toolbarSurface: colors.surfaceRaised,
+      decorativeBackground: colors.muted,
+      watermarkAssetId: `hikmet-${modeName}-smart-list-watermark`,
+      watermarkOpacity: modeName === 'light' ? 0.14 : 0.12,
+      emptyStateAssetId: `hikmet-${modeName}-empty-state`,
+      topStripDecoration: colors.accent,
+      panelBorder: colors.border,
+      rowSeparator: colors.border,
+      rowHover: tableHoverResolved,
+      rowSelected: colors.surfaceRaised,
+      filterSurface: colors.surface,
+      searchInputBg: colors.input,
+      paginationSurface: colors.surface,
+      listHeaderSurface: colors.surface,
+      listPanelBorder: colors.border,
+      listHoverVisualEffect: hoverResolved,
+    },
     cards: { cardBg: colors.card, cardBorder: colors.border, cardShadow: shadows(modeName).shadowCard, cardHoverBg: colors.surfaceRaised },
     forms: { inputBg: colors.input, inputForeground: colors.inputForeground, inputBorder: colors.border, inputFocus: colors.ring, inputPlaceholder: colors.mutedForeground, inputDisabledBg: colors.muted, labelText: colors.foreground, helperText: colors.mutedForeground, errorText: colors.danger, fieldHeight: '44px', fieldRadius: '10px' },
-    tables: { tableHeaderBg: colors.surfaceMuted, tableHeaderText: colors.foreground, tableBorder: colors.border, tableRowHover: colors.muted, tableRowSelected: colors.surfaceRaised },
+    tables: { tableHeaderBg: colors.surfaceMuted, tableHeaderText: colors.foreground, tableBorder: colors.border, tableRowHover: tableHoverResolved, tableRowSelected: colors.surfaceRaised },
     badges: { neutralBg: colors.muted, neutralText: colors.foreground, neutralBorder: colors.border, successBg: colors.success, successText: colors.successForeground, successBorder: colors.success, warningBg: colors.warning, warningText: colors.warningForeground, warningBorder: colors.warning, dangerBg: colors.danger, dangerText: colors.dangerForeground, dangerBorder: colors.danger, infoBg: colors.info, infoText: colors.infoForeground, infoBorder: colors.info },
     wizard: { wizardBg: colors.background, panelBg: colors.surface, panelBorder: colors.border, stepBg: colors.muted, stepText: colors.foreground, stepActiveBg: colors.primary, stepActiveText: colors.primaryForeground, stepCompleteBg: colors.success, stepCompleteText: colors.successForeground, stepLine: colors.border, summaryBg: colors.surfaceRaised, sidebarBg: colors.surfaceMuted, sidebarBorder: colors.border, illustrationAssetId: `hikmet-${modeName}-wizard` },
     tabs: { background: colors.surfaceMuted, foreground: colors.mutedForeground, activeBackground: colors.surface, activeForeground: colors.primary, border: colors.border },
@@ -327,7 +359,7 @@ function components(colors, modeName) {
     buttons: { primaryBg: colors.primary, primaryText: colors.primaryForeground, primaryHover: colors.secondary, secondaryBg: colors.surfaceMuted, secondaryText: colors.foreground, dangerBg: colors.danger, dangerText: colors.dangerForeground },
     alerts: { alertBg: colors.surfaceMuted, alertBorder: colors.borderStrong, alertText: colors.foreground },
     toast: { toastBg: colors.surfaceRaised, toastBorder: colors.border, toastText: colors.foreground },
-    interaction: { focusRing: colors.ring, hoverOverlay: colors.muted, selectedOverlay: colors.surfaceRaised },
+    interaction: { focusRing: focusResolved, hoverOverlay: colors.muted, selectedOverlay: colors.surfaceRaised },
   }
 }
 
@@ -347,6 +379,12 @@ function states(colors, modeName) {
 }
 
 function cssVariables(modeName, colors) {
+  const navActive = colorMix(colors.primary, 28)
+  const smartListHover = colorMix(colors.primary, 8)
+  const tableRowHover = colorMix(colors.primary, 10)
+  const focusRing = colorMix(colors.ring, 28)
+  const shadowFocus = `0 0 0 3px ${colorMix(colors.ring, 24)}`
+  const shadowFocusResolved = `0 0 0 3px ${hexToRgba(colors.ring, 0.24)}`
   return {
     '--eden-color-background': colors.background,
     '--eden-color-foreground': colors.foreground,
@@ -367,6 +405,8 @@ function cssVariables(modeName, colors) {
     '--eden-color-info': colors.info,
     '--eden-sidebar-bg': colors.primary,
     '--eden-sidebar-text': colors.primaryForeground,
+    '--eden-nav-active-bg': navActive,
+    '--eden-nav-active-bg-resolved': hexToRgba(colors.primary, 0.28),
     '--eden-topbar-bg': colors.surfaceRaised,
     '--eden-topbar-border': colors.border,
     '--eden-page-banner-bg': colors.primary,
@@ -380,19 +420,27 @@ function cssVariables(modeName, colors) {
     '--eden-smart-list-toolbar-bg': colors.surfaceRaised,
     '--eden-smart-list-border': colors.border,
     '--eden-smart-list-row-hover': colors.muted,
+    '--eden-smart-list-hover': smartListHover,
+    '--eden-smart-list-hover-resolved': hexToRgba(colors.primary, 0.08),
     '--eden-smart-list-watermark-asset': `url("${assetRoot}/${modeName}/smart-list-watermark.svg")`,
+    '--eden-table-row-hover': tableRowHover,
+    '--eden-table-row-hover-resolved': hexToRgba(colors.primary, 0.1),
     '--eden-card-bg': colors.card,
     '--eden-card-border': colors.border,
     '--eden-card-shadow': shadows(modeName).shadowCard,
     '--eden-input-bg': colors.input,
     '--eden-input-border': colors.border,
     '--eden-input-focus': colors.ring,
+    '--eden-focus-ring': focusRing,
+    '--eden-focus-ring-resolved': hexToRgba(colors.ring, 0.28),
     '--eden-radius-card': '12px',
     '--eden-radius-button': '10px',
     '--eden-radius-input': '10px',
     '--eden-radius-banner': '18px',
     '--eden-shadow-card': shadows(modeName).shadowCard,
     '--eden-shadow-floating': shadows(modeName).shadowFloating,
+    '--eden-shadow-focus': shadowFocus,
+    '--eden-shadow-focus-resolved': shadowFocusResolved,
   }
 }
 
@@ -427,7 +475,7 @@ function tokenStudio(value) {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return { value, type: inferType(value) }
   }
-  if (Array.isArray(value)) return { value: value.join(', '), type: 'other' }
+  if (Array.isArray(value)) return { value, type: 'other' }
   return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, tokenStudio(child)]))
 }
 
@@ -471,6 +519,178 @@ function validateNoEmpty(value, pathName = 'root') {
     if (allowedEmptyArrays.includes(key) && Array.isArray(child) && child.length === 0) continue
     validateNoEmpty(child, `${pathName}.${key}`)
   }
+}
+
+function buildValidationResult(theme, figma) {
+  const assetWarnings = assetValidationWarnings(theme)
+  const cssWarnings = cssVariableWarnings(theme)
+  const figmaWarnings = figmaValidationWarnings(figma)
+  const contractWarnings = componentContractWarnings(theme)
+  const backgroundWarnings = backgroundValidationWarnings(theme)
+  const warnings = [
+    ...assetWarnings,
+    ...cssWarnings,
+    ...figmaWarnings,
+    ...contractWarnings,
+    ...backgroundWarnings,
+  ]
+  return {
+    schemaValid: true,
+    requiredFieldsComplete: contractWarnings.length === 0 && backgroundWarnings.length === 0,
+    assetRefsResolved: assetWarnings.length === 0,
+    cssVariablesComplete: cssWarnings.length === 0,
+    figmaExportReady: figmaWarnings.length === 0,
+    contrastWarnings: [],
+    assetWarnings,
+    unusedAssets: unusedAssetIds(theme),
+    notes: warnings,
+  }
+}
+
+function assertThemeStrict(theme, figma) {
+  const validation = buildValidationResult(theme, figma)
+  const allWarnings = [
+    ...validation.assetWarnings,
+    ...validation.unusedAssets.map((assetId) => `Unused asset: ${assetId}`),
+    ...validation.notes,
+  ]
+  if (allWarnings.length) throw new Error(`Hikmet strict validation failed:\n${allWarnings.join('\n')}`)
+}
+
+function componentContractWarnings(theme) {
+  const warnings = []
+  const pageBannerKeys = ['background', 'foreground', 'muted', 'accent', 'border', 'shadow', 'radius', 'illustrationAssetId', 'overlay', 'contentPlacement', 'actionPlacement']
+  const smartListKeys = ['containerBg', 'headerSurface', 'toolbarSurface', 'decorativeBackground', 'watermarkAssetId', 'watermarkOpacity', 'emptyStateAssetId', 'topStripDecoration', 'panelBorder', 'rowSeparator', 'rowHover', 'rowSelected', 'filterSurface', 'searchInputBg', 'paginationSurface']
+  const wizardKeys = ['wizardBg', 'panelBg', 'panelBorder', 'stepBg', 'stepText', 'stepActiveBg', 'stepActiveText', 'stepCompleteBg', 'stepCompleteText', 'stepLine', 'summaryBg', 'sidebarBg', 'sidebarBorder', 'illustrationAssetId']
+  for (const modeName of ['light', 'dark']) {
+    const componentsForMode = theme.modes[modeName].components
+    for (const key of pageBannerKeys) if (!(key in componentsForMode.pageBanner)) warnings.push(`${modeName}.components.pageBanner.${key} missing`)
+    for (const key of smartListKeys) if (!(key in componentsForMode.smartList)) warnings.push(`${modeName}.components.smartList.${key} missing`)
+    for (const key of wizardKeys) if (!(key in componentsForMode.wizard)) warnings.push(`${modeName}.components.wizard.${key} missing`)
+    if (typeof componentsForMode.pageBanner.overlay.opacity === 'string') warnings.push(`${modeName}.components.pageBanner.overlay.opacity must be number`)
+    if (typeof componentsForMode.smartList.watermarkOpacity === 'string') warnings.push(`${modeName}.components.smartList.watermarkOpacity must be number`)
+  }
+  return warnings
+}
+
+function backgroundValidationWarnings(theme) {
+  const warnings = []
+  for (const modeName of ['light', 'dark']) {
+    for (const [key, backgroundValue] of Object.entries(theme.modes[modeName].background)) {
+      if (backgroundValue.pattern?.enabled && backgroundValue.pattern.motifType === 'none') {
+        warnings.push(`${modeName}.background.${key}.pattern motifType cannot be none when enabled`)
+      }
+      if (backgroundValue.pattern?.enabled && backgroundValue.pattern.motifType !== 'medrese_geometry') {
+        warnings.push(`${modeName}.background.${key}.pattern motifType must be medrese_geometry`)
+      }
+    }
+  }
+  return warnings
+}
+
+function assetValidationWarnings(theme) {
+  const warnings = []
+  const assetIdToSrc = new Map()
+  for (const [modeName, modeValue] of Object.entries(theme.modes)) {
+    for (const [category, illustration] of Object.entries(modeValue.illustrations)) {
+      const registryEntry = theme.assetRegistry[illustration.assetId]
+      if (!registryEntry) {
+        warnings.push(`${modeName}.illustrations.${category} asset id missing from registry: ${illustration.assetId}`)
+        continue
+      }
+      if (registryEntry.src !== illustration.src) {
+        warnings.push(`${illustration.assetId} src mismatch: illustration=${illustration.src} registry=${registryEntry.src}`)
+      }
+      if (assetIdToSrc.has(illustration.assetId) && assetIdToSrc.get(illustration.assetId) !== illustration.src) {
+        warnings.push(`${illustration.assetId} is reused for multiple src values`)
+      }
+      assetIdToSrc.set(illustration.assetId, illustration.src)
+      const filePath = path.join(root, 'public', illustration.src.replace(/^\//, ''))
+      if (!fs.existsSync(filePath)) warnings.push(`${illustration.assetId} file missing: ${illustration.src}`)
+      if (!Array.isArray(illustration.visibleOn)) warnings.push(`${modeName}.illustrations.${category}.visibleOn must be array`)
+    }
+  }
+  for (const [assetId, asset] of Object.entries(theme.assetRegistry)) {
+    const filePath = path.join(root, 'public', asset.src.replace(/^\//, ''))
+    if (!fs.existsSync(filePath)) warnings.push(`${assetId} registry file missing: ${asset.src}`)
+    if (filePath.endsWith('.svg') && fs.existsSync(filePath)) {
+      const svg = fs.readFileSync(filePath, 'utf8')
+      if (/<script\b/i.test(svg)) warnings.push(`${assetId} svg contains script`)
+      if (/<foreignObject\b/i.test(svg)) warnings.push(`${assetId} svg contains foreignObject`)
+      if (/\son[a-z]+\s*=/i.test(svg)) warnings.push(`${assetId} svg contains inline event handler`)
+      if (/(href|xlink:href)=["']https?:/i.test(svg)) warnings.push(`${assetId} svg contains external reference`)
+      if (/base64,/i.test(svg)) warnings.push(`${assetId} svg contains base64 data`)
+    }
+  }
+  return warnings
+}
+
+function unusedAssetIds(theme) {
+  const used = new Set()
+  for (const modeValue of Object.values(theme.modes)) {
+    for (const illustration of Object.values(modeValue.illustrations)) used.add(illustration.assetId)
+  }
+  return Object.keys(theme.assetRegistry).filter((assetId) => !used.has(assetId))
+}
+
+function cssVariableWarnings(theme) {
+  const warnings = []
+  const required = ['--eden-nav-active-bg', '--eden-smart-list-hover', '--eden-table-row-hover', '--eden-focus-ring', '--eden-shadow-focus']
+  for (const modeName of ['light', 'dark']) {
+    const vars = theme.cssVariables[modeName]
+    for (const key of required) {
+      if (!(key in vars)) warnings.push(`${modeName}.cssVariables.${key} missing`)
+      const fallbackKey = `${key}-resolved`
+      if (!(fallbackKey in vars)) warnings.push(`${modeName}.cssVariables.${fallbackKey} missing`)
+    }
+    for (const [key, value] of Object.entries(vars)) {
+      if (typeof value === 'string' && value.includes('color-mix')) {
+        const fallbackKey = `${key}-resolved`
+        const fallback = vars[fallbackKey]
+        if (typeof fallback !== 'string' || !fallback || fallback.includes('color-mix')) {
+          warnings.push(`${modeName}.cssVariables.${key} needs resolved fallback ${fallbackKey}`)
+        }
+      }
+    }
+  }
+  return warnings
+}
+
+function figmaValidationWarnings(figma) {
+  const warnings = []
+  walk(figma, (value, pathName) => {
+    if (typeof value === 'string' && value.includes('color-mix')) warnings.push(`${pathName} contains color-mix`)
+    if (value && typeof value === 'object' && !Array.isArray(value) && 'value' in value) {
+      if (/opacity/i.test(pathName) && typeof value.value === 'string') warnings.push(`${pathName}.value opacity must be number`)
+      if (pathName.endsWith('.visibleOn') && !Array.isArray(value.value)) warnings.push(`${pathName}.value visibleOn must be array`)
+    }
+  })
+  for (const key of ['lifecycle', 'validation', 'assetRegistry', 'cssVariables']) {
+    if (key in figma) warnings.push(`Figma export must not contain ${key}`)
+  }
+  return warnings
+}
+
+function walk(value, visit, pathName = 'root') {
+  visit(value, pathName)
+  if (!value || typeof value !== 'object') return
+  if (Array.isArray(value)) {
+    value.forEach((child, index) => walk(child, visit, `${pathName}.${index}`))
+    return
+  }
+  for (const [key, child] of Object.entries(value)) walk(child, visit, `${pathName}.${key}`)
+}
+
+function colorMix(hex, percentage) {
+  return `color-mix(in srgb, ${hex} ${percentage}%, transparent)`
+}
+
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace('#', '')
+  const r = Number.parseInt(clean.slice(0, 2), 16)
+  const g = Number.parseInt(clean.slice(2, 4), 16)
+  const b = Number.parseInt(clean.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function checksum(value) {
