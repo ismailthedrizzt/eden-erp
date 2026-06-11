@@ -1,5 +1,6 @@
 'use client'
 
+
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   CheckCircle2,
@@ -56,111 +57,43 @@ import {
 } from '@/lib/theme/themeManagement'
 import type { EdenThemePackage, ThemeAppearance, ThemeValidationIssue } from '@/lib/theme/themeSchema'
 import { cn } from '@/lib/utils'
+import { workspaceThemeStatusClass as STATUS_CLASS, workspaceThemeStatusLabels as STATUS_LABELS } from '@/contracts/entities/workspace-theme.contract'
+import { themeManagementPageContract } from '@/contracts/pages/system/themes-management.page.contract'
+import { themeManagementListContract, themeManagementFilters as FILTERS, type ThemeManagementFilter as ThemeFilter } from '@/contracts/lists/system/themes-management.list.contract'
+import {
+  themeBackgroundRows,
+  themeColorFields as COLOR_FIELDS,
+  themeColorGroups,
+  themeComponentSections,
+  themeDocumentSlots as DOCUMENT_SLOTS,
+  themeImageSlots as IMAGE_SLOTS,
+  themeManagementFormContract,
+  themeManagementTabs as TABS,
+  type ThemeManagementTab as ThemeTab,
+} from '@/contracts/forms/system/themes-management.form.contract'
+import { themeImportWizardContract } from '@/contracts/wizards/system/theme-import.wizard.contract'
+import { themeActivationWizardContract } from '@/contracts/wizards/system/theme-activation.wizard.contract'
+import { themeManagementLifecycleContract } from '@/contracts/lifecycle/system/theme-management.lifecycle.contract'
+import { themeManagementApiServiceFunctions } from '@/contracts/api/system/theme-management.api.contract'
 
 type ToastState = { type: ToastType; title?: string; message: string }
-type ThemeTab = 'general' | 'colors' | 'components' | 'background' | 'typography' | 'audit' | 'importExport' | 'preview'
-type ThemeFilter = 'all' | 'active' | 'draft' | 'inactive' | 'invalid'
-
-const STATUS_LABELS: Record<ManagedThemeStatus, string> = {
-  draft: 'Taslak',
-  review: 'Pasif',
-  approved: 'Pasif',
-  inactive: 'Pasif',
-  active: 'Aktif',
-  archived: 'Pasif',
-  rejected: 'Pasif',
-}
-
-const STATUS_CLASS: Record<ManagedThemeStatus, string> = {
-  draft: 'border-slate-200 bg-slate-50 text-slate-700',
-  review: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-  approved: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-  inactive: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-  active: 'border-teal-200 bg-teal-50 text-teal-800',
-  archived: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-  rejected: 'border-zinc-200 bg-zinc-50 text-zinc-700',
-}
-
-const FILTERS: { id: ThemeFilter; label: string }[] = [
-  { id: 'all', label: 'Tumu' },
-  { id: 'active', label: 'Aktif' },
-  { id: 'draft', label: 'Taslak' },
-  { id: 'inactive', label: 'Pasif' },
-  { id: 'invalid', label: 'Hata' },
-]
-
-const TABS: { id: ThemeTab; label: string }[] = [
-  { id: 'general', label: 'Genel Bilgiler' },
-  { id: 'colors', label: 'Renkler' },
-  { id: 'components', label: 'Bilesen Kurallari' },
-  { id: 'background', label: 'Arka Plan / Pattern' },
-  { id: 'typography', label: 'Tipografi ve Olculer' },
-  { id: 'audit', label: 'Durum Gecmisi' },
-  { id: 'importExport', label: 'Export / Import' },
-  { id: 'preview', label: 'Onizleme' },
-]
-
-const IMAGE_SLOTS: ImageSlot[] = [
-  { id: 'light_page_banner', title: 'Light Page Banner', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_page_banner', title: 'Dark Page Banner', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_smart_list_watermark', title: 'Light Smart List Watermark', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_smart_list_watermark', title: 'Dark Smart List Watermark', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_form_hero', title: 'Light Form Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_form_hero', title: 'Dark Form Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_detail_panel', title: 'Light Detail Panel', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_detail_panel', title: 'Dark Detail Panel', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_wizard', title: 'Light Wizard', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_wizard', title: 'Dark Wizard', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_login', title: 'Light Login', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_login', title: 'Dark Login', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_dashboard_hero', title: 'Light Dashboard Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_dashboard_hero', title: 'Dark Dashboard Hero', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'light_empty_state', title: 'Light Empty State', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-  { id: 'dark_empty_state', title: 'Dark Empty State', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 8 },
-]
-
-const DOCUMENT_SLOTS: DocumentSlot[] = [
-  { id: 'designer_note', title: 'Tasarimci Notu', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
-  { id: 'technical_document', title: 'Tema Teknik Dokumani', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
-  { id: 'figma_token_export', title: 'Figma Token Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
-  { id: 'css_variable_export', title: 'CSS Variable Export', acceptedTypes: ['text/css', 'text/plain'], maxSizeMB: 5 },
-  { id: 'theme_json_export', title: 'Tema JSON Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
-  { id: 'validation_report', title: 'Validation Report', acceptedTypes: ['application/pdf', 'application/json', 'text/plain', 'text/markdown'], maxSizeMB: 10 },
-]
-
-const COLOR_FIELDS: { path: string; label: string; helper: string }[] = [
-  { path: 'colors.primary', label: 'Primary', helper: 'Ana aksiyon, aktif moduller' },
-  { path: 'colors.primaryForeground', label: 'Primary Foreground', helper: 'Primary ustu metin' },
-  { path: 'colors.secondary', label: 'Secondary', helper: 'Ikincil vurgular' },
-  { path: 'colors.accent', label: 'Accent', helper: 'Sicak/karakter aksani' },
-  { path: 'colors.background', label: 'Background', helper: 'Sayfa zemini' },
-  { path: 'colors.foreground', label: 'Foreground', helper: 'Ana metin' },
-  { path: 'colors.surface', label: 'Surface', helper: 'Panel yuzeyi' },
-  { path: 'colors.surfaceMuted', label: 'Surface Muted', helper: 'Toolbar/list zeminleri' },
-  { path: 'colors.card', label: 'Card', helper: 'Kart zemini' },
-  { path: 'colors.cardForeground', label: 'Card Text', helper: 'Kart metni' },
-  { path: 'colors.muted', label: 'Muted', helper: 'Pasif yuzey' },
-  { path: 'colors.mutedForeground', label: 'Muted Text', helper: 'Ikincil metin' },
-  { path: 'colors.border', label: 'Border', helper: 'Normal cizgi' },
-  { path: 'colors.borderStrong', label: 'Border Strong', helper: 'Vurgulu cizgi' },
-  { path: 'colors.input', label: 'Input', helper: 'Form alan zemini' },
-  { path: 'colors.inputForeground', label: 'Input Text', helper: 'Form alan metni' },
-  { path: 'colors.ring', label: 'Focus Ring', helper: 'Odak cizgisi' },
-  { path: 'colors.success', label: 'Success', helper: 'Basari durumu' },
-  { path: 'colors.warning', label: 'Warning', helper: 'Uyari durumu' },
-  { path: 'colors.danger', label: 'Danger', helper: 'Hata/tehlike' },
-  { path: 'colors.info', label: 'Info', helper: 'Bilgi durumu' },
-]
 
 export default function DevelopmentThemesPage() {
   const [records, setRecords] = useState<ManagedThemeRecord[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<ThemeTab>('general')
+  const [activeTab, setActiveTab] = useState<ThemeTab>(themeManagementFormContract.tabs[0].id)
   const [filter, setFilter] = useState<ThemeFilter>('all')
   const [search, setSearch] = useState('')
   const [mode, setMode] = useState<ThemeAppearance>('light')
   const [importText, setImportText] = useState('')
   const [toast, setToast] = useState<ToastState | null>(null)
+  const themeContractContext = useMemo(() => ({
+    route: themeManagementPageContract.route,
+    lifecycleTable: themeManagementLifecycleContract.transactionTable,
+    serviceFunctions: themeManagementApiServiceFunctions,
+    importOperation: themeImportWizardContract.lifecycleOperationType,
+    activationOperation: themeActivationWizardContract.lifecycleOperationType,
+  }), [])
 
   useEffect(() => {
     function refresh() {
@@ -185,6 +118,8 @@ export default function DevelopmentThemesPage() {
   const selected = allRecords.find(record => record.id === selectedId) || null
   const listRecords = allRecords.filter(record => filterRecord(record, filter, search))
   const editable = Boolean(selected && selected.source !== 'system' && selected.status !== 'inactive')
+  const canCreateDraftTheme = themeManagementPageContract.allowedActions.includes('create_draft')
+    && themeContractContext.serviceFunctions.includes('createDraftThemeRecord')
 
   function notify(type: ToastType, message: string, title?: string) {
     setToast({ type, message, title })
@@ -206,7 +141,7 @@ export default function DevelopmentThemesPage() {
     upsertManagedThemeRecord(draft)
     setRecords(readManagedThemeRecords())
     setSelectedId(draft.id)
-    setActiveTab('general')
+    setActiveTab(themeManagementFormContract.tabs[0].id)
     notify('success', 'Yeni tema taslak olarak acildi.')
   }
 
@@ -248,7 +183,7 @@ export default function DevelopmentThemesPage() {
     upsertManagedThemeRecord(next)
     setRecords(readManagedThemeRecords())
     setSelectedId(next.id)
-    setActiveTab('general')
+    setActiveTab(themeManagementFormContract.tabs[0].id)
     notify('success', 'Düzenlenebilir V2 kopya olusturuldu.')
   }
 
@@ -362,9 +297,9 @@ export default function DevelopmentThemesPage() {
     upsertManagedThemeRecord(record)
     setRecords(readManagedThemeRecords())
     setSelectedId(record.id)
-    setActiveTab('general')
+    setActiveTab(themeManagementFormContract.tabs[0].id)
     setImportText('')
-    notify('success', 'Tema taslak olarak import edildi.')
+    notify('success', themeImportWizardContract.successMessage)
   }
 
   function exportSelected(format: 'eden' | 'figma' | 'css') {
@@ -480,7 +415,7 @@ export default function DevelopmentThemesPage() {
         title="Temalarımız"
         subtitle="Eden ERP sistem temasını, tasarım tokenlarını ve arayüz görünüm kurallarını yönetin."
         icon={<Palette size={24} />}
-        onAddClick={() => createDraft()}
+        onAddClick={canCreateDraftTheme ? () => createDraft() : undefined}
         addButtonText="Ekle"
       />
 
@@ -517,12 +452,9 @@ export default function DevelopmentThemesPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Tema adi</th>
-                <th className="px-4 py-3 text-left font-semibold">Tema kodu / slug</th>
-                <th className="px-4 py-3 text-left font-semibold">Durum</th>
-                <th className="px-4 py-3 text-left font-semibold">Versiyon</th>
-                <th className="px-4 py-3 text-left font-semibold">Aktif tema mi?</th>
-                <th className="px-4 py-3 text-left font-semibold">Son guncelleme</th>
+                {themeManagementListContract.columns.map(column => (
+                  <th key={column.key} className="px-4 py-3 text-left font-semibold">{column.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -531,7 +463,7 @@ export default function DevelopmentThemesPage() {
                   key={record.id}
                   onClick={() => {
                     setSelectedId(record.id)
-                    setActiveTab('general')
+                    setActiveTab(themeManagementFormContract.tabs[0].id)
                   }}
                   className="cursor-pointer border-t border-[var(--eden-border)] bg-[var(--eden-surface)] transition-colors hover:bg-[var(--eden-table-row-hover)]"
                 >
@@ -553,7 +485,7 @@ export default function DevelopmentThemesPage() {
               ))}
               {!listRecords.length && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--eden-text-muted)]">Tema kaydi bulunamadi.</td>
+                  <td colSpan={themeManagementListContract.columns.length} className="px-4 py-12 text-center text-sm text-[var(--eden-text-muted)]">{themeManagementListContract.emptyState.title}</td>
                 </tr>
               )}
             </tbody>
@@ -581,6 +513,13 @@ function ThemeFormHeader({
   onActivate: () => void
   onDeactivate: () => void
 }) {
+  const canActivate = record.source !== 'system'
+    && (themeActivationWizardContract.allowedSourceStatuses as readonly string[]).includes(record.status)
+    && record.status === 'draft'
+  const canDeactivate = record.source !== 'system'
+    && themeManagementLifecycleContract.operationTypes.includes('workspace_theme.deactivate')
+    && record.status === 'active'
+
   return (
     <EdenFormHeader title={record.displayName} className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface)] px-4 py-3 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -606,12 +545,12 @@ function ThemeFormHeader({
           <button onClick={onSave} className={primaryButtonClass}>
             <Save size={16} /> Kaydet
           </button>
-          {record.source !== 'system' && record.status === 'draft' && (
+          {canActivate && (
             <EdenStatusActionButton onClick={onActivate}>
               <CheckCircle2 size={16} /> Aktifleştir
             </EdenStatusActionButton>
           )}
-          {record.source !== 'system' && record.status === 'active' && (
+          {canDeactivate && (
             <EdenStatusActionButton onClick={onDeactivate} variant="secondary">Pasife Al</EdenStatusActionButton>
           )}
           {record.source === 'system' && (
@@ -667,14 +606,14 @@ function GeneralTab({
 }
 
 function ColorsTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  const groups = [
-    { id: 'core', label: 'Core', fields: COLOR_FIELDS.slice(0, 4) },
-    { id: 'surface', label: 'Surface', fields: COLOR_FIELDS.slice(4, 11) },
-    { id: 'text', label: 'Text', fields: COLOR_FIELDS.slice(11, 12).concat(COLOR_FIELDS.slice(5, 6), COLOR_FIELDS.slice(9, 12)) },
-    { id: 'border', label: 'Border', fields: COLOR_FIELDS.slice(12, 16) },
-    { id: 'semantic', label: 'Semantic', fields: COLOR_FIELDS.slice(17, 21) },
-    { id: 'interaction', label: 'Interaction', fields: COLOR_FIELDS.slice(16, 17).concat(COLOR_FIELDS.slice(0, 3)) },
-  ]
+  const fieldByPath = new Map(COLOR_FIELDS.map(field => [field.path, field]))
+  const groups = themeColorGroups.map(group => ({
+    id: group.id,
+    label: group.label,
+    fields: group.fieldPaths
+      .map(path => fieldByPath.get(path))
+      .filter((field): field is (typeof COLOR_FIELDS)[number] => Boolean(field)),
+  }))
   const [activeGroup, setActiveGroup] = useState(groups[0].id)
   const group = groups.find(item => item.id === activeGroup) || groups[0]
 
@@ -730,22 +669,9 @@ function ColorsTab({ record, mode, editable, patchMode }: ModeTabProps) {
 }
 
 function BackgroundTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  const rows = [
-    ['background.app.color', 'App background'],
-    ['background.page.color', 'Page background'],
-    ['background.pageBanner.color', 'Page Banner background'],
-    ['background.smartList.color', 'Smart List background'],
-    ['background.login.color', 'Login background'],
-    ['background.dashboard.color', 'Dashboard background'],
-    ['motif.type', 'Motif type'],
-    ['motif.opacity', 'Pattern opacity'],
-    ['motif.size', 'Pattern size'],
-    ['motif.spacing', 'Pattern spacing'],
-    ['background.pageBanner.overlayOpacity', 'Overlay'],
-  ] as const
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <CompactPathTable rows={rows} source={record.package.modes[mode]} editable={editable} onChange={patchMode} />
+      <CompactPathTable rows={themeBackgroundRows} source={record.package.modes[mode]} editable={editable} onChange={patchMode} />
       <div className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] p-4">
         <h3 className="mb-3 text-sm font-semibold text-[var(--eden-text)]">Arka plan preview</h3>
         <div
@@ -760,21 +686,9 @@ function BackgroundTab({ record, mode, editable, patchMode }: ModeTabProps) {
 }
 
 function ComponentsTab({ record, mode, editable, patchMode }: ModeTabProps) {
-  const sections = [
-    { title: 'Shell / Sidebar / Topbar', groups: ['shell'] },
-    { title: 'Page Banner', groups: ['pageBanner'] },
-    { title: 'Smart List', groups: ['smartList'] },
-    { title: 'Form', groups: ['forms'] },
-    { title: 'Table', groups: ['tables'] },
-    { title: 'Button', groups: ['buttons'] },
-    { title: 'Badge', groups: ['badges'] },
-    { title: 'Wizard', groups: ['wizard'] },
-    { title: 'Modal / Drawer', groups: ['modal', 'drawer'] },
-    { title: 'Toast / Alert', groups: ['toast', 'alerts'] },
-  ]
   return (
     <div className="space-y-3">
-      {sections.map(section => (
+      {themeComponentSections.map(section => (
         <details key={section.title} className="rounded-lg border border-[var(--eden-border)] bg-[var(--eden-surface-raised)]" open={section.title === 'Page Banner'}>
           <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--eden-text)]">{section.title}</summary>
           <div className="border-t border-[var(--eden-border)] p-3">

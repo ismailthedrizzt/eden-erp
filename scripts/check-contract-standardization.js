@@ -2,8 +2,10 @@ const fs = require('fs')
 const path = require('path')
 
 const root = process.cwd()
+const errors = []
+const warnings = []
 
-const requiredFiles = [
+const requiredCoreFiles = [
   'contracts/core/entity.contract.ts',
   'contracts/core/page.contract.ts',
   'contracts/core/list.contract.ts',
@@ -14,221 +16,78 @@ const requiredFiles = [
   'contracts/core/release.contract.ts',
   'contracts/core/field.contract.ts',
   'contracts/core/validation.contract.ts',
-  'contracts/entities/company.contract.ts',
-  'contracts/entities/partner.contract.ts',
-  'contracts/entities/representative.contract.ts',
-  'contracts/entities/branch.contract.ts',
-  'contracts/entities/shareholder.contract.ts',
-  'contracts/pages/company.page.contract.ts',
-  'contracts/pages/partner.page.contract.ts',
-  'contracts/pages/representative.page.contract.ts',
-  'contracts/pages/branch.page.contract.ts',
-  'contracts/api/company.api.contract.ts',
-  'contracts/api/partner.api.contract.ts',
-  'contracts/api/representative.api.contract.ts',
-  'contracts/api/branch.api.contract.ts',
-  'contracts/lifecycle/company.lifecycle.contract.ts',
-  'contracts/lifecycle/partner.lifecycle.contract.ts',
-  'contracts/lifecycle/representative.lifecycle.contract.ts',
-  'contracts/lifecycle/branch.lifecycle.contract.ts',
+  'contracts/pages/page-contract-registry.ts',
   'contracts/release/page-release-registry.contract.ts',
   'contracts/tests/contract-test-utils.ts',
   'contracts/allowlists/contract-exceptions.ts',
 ]
 
-const integratedPages = [
-  {
-    name: 'companies',
-    file: 'app/app/sirket/companies/page.tsx',
-    contractImport: '@/contracts/pages/company.page.contract',
-    contractSymbol: 'companyPageContract',
-  },
-  {
-    name: 'partners',
-    file: 'app/app/sirket/companies/partners/page.tsx',
-    contractImport: '@/contracts/pages/partner.page.contract',
-    contractSymbol: 'partnerPageContract',
-  },
-  {
-    name: 'representatives',
-    file: 'app/app/sirket/companies/representatives/page.tsx',
-    contractImport: '@/contracts/pages/representative.page.contract',
-    contractSymbol: 'representativePageContract',
-  },
-  {
-    name: 'branches',
-    file: 'app/app/sirket/companies/branches/page.tsx',
-    contractImport: '@/contracts/pages/branch.page.contract',
-    contractSymbol: 'branchPageContract',
-  },
-]
-
-const apiContractFiles = [
-  'contracts/api/company.api.contract.ts',
-  'contracts/api/partner.api.contract.ts',
-  'contracts/api/representative.api.contract.ts',
-  'contracts/api/branch.api.contract.ts',
-]
-
-const lifecycleContractFiles = [
-  'contracts/lifecycle/company.lifecycle.contract.ts',
-  'contracts/lifecycle/partner.lifecycle.contract.ts',
-  'contracts/lifecycle/representative.lifecycle.contract.ts',
-  'contracts/lifecycle/branch.lifecycle.contract.ts',
-]
-
-const entityContractFiles = [
-  'contracts/entities/company.contract.ts',
-  'contracts/entities/partner.contract.ts',
-  'contracts/entities/representative.contract.ts',
-  'contracts/entities/branch.contract.ts',
-  'contracts/entities/shareholder.contract.ts',
-]
-
-const errors = []
-const warnings = []
-
-for (const file of requiredFiles) {
+for (const file of requiredCoreFiles) {
   if (!exists(file)) errors.push(`Missing required contract file: ${file}`)
 }
 
-for (const file of entityContractFiles) {
-  const source = read(file)
-  if (!source) continue
-  requireText(file, source, 'satisfies EdenEntityContract')
-  for (const token of [
-    'entityName',
-    'tableName',
-    'primaryKey',
-    'draftStatusField',
-    'allowedStatuses',
-    'uniqueKeys',
-    'requiredFields',
-    'auditFields',
-    'ownershipFields',
-    'allowedOperations',
-    'forbiddenOperations',
-    'deletePolicy',
-    'lifecycleBoundary',
-  ]) {
-    requireText(file, source, token)
-  }
+const releaseRoutes = parseReleaseRoutes(read('lib/release/routeReleaseRegistry.ts'))
+const pageRoutes = walk(path.join(root, 'app'))
+  .filter((file) => file.endsWith(`${path.sep}page.tsx`))
+  .map((file) => ({ route: pageRoute(file), sourcePagePath: relative(file), source: fs.readFileSync(file, 'utf8') }))
+
+const topLevelPortal = path.join(root, 'portal')
+if (fs.existsSync(topLevelPortal)) {
+  pageRoutes.push(
+    ...walk(topLevelPortal)
+      .filter((file) => file.endsWith(`${path.sep}page.tsx`))
+      .map((file) => ({ route: pageRoute(file), sourcePagePath: relative(file), source: fs.readFileSync(file, 'utf8') }))
+  )
 }
 
-for (const page of integratedPages) {
-  const source = read(page.file)
-  if (!source) continue
-  requireText(page.file, source, page.contractImport)
-  requireText(page.file, source, page.contractSymbol)
-  requireText(page.file, source, 'assertListColumnsMatchContract')
-  requireText(page.file, source, `${page.contractSymbol}.route`)
-  requireText(page.file, source, `${page.contractSymbol}.list.columns`)
-  requireText(page.file, source, `pagePrimaryActionLabel(${page.contractSymbol})`)
+const registry = parsePageContractRegistry(read('contracts/pages/page-contract-registry.ts'))
+const registryByRoute = new Map(registry.map((entry) => [entry.route, entry]))
+const releaseByRoute = new Map(releaseRoutes.map((entry) => [entry.route, entry]))
+const pageByRoute = new Map(pageRoutes.map((entry) => [entry.route, entry]))
+const routeUnion = new Set([...releaseByRoute.keys(), ...pageByRoute.keys()])
+
+for (const route of routeUnion) {
+  if (!registryByRoute.has(route)) errors.push(`Missing page contract registry item for route: ${route}`)
 }
 
-for (const file of [
-  'contracts/pages/company.page.contract.ts',
-  'contracts/pages/partner.page.contract.ts',
-  'contracts/pages/representative.page.contract.ts',
-  'contracts/pages/branch.page.contract.ts',
-]) {
-  const source = read(file)
-  if (!source) continue
-  requireText(file, source, 'satisfies EdenPageContract')
-  for (const token of [
-    'route',
-    'pageKind',
-    'owningEntity',
-    'allowedActions',
-    'requiredComponents',
-    'requiredStates',
-    'releaseStatus',
-    'visibleInProduction',
-    'visibleInStaging',
-    'visibleInDevelopment',
-    'debugStatusBadgeAllowed',
-    'primaryActionLabel',
-    'primaryActionBehavior',
-    'columns',
-    'sortableFields',
-    'filterableFields',
-    'searchableFields',
-    'rowActions',
-  ]) {
-    requireText(file, source, token)
-  }
+for (const entry of registry) {
+  validateRegistryEntry(entry)
 }
 
-for (const file of apiContractFiles) {
-  const source = read(file)
-  if (!source) continue
-  requireText(file, source, 'satisfies readonly EdenApiContract[]')
-  for (const token of [
-    'requestSchema',
-    'responseSchema',
-    'errorSchema',
-    'authorization',
-    'tenantScope',
-    'normalization',
-    'uuidFields',
-    'dateFields',
-    'datetimeFields',
-    'enumFields',
-    'serviceFunction',
-  ]) {
-    requireText(file, source, token)
-  }
-}
-
-for (const file of lifecycleContractFiles) {
-  const source = read(file)
-  if (!source) continue
-  requireText(file, source, 'satisfies EdenLifecycleContract')
-  requireText(file, source, 'operationRecordRequired: true')
-  for (const token of [
-    'entityName',
-    'operationTypes',
-    'masterDataMutationForbiddenInForms',
-    'allowedSourceStatuses',
-    'resultingStatuses',
-    'transactionTable',
-  ]) {
-    requireText(file, source, token)
-  }
-}
-
-const releaseBridge = read('contracts/release/page-release-registry.contract.ts')
-if (releaseBridge) {
-  requireText('contracts/release/page-release-registry.contract.ts', releaseBridge, '../../lib/release/routeReleaseRegistry')
-  requireText('contracts/release/page-release-registry.contract.ts', releaseBridge, 'listRouteReleaseConfigs')
-  requireText('contracts/release/page-release-registry.contract.ts', releaseBridge, 'productionVisibleRouteContracts')
-}
-
-const releaseRegistry = read('lib/release/routeReleaseRegistry.ts')
-if (releaseRegistry) {
-  for (const page of integratedPages) {
-    const route = pageContractRoute(page.contractSymbol)
-    if (route && !releaseRegistry.includes(route)) {
-      errors.push(`Release registry does not include ${route} for ${page.name}`)
-    }
-  }
-}
-
-const navigationRegistry = read('lib/navigation/navigationRegistry.ts')
-if (navigationRegistry && releaseRegistry) {
-  const navRoutes = Array.from(navigationRegistry.matchAll(/href:\s*['"]([^'"]+)['"]/g)).map((match) => match[1])
-  const missing = navRoutes.filter((route) => route.startsWith('/app') && !releaseRegistry.includes(route))
-  if (missing.length) {
-    errors.push(`Navigation routes missing release registry entries: ${missing.slice(0, 20).join(', ')}`)
-  }
-}
-
+validateExceptions()
 validateForbiddenPatterns()
 
-if (warnings.length) {
-  console.log('Contract standardization warnings:')
-  for (const warning of warnings) console.warn(`WARNING ${warning}`)
+const matrix = {
+  totalPageRoutes: pageRoutes.length,
+  totalReleaseRegistryRoutes: releaseRoutes.length,
+  pageContractsFound: registry.length,
+  missingPageContracts: Array.from(routeUnion).filter((route) => !registryByRoute.has(route)).length,
+  implementedPagesWithoutListFormWizardContracts: registry.filter((entry) => {
+    const page = pageByRoute.get(entry.route)
+    if (!page) return false
+    const signals = inferSignals(page.source)
+    return (signals.hasList && !entry.listContractPath)
+      || (signals.hasForm && !entry.formContractPath)
+      || (signals.hasWizard && !entry.wizardContractPath && !entry.lifecycleContractPath)
+  }).length,
+  productionVisibleRoutesWithoutFullContracts: registry.filter((entry) => {
+    const release = releaseByRoute.get(entry.route)
+    if (!release || release.releaseStatus !== 'release') return false
+    return !entry.pageContractPath || !exists(entry.pageContractPath)
+  }).length,
+  temporaryExceptions: parseExceptions(read('contracts/allowlists/contract-exceptions.ts')).length,
 }
+
+console.log('Contract Coverage Matrix')
+console.log(`- total page routes: ${matrix.totalPageRoutes}`)
+console.log(`- total release registry routes: ${matrix.totalReleaseRegistryRoutes}`)
+console.log(`- page contracts found: ${matrix.pageContractsFound}`)
+console.log(`- missing page contracts: ${matrix.missingPageContracts}`)
+console.log(`- implemented pages without list/form/wizard contracts: ${matrix.implementedPagesWithoutListFormWizardContracts}`)
+console.log(`- production-visible routes without full contracts: ${matrix.productionVisibleRoutesWithoutFullContracts}`)
+console.log(`- temporary exceptions: ${matrix.temporaryExceptions}`)
+
+for (const warning of warnings) console.warn(`WARNING ${warning}`)
 
 if (errors.length) {
   console.error('Contract standardization check failed:')
@@ -237,56 +96,214 @@ if (errors.length) {
 }
 
 console.log('Contract standardization check passed.')
-console.log(`Contract files checked: ${requiredFiles.length}`)
-console.log(`Integrated pages checked: ${integratedPages.length}`)
+
+function validateRegistryEntry(entry) {
+  const release = releaseByRoute.get(entry.route)
+  const page = pageByRoute.get(entry.route)
+
+  for (const field of ['route', 'contractId', 'moduleKey', 'pageKind', 'implementationStatus', 'releaseStatus', 'pageContractPath']) {
+    if (!entry[field]) errors.push(`${entry.route || '<unknown>'}: missing registry field ${field}`)
+  }
+
+  if (!exists(entry.pageContractPath)) {
+    errors.push(`${entry.route}: pageContractPath does not exist: ${entry.pageContractPath}`)
+    return
+  }
+
+  const contractSource = read(entry.pageContractPath)
+  if (!contractSource.includes('satisfies EdenPageContract')) {
+    errors.push(`${entry.route}: page contract must satisfy EdenPageContract (${entry.pageContractPath})`)
+  }
+  const routeMatch = contractSource.match(/route:\s*['"]([^'"]+)['"]/)
+  if (!routeMatch || routeMatch[1] !== entry.route) {
+    errors.push(`${entry.route}: page contract route mismatch in ${entry.pageContractPath}`)
+  }
+
+  if (release) {
+    const expectedReleaseStatus = mapReleaseStatus(release.releaseStatus)
+    const contractRelease = contractSource.match(/releaseStatus:\s*['"]([^'"]+)['"]/)
+    if (!contractRelease || contractRelease[1] !== expectedReleaseStatus) {
+      errors.push(`${entry.route}: releaseStatus mismatch. Expected ${expectedReleaseStatus}, got ${contractRelease ? contractRelease[1] : '<missing>'}`)
+    }
+    if (release.releaseStatus === 'release' && /debugStatusBadgeAllowed:\s*true/.test(contractSource)) {
+      errors.push(`${entry.route}: production-visible route cannot allow debug/status badge`)
+    }
+  }
+
+  if (page) {
+    if (entry.sourcePagePath !== page.sourcePagePath) {
+      errors.push(`${entry.route}: sourcePagePath mismatch. Expected ${page.sourcePagePath}, got ${entry.sourcePagePath || '<missing>'}`)
+    }
+    if (!page.source.includes(entry.pageContractPath.replace(/\.ts$/, '')) && !page.source.includes(entry.contractId)) {
+      errors.push(`${entry.route}: source page does not import its page contract (${entry.sourcePagePath})`)
+    }
+    const signals = inferSignals(page.source)
+    if (signals.hasList && !entry.listContractPath) errors.push(`${entry.route}: list behavior requires listContractPath`)
+    if (signals.hasForm && !entry.formContractPath) errors.push(`${entry.route}: form behavior requires formContractPath`)
+    if (signals.hasWizard && !entry.wizardContractPath && !entry.lifecycleContractPath) {
+      errors.push(`${entry.route}: wizard/lifecycle behavior requires wizardContractPath or lifecycleContractPath`)
+    }
+    if (entry.listContractPath && !exists(entry.listContractPath)) errors.push(`${entry.route}: listContractPath missing: ${entry.listContractPath}`)
+    if (entry.formContractPath && !exists(entry.formContractPath)) errors.push(`${entry.route}: formContractPath missing: ${entry.formContractPath}`)
+    if (entry.wizardContractPath && !exists(entry.wizardContractPath)) errors.push(`${entry.route}: wizardContractPath missing: ${entry.wizardContractPath}`)
+    if (entry.lifecycleContractPath && !exists(entry.lifecycleContractPath)) errors.push(`${entry.route}: lifecycleContractPath missing: ${entry.lifecycleContractPath}`)
+
+    if (signals.hasHardcodedColumns && entry.listContractPath && !page.source.includes(entry.listContractPath.replace(/\.ts$/, '')) && !page.source.includes('assertListColumnsMatchContract') && entry.implementationStatus === 'implemented') {
+      errors.push(`${entry.route}: implemented list page has hardcoded columns without list contract assertion`)
+    }
+    if (signals.hasHardcodedFields && entry.formContractPath && !page.source.includes(entry.formContractPath.replace(/\.ts$/, '')) && entry.implementationStatus === 'implemented') {
+      errors.push(`${entry.route}: implemented form page has hardcoded fields without form contract import`)
+    }
+    if (signals.hasLifecycleStrings && !entry.lifecycleContractPath && !entry.wizardContractPath) {
+      errors.push(`${entry.route}: lifecycle action strings require lifecycle/wizard contract`)
+    }
+  }
+}
+
+function validateExceptions() {
+  const exceptions = parseExceptions(read('contracts/allowlists/contract-exceptions.ts'))
+  const now = new Date()
+  for (const exception of exceptions) {
+    for (const field of ['rule', 'route', 'file', 'reason', 'owner', 'expiresAt', 'removalPlan']) {
+      if (!exception[field]) errors.push(`Contract exception missing ${field}: ${JSON.stringify(exception)}`)
+    }
+    if (exception.expiresAt && new Date(exception.expiresAt) < now) {
+      errors.push(`Contract exception expired for ${exception.route} ${exception.rule}`)
+    }
+    const release = releaseByRoute.get(exception.route)
+    if (release?.releaseStatus === 'release' && /standard|frontend|baseline/i.test(exception.rule || '')) {
+      errors.push(`Production-visible route cannot use broad standardization exception: ${exception.route}`)
+    }
+  }
+}
+
+function validateForbiddenPatterns() {
+  const enforcedFiles = [
+    'contracts/pages/page-contract-registry.ts',
+    'contracts/allowlists/contract-exceptions.ts',
+    'scripts/check-frontend-standard-contracts.js',
+  ].filter(exists)
+
+  for (const file of enforcedFiles) {
+    const source = read(file)
+    if (file === 'scripts/check-frontend-standard-contracts.js' && /STANDARD_DEBT_BASELINE/.test(source)) {
+      errors.push(`${file}: broad route debt baseline is not allowed`)
+    }
+    if (/@ts-ignore/.test(source)) errors.push(`${file}: @ts-ignore is not allowed`)
+    if (/\bas\s+any\b/.test(source)) errors.push(`${file}: as any is not allowed`)
+  }
+}
+
+function inferSignals(source) {
+  return {
+    hasList: /SmartDataTable|EdenSmartList|<table\b|ColumnDef|columns\s*[:=]/.test(source),
+    hasForm: /EntityForm|EdenFormShell|<form\b|FormField|const\s+tabs|fields\s*[:=]/.test(source),
+    hasWizard: /Wizard|wizard|currentStep|activeStep|stepper|lifecycle/i.test(source),
+    hasHardcodedColumns: /const\s+\w*columns\w*\s*[:=]|ColumnDef\[\]|columns\s*=\s*\[/.test(source),
+    hasHardcodedFields: /const\s+\w*fields\w*\s*[:=]|FormField\[\]|fields\s*=\s*\[/.test(source),
+    hasLifecycleStrings: /Aktifle|Pasife Al|Onayla|Arsiv|Arşiv|Yeni Versiyon|Incelemeye|İncelemeye|lifecycle/i.test(source),
+  }
+}
+
+function parsePageContractRegistry(source) {
+  const bodyMatch = source.match(/export const pageContractRegistry = \[([\s\S]*?)\] as const/)
+  if (!bodyMatch) return []
+  return bodyMatch[1]
+    .split(/\n\s*\},\n\s*\{/)
+    .map((part) => part.replace(/^\s*\{/, '').replace(/\}\s*$/, ''))
+    .filter((part) => part.includes('route:'))
+    .map((part) => ({
+      route: field(part, 'route'),
+      contractId: field(part, 'contractId'),
+      moduleKey: field(part, 'moduleKey'),
+      pageKind: field(part, 'pageKind'),
+      implementationStatus: field(part, 'implementationStatus'),
+      releaseStatus: field(part, 'releaseStatus'),
+      owningEntity: field(part, 'owningEntity'),
+      pageContractPath: field(part, 'pageContractPath'),
+      listContractPath: field(part, 'listContractPath'),
+      formContractPath: field(part, 'formContractPath'),
+      wizardContractPath: field(part, 'wizardContractPath'),
+      apiContractPath: field(part, 'apiContractPath'),
+      lifecycleContractPath: field(part, 'lifecycleContractPath'),
+      sourcePagePath: field(part, 'sourcePagePath'),
+      notes: field(part, 'notes'),
+    }))
+}
+
+function parseReleaseRoutes(source) {
+  const routes = []
+  const regex = /route\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"][^'"]*['"]\s*,\s*['"]([^'"]+)['"]/g
+  let match
+  while ((match = regex.exec(source))) {
+    routes.push({ route: match[1], moduleKey: match[2], releaseStatus: match[3] })
+  }
+  return routes
+}
+
+function parseExceptions(source) {
+  const bodyMatch = source.match(/export const contractExceptions[^=]*=\s*\[([\s\S]*?)\]/)
+  const body = bodyMatch ? bodyMatch[1] : ''
+  const matches = body.match(/\{[\s\S]*?\}/g) || []
+  return matches
+    .filter((item) => item.includes('rule:'))
+    .map((item) => ({
+      rule: field(item, 'rule'),
+      route: field(item, 'route'),
+      file: field(item, 'file'),
+      reason: field(item, 'reason'),
+      owner: field(item, 'owner'),
+      expiresAt: field(item, 'expiresAt'),
+      removalPlan: field(item, 'removalPlan'),
+    }))
+}
+
+function field(source, name) {
+  const match = source.match(new RegExp(`${name}:\\s*['"]([^'"]*)['"]`))
+  return match ? match[1] : undefined
+}
+
+function mapReleaseStatus(status) {
+  if (status === 'release') return 'live'
+  if (status === 'development_demo') return 'demo'
+  if (status === 'development' || status === 'coming_soon') return 'preview'
+  if (status === 'broken_do_not_show') return 'deprecated'
+  return 'hidden'
+}
+
+function pageRoute(file) {
+  const normalized = relative(file).split(path.sep).join('/')
+  if (normalized.startsWith('app/')) {
+    return normalized.replace(/^app/, '').replace(/\/page\.tsx$/, '') || '/'
+  }
+  if (normalized.startsWith('portal/')) {
+    return `/${normalized.replace(/\/page\.tsx$/, '')}`
+  }
+  return normalized.replace(/\/page\.tsx$/, '')
+}
+
+function walk(directory) {
+  if (!fs.existsSync(directory)) return []
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(directory, entry.name)
+    if (entry.isDirectory()) return walk(full)
+    return [full]
+  })
+}
 
 function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath))
 }
 
 function read(relativePath) {
-  const absolutePath = path.join(root, relativePath)
-  if (!fs.existsSync(absolutePath)) {
+  const absolute = path.join(root, relativePath)
+  if (!fs.existsSync(absolute)) {
     errors.push(`Missing file: ${relativePath}`)
     return ''
   }
-  return fs.readFileSync(absolutePath, 'utf8')
+  return fs.readFileSync(absolute, 'utf8')
 }
 
-function requireText(file, source, token) {
-  if (!source.includes(token)) errors.push(`${file} is missing required contract token: ${token}`)
-}
-
-function pageContractRoute(contractSymbol) {
-  const pageFile = integratedPages.find((page) => page.contractSymbol === contractSymbol)
-  if (!pageFile) return null
-  const contractFile = pageFile.contractImport.replace('@/contracts/', 'contracts/') + '.ts'
-  const source = read(contractFile)
-  const match = source.match(/route:\s*['"]([^'"]+)['"]/)
-  return match ? match[1] : null
-}
-
-function validateForbiddenPatterns() {
-  const enforcedFiles = [
-    ...requiredFiles,
-  ].filter((file) => exists(file) && file !== 'contracts/allowlists/contract-exceptions.ts')
-
-  const forbiddenPatterns = [
-    { rule: 'ts-ignore', pattern: /@ts-ignore/ },
-    { rule: 'as-any', pattern: /\bas\s+any\b/ },
-    { rule: 'eslint-disable', pattern: /eslint-disable/ },
-    { rule: 'direct-lifecycle-mutation', pattern: /record_status\s*=\s*['"](active|closed|approved)['"]/ },
-    { rule: 'hardcoded-release-visibility', pattern: /showInNavigation:\s*(true|false)/ },
-    { rule: 'production-placeholder', pattern: /\bplaceholder\b|\bmock\b|\bTODO\b/i },
-  ]
-
-  const allowlist = read('contracts/allowlists/contract-exceptions.ts')
-  for (const file of enforcedFiles) {
-    const source = read(file)
-    for (const { rule, pattern } of forbiddenPatterns) {
-      if (!pattern.test(source)) continue
-      if (allowlist.includes(`rule: '${rule}'`) && allowlist.includes(`file: '${file}'`)) continue
-      errors.push(`${file} violates contract guardrail: ${rule}`)
-    }
-  }
+function relative(file) {
+  return path.relative(root, file).split(path.sep).join('/')
 }

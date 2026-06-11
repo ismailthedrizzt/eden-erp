@@ -90,12 +90,94 @@ export const employeeCreatePayloadSchema = z.object({
   base_updated_at: isoDateTime.optional(),
 })
 
+export const employmentStartPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  employee_id: uuid,
+  company_id: uuid,
+  branch_id: uuid.optional(),
+  organization_unit_id: uuid.optional(),
+  position_id: uuid.optional(),
+  employment_type: z.string().min(1),
+  start_date: isoDate,
+  trial_period_end_date: isoDate.optional(),
+  sgk_status: z.string().min(1),
+  base_updated_at: isoDateTime.optional(),
+})
+
+export const employmentTerminationPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  employee_id: uuid,
+  end_date: isoDate,
+  termination_reason: z.string().min(1),
+  sgk_status: z.string().min(1),
+  base_updated_at: isoDateTime.optional(),
+})
+
+export const employeeAssignmentChangePayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  employee_id: uuid,
+  effective_date: isoDate,
+  branch_id: uuid.optional(),
+  organization_unit_id: uuid.optional(),
+  position_id: uuid.optional(),
+  job_title: z.string().optional(),
+  reason: z.string().optional(),
+  base_updated_at: isoDateTime.optional(),
+})
+
+export const employeeSgkCompletedPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  employee_id: uuid,
+  completed_date: isoDate,
+  reference_no: z.string().optional(),
+  base_updated_at: isoDateTime.optional(),
+})
+
 export const themesManagementPayloadSchema = z.object({
   tenant_id: uuid.optional(),
   theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
   display_name: z.string().min(1),
   status: z.enum(['draft', 'inactive', 'active']),
   theme_json: z.record(z.unknown()),
+  updated_at: isoDateTime.optional(),
+})
+
+export const themeImportPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
+  import_text: z.string().min(1),
+  source_type: z.enum(['eden_theme_json', 'figma_tokens_json', 'css_variables']),
+  updated_at: isoDateTime.optional(),
+})
+
+export const themeValidationPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
+  theme_json: z.record(z.unknown()),
+  updated_at: isoDateTime.optional(),
+})
+
+export const themeActivationPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
+  validation_passed: z.boolean(),
+  deactivate_existing_active_theme: z.boolean(),
+  updated_at: isoDateTime.optional(),
+})
+
+export const themeExportPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
+  format: z.enum(['eden', 'figma', 'css', 'tailwind']),
+  updated_at: isoDateTime.optional(),
+})
+
+export const themeAssetUploadPayloadSchema = z.object({
+  tenant_id: uuid.optional(),
+  theme_key: z.string().regex(/^[a-z0-9][a-z0-9_]{1,63}$/),
+  slot_id: z.string().min(1),
+  asset_kind: z.enum(['image', 'document']),
+  asset_ref: z.record(z.unknown()),
   updated_at: isoDateTime.optional(),
 })
 

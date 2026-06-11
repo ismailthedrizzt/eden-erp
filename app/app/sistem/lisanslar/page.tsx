@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appSistemLisanslarListContract } from '@/contracts/pages/generated/app-sistem-lisanslar.list.contract'
+
+void appSistemLisanslarListContract
+
+import { appSistemLisanslarPageContract } from '@/contracts/pages/generated/app-sistem-lisanslar.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemLisanslarContractReady = requirePageContract(appSistemLisanslarPageContract)
+void appSistemLisanslarContractReady
+
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, BadgeCheck, Building2, CreditCard, PauseCircle, PlayCircle, RefreshCw, ShieldCheck } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'

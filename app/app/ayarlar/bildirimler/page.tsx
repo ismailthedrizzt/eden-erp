@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appAyarlarBildirimlerListContract } from '@/contracts/pages/generated/app-ayarlar-bildirimler.list.contract'
+
+void appAyarlarBildirimlerListContract
+
+import { appAyarlarBildirimlerPageContract } from '@/contracts/pages/generated/app-ayarlar-bildirimler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appAyarlarBildirimlerContractReady = requirePageContract(appAyarlarBildirimlerPageContract)
+void appAyarlarBildirimlerContractReady
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BellRing } from 'lucide-react'
 import PageBanner from '@/components/ui/PageBanner'

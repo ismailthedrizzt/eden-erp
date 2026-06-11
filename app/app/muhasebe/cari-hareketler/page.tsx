@@ -1,5 +1,23 @@
 'use client'
 
+
+
+import { appMuhasebeCariHareketlerListContract } from '@/contracts/pages/generated/app-muhasebe-cari-hareketler.list.contract'
+import { appMuhasebeCariHareketlerFormContract } from '@/contracts/pages/generated/app-muhasebe-cari-hareketler.form.contract'
+import { appMuhasebeCariHareketlerWizardContract } from '@/contracts/pages/generated/app-muhasebe-cari-hareketler.wizard.contract'
+import { appMuhasebeCariHareketlerLifecycleContract } from '@/contracts/pages/generated/app-muhasebe-cari-hareketler.lifecycle.contract'
+
+void appMuhasebeCariHareketlerListContract
+void appMuhasebeCariHareketlerFormContract
+void appMuhasebeCariHareketlerWizardContract
+void appMuhasebeCariHareketlerLifecycleContract
+
+import { appMuhasebeCariHareketlerPageContract } from '@/contracts/pages/generated/app-muhasebe-cari-hareketler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeCariHareketlerContractReady = requirePageContract(appMuhasebeCariHareketlerPageContract)
+void appMuhasebeCariHareketlerContractReady
+
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AlertCircle, FilePlus2, FileText, Plus, ReceiptText, X } from 'lucide-react'

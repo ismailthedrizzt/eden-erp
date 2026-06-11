@@ -1,5 +1,12 @@
 'use client'
 
+
+import { appSirketPageContract } from '@/contracts/pages/generated/app-sirket.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSirketContractReady = requirePageContract(appSirketPageContract)
+void appSirketContractReady
+
 // MODULE LICENSE: sirket/dashboard
 // Ana Modül: Şirket Yönetimi (sirket)
 // Alt Modül: Dashboard

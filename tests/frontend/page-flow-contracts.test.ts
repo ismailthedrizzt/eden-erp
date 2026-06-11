@@ -2,12 +2,21 @@ import {
   branchCreatePayloadSchema,
   companyCreateWizardPayloadSchema,
   documentUploadPayloadSchema,
+  employeeAssignmentChangePayloadSchema,
   employeeCreatePayloadSchema,
+  employeeSgkCompletedPayloadSchema,
+  employmentStartPayloadSchema,
+  employmentTerminationPayloadSchema,
   genericLifecycleOperationPayloadSchema,
   ownershipTransactionPayloadSchema,
   partnerCreatePayloadSchema,
   representativeAuthorityWizardPayloadSchema,
   representativeCreatePayloadSchema,
+  themeActivationPayloadSchema,
+  themeAssetUploadPayloadSchema,
+  themeExportPayloadSchema,
+  themeImportPayloadSchema,
+  themeValidationPayloadSchema,
   themesManagementPayloadSchema,
 } from '../../lib/contracts/pageFlowSchemas'
 
@@ -88,6 +97,54 @@ export function testEmployeeCreatePayloadShape() {
   })
 }
 
+export function testEmploymentStartPayloadShape() {
+  return employmentStartPayloadSchema.parse({
+    tenant_id: tenantId,
+    employee_id: entityId,
+    company_id: companyId,
+    employment_type: 'full_time',
+    start_date: '2026-06-11',
+    sgk_status: 'pending',
+  })
+}
+
+export function testEmploymentTerminationPayloadShape() {
+  return employmentTerminationPayloadSchema.parse({
+    tenant_id: tenantId,
+    employee_id: entityId,
+    end_date: '2026-06-11',
+    termination_reason: 'Contract ended',
+    sgk_status: 'pending',
+  })
+}
+
+export function testEmployeeAssignmentChangePayloadShape() {
+  return employeeAssignmentChangePayloadSchema.parse({
+    tenant_id: tenantId,
+    employee_id: entityId,
+    effective_date: '2026-06-11',
+    job_title: 'Operations Lead',
+  })
+}
+
+export function testEmployeeSgkEntryCompletedPayloadShape() {
+  return employeeSgkCompletedPayloadSchema.parse({
+    tenant_id: tenantId,
+    employee_id: entityId,
+    completed_date: '2026-06-11',
+    reference_no: 'SGK-ENTRY-1',
+  })
+}
+
+export function testEmployeeSgkExitCompletedPayloadShape() {
+  return employeeSgkCompletedPayloadSchema.parse({
+    tenant_id: tenantId,
+    employee_id: entityId,
+    completed_date: '2026-06-11',
+    reference_no: 'SGK-EXIT-1',
+  })
+}
+
 export function testThemesManagementPayloadShape() {
   return themesManagementPayloadSchema.parse({
     tenant_id: tenantId,
@@ -95,6 +152,50 @@ export function testThemesManagementPayloadShape() {
     display_name: 'Hikmet',
     status: 'draft',
     theme_json: { meta: { scope: 'system' } },
+  })
+}
+
+export function testThemeImportPayloadShape() {
+  return themeImportPayloadSchema.parse({
+    tenant_id: tenantId,
+    theme_key: 'hikmet',
+    import_text: '{"schemaVersion":"1.0.0"}',
+    source_type: 'eden_theme_json',
+  })
+}
+
+export function testThemeValidationPayloadShape() {
+  return themeValidationPayloadSchema.parse({
+    tenant_id: tenantId,
+    theme_key: 'hikmet',
+    theme_json: { meta: { scope: 'system' } },
+  })
+}
+
+export function testThemeActivationPayloadShape() {
+  return themeActivationPayloadSchema.parse({
+    tenant_id: tenantId,
+    theme_key: 'hikmet',
+    validation_passed: true,
+    deactivate_existing_active_theme: true,
+  })
+}
+
+export function testThemeExportPayloadShape() {
+  return themeExportPayloadSchema.parse({
+    tenant_id: tenantId,
+    theme_key: 'hikmet',
+    format: 'eden',
+  })
+}
+
+export function testThemeAssetUploadPayloadShape() {
+  return themeAssetUploadPayloadSchema.parse({
+    tenant_id: tenantId,
+    theme_key: 'hikmet',
+    slot_id: 'light_page_banner',
+    asset_kind: 'image',
+    asset_ref: { path: 'themes/hikmet/light-banner.svg' },
   })
 }
 

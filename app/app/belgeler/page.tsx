@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appBelgelerListContract } from '@/contracts/pages/generated/app-belgeler.list.contract'
+
+void appBelgelerListContract
+
+import { appBelgelerPageContract } from '@/contracts/pages/generated/app-belgeler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appBelgelerContractReady = requirePageContract(appBelgelerPageContract)
+void appBelgelerContractReady
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,

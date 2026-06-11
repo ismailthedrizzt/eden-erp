@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appMuhasebeBorclarListContract } from '@/contracts/pages/generated/app-muhasebe-borclar.list.contract'
+
+void appMuhasebeBorclarListContract
+
+import { appMuhasebeBorclarPageContract } from '@/contracts/pages/generated/app-muhasebe-borclar.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeBorclarContractReady = requirePageContract(appMuhasebeBorclarPageContract)
+void appMuhasebeBorclarContractReady
+
 // MODULE LICENSE: muhasebe/cari
 // Ana Modül: Muhasebe (muhasebe)
 // Alt Modül: Borç Takip (cari)

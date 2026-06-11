@@ -1,5 +1,14 @@
 'use client'
 
+
+import { appSirketCompaniesFormContract } from '@/contracts/pages/generated/app-sirket-companies.form.contract'
+import { appSirketCompaniesWizardContract } from '@/contracts/pages/generated/app-sirket-companies.wizard.contract'
+import { appSirketCompaniesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies.lifecycle.contract'
+
+void appSirketCompaniesFormContract
+void appSirketCompaniesWizardContract
+void appSirketCompaniesLifecycleContract
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'

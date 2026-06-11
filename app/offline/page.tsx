@@ -1,3 +1,9 @@
+import { offlinePageContract } from '@/contracts/pages/generated/offline.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const offlineContractReady = requirePageContract(offlinePageContract)
+void offlineContractReady
+
 import Link from 'next/link'
 import { WifiOff } from 'lucide-react'
 

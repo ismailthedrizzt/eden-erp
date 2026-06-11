@@ -1,3 +1,15 @@
+import { appMuhasebeWizardContract } from '@/contracts/pages/generated/app-muhasebe.wizard.contract'
+import { appMuhasebeLifecycleContract } from '@/contracts/pages/generated/app-muhasebe.lifecycle.contract'
+
+void appMuhasebeWizardContract
+void appMuhasebeLifecycleContract
+
+import { appMuhasebePageContract } from '@/contracts/pages/generated/app-muhasebe.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeContractReady = requirePageContract(appMuhasebePageContract)
+void appMuhasebeContractReady
+
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { ArrowLeftRight, CreditCard, FileText, Landmark, ReceiptText, Scale, WalletCards } from 'lucide-react'

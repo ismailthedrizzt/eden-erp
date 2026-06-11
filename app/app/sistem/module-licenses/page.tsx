@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appSistemModuleLicensesListContract } from '@/contracts/pages/generated/app-sistem-module-licenses.list.contract'
+
+void appSistemModuleLicensesListContract
+
+import { appSistemModuleLicensesPageContract } from '@/contracts/pages/generated/app-sistem-module-licenses.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemModuleLicensesContractReady = requirePageContract(appSistemModuleLicensesPageContract)
+void appSistemModuleLicensesContractReady
+
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,

@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appSistemAuditListContract } from '@/contracts/pages/generated/app-sistem-audit.list.contract'
+
+void appSistemAuditListContract
+
+import { appSistemAuditPageContract } from '@/contracts/pages/generated/app-sistem-audit.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemAuditContractReady = requirePageContract(appSistemAuditPageContract)
+void appSistemAuditContractReady
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,

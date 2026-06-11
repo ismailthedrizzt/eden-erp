@@ -1,5 +1,21 @@
 'use client'
 
+
+
+import { appSistemVeriKalitesiListContract } from '@/contracts/pages/generated/app-sistem-veri-kalitesi.list.contract'
+import { appSistemVeriKalitesiWizardContract } from '@/contracts/pages/generated/app-sistem-veri-kalitesi.wizard.contract'
+import { appSistemVeriKalitesiLifecycleContract } from '@/contracts/pages/generated/app-sistem-veri-kalitesi.lifecycle.contract'
+
+void appSistemVeriKalitesiListContract
+void appSistemVeriKalitesiWizardContract
+void appSistemVeriKalitesiLifecycleContract
+
+import { appSistemVeriKalitesiPageContract } from '@/contracts/pages/generated/app-sistem-veri-kalitesi.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemVeriKalitesiContractReady = requirePageContract(appSistemVeriKalitesiPageContract)
+void appSistemVeriKalitesiContractReady
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,

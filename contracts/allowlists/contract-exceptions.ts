@@ -12,11 +12,12 @@ export type ContractExceptionRule =
 
 export type ContractException = {
   rule: ContractExceptionRule
+  route: string
   file: string
   reason: string
   owner: string
-  expiresOn: string
-  removalTarget: string
+  expiresAt: string
+  removalPlan: string
 }
 
 export const contractExceptions: readonly ContractException[] = []

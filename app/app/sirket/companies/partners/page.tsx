@@ -1,5 +1,14 @@
 'use client'
 
+
+import { appSirketCompaniesPartnersFormContract } from '@/contracts/pages/generated/app-sirket-companies-partners.form.contract'
+import { appSirketCompaniesPartnersWizardContract } from '@/contracts/pages/generated/app-sirket-companies-partners.wizard.contract'
+import { appSirketCompaniesPartnersLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies-partners.lifecycle.contract'
+
+void appSirketCompaniesPartnersFormContract
+void appSirketCompaniesPartnersWizardContract
+void appSirketCompaniesPartnersLifecycleContract
+
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AlertCircle, CheckCircle2, FileText, ListChecks, Users } from 'lucide-react'

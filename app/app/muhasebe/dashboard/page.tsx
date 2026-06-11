@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appMuhasebeDashboardListContract } from '@/contracts/pages/generated/app-muhasebe-dashboard.list.contract'
+
+void appMuhasebeDashboardListContract
+
+import { appMuhasebeDashboardPageContract } from '@/contracts/pages/generated/app-muhasebe-dashboard.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeDashboardContractReady = requirePageContract(appMuhasebeDashboardPageContract)
+void appMuhasebeDashboardContractReady
+
 // MODULE LICENSE: muhasebe/dashboard
 // Ana Modül: Muhasebe (muhasebe)
 // Alt Modül: Dashboard (dashboard)

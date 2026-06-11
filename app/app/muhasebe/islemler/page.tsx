@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appMuhasebeIslemlerListContract } from '@/contracts/pages/generated/app-muhasebe-islemler.list.contract'
+
+void appMuhasebeIslemlerListContract
+
+import { appMuhasebeIslemlerPageContract } from '@/contracts/pages/generated/app-muhasebe-islemler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeIslemlerContractReady = requirePageContract(appMuhasebeIslemlerPageContract)
+void appMuhasebeIslemlerContractReady
+
 // MODULE LICENSE: muhasebe/fatura
 // Ana Modül: Muhasebe (muhasebe)
 // Alt Modül: Tüm İşlemler (fatura)

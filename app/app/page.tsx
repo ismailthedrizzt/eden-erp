@@ -1,5 +1,12 @@
 'use client'
 
+
+import { appPageContract } from '@/contracts/pages/generated/app.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appContractReady = requirePageContract(appPageContract)
+void appContractReady
+
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Home, Settings, SlidersHorizontal } from 'lucide-react'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'

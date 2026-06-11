@@ -1,6 +1,8 @@
 export interface EdenListColumnContract {
   key: string
   label: string
+  type?: 'text' | 'number' | 'date' | 'datetime' | 'boolean' | 'status' | 'custom'
+  width?: number
   sortable?: boolean
   filterable?: boolean
   searchable?: boolean

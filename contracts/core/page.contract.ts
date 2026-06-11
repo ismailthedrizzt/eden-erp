@@ -2,7 +2,7 @@ import type { EdenListContract } from './list.contract'
 import type { EdenFormContract } from './form.contract'
 import type { EdenWizardContract } from './wizard.contract'
 
-export type EdenPageKind = 'list' | 'form' | 'detail' | 'wizard' | 'dashboard'
+export type EdenPageKind = 'list' | 'form' | 'detail' | 'wizard' | 'dashboard' | 'shell' | 'placeholder' | 'redirect'
 export type EdenReleaseStatus = 'live' | 'preview' | 'demo' | 'hidden' | 'deprecated'
 
 export interface EdenPageContract {

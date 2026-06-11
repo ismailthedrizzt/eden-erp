@@ -1,5 +1,23 @@
 'use client'
 
+
+
+import { appSirketTeskilatListContract } from '@/contracts/pages/generated/app-sirket-teskilat.list.contract'
+import { appSirketTeskilatFormContract } from '@/contracts/pages/generated/app-sirket-teskilat.form.contract'
+import { appSirketTeskilatWizardContract } from '@/contracts/pages/generated/app-sirket-teskilat.wizard.contract'
+import { appSirketTeskilatLifecycleContract } from '@/contracts/pages/generated/app-sirket-teskilat.lifecycle.contract'
+
+void appSirketTeskilatListContract
+void appSirketTeskilatFormContract
+void appSirketTeskilatWizardContract
+void appSirketTeskilatLifecycleContract
+
+import { appSirketTeskilatPageContract } from '@/contracts/pages/generated/app-sirket-teskilat.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSirketTeskilatContractReady = requirePageContract(appSirketTeskilatPageContract)
+void appSirketTeskilatContractReady
+
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'

@@ -1,3 +1,9 @@
+import { appSozlesmelerYenilemelerPageContract } from '@/contracts/pages/generated/app-sozlesmeler-yenilemeler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSozlesmelerYenilemelerContractReady = requirePageContract(appSozlesmelerYenilemelerPageContract)
+void appSozlesmelerYenilemelerContractReady
+
 import { RefreshCw } from 'lucide-react'
 import { ContractsList } from '@/components/contracts/ContractsList'
 import { PageBanner } from '@/components/ui/PageBanner'

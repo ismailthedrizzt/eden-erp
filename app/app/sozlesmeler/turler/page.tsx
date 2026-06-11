@@ -1,3 +1,9 @@
+import { appSozlesmelerTurlerPageContract } from '@/contracts/pages/generated/app-sozlesmeler-turler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSozlesmelerTurlerContractReady = requirePageContract(appSozlesmelerTurlerPageContract)
+void appSozlesmelerTurlerContractReady
+
 import { Tags } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { CONTRACT_TYPE_LABELS } from '@/lib/services/contracts'

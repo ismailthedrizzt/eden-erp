@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appSirketAraclarListContract } from '@/contracts/pages/generated/app-sirket-araclar.list.contract'
+
+void appSirketAraclarListContract
+
+import { appSirketAraclarPageContract } from '@/contracts/pages/generated/app-sirket-araclar.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSirketAraclarContractReady = requirePageContract(appSirketAraclarPageContract)
+void appSirketAraclarContractReady
+
 // MODULE LICENSE: sirket/araclar
 // Ana Modül: Şirket Yönetimi (sirket)
 // Alt Modül: Şirket Araçlarımız

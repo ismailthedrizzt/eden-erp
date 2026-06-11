@@ -1,5 +1,21 @@
 'use client'
 
+
+
+import { appMuhasebeHesapVeKartHareketleriListContract } from '@/contracts/pages/generated/app-muhasebe-hesap-ve-kart-hareketleri.list.contract'
+import { appMuhasebeHesapVeKartHareketleriWizardContract } from '@/contracts/pages/generated/app-muhasebe-hesap-ve-kart-hareketleri.wizard.contract'
+import { appMuhasebeHesapVeKartHareketleriLifecycleContract } from '@/contracts/pages/generated/app-muhasebe-hesap-ve-kart-hareketleri.lifecycle.contract'
+
+void appMuhasebeHesapVeKartHareketleriListContract
+void appMuhasebeHesapVeKartHareketleriWizardContract
+void appMuhasebeHesapVeKartHareketleriLifecycleContract
+
+import { appMuhasebeHesapVeKartHareketleriPageContract } from '@/contracts/pages/generated/app-muhasebe-hesap-ve-kart-hareketleri.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeHesapVeKartHareketleriContractReady = requirePageContract(appMuhasebeHesapVeKartHareketleriPageContract)
+void appMuhasebeHesapVeKartHareketleriContractReady
+
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileDown, Filter, Link2, Plus, RefreshCw, SearchCheck, WalletCards, X } from 'lucide-react'

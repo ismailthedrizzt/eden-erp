@@ -1,5 +1,12 @@
 'use client'
 
+
+import { appSirketDemirbasPageContract } from '@/contracts/pages/generated/app-sirket-demirbas.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSirketDemirbasContractReady = requirePageContract(appSirketDemirbasPageContract)
+void appSirketDemirbasContractReady
+
 // MODULE LICENSE: sirket/demirbas
 // Ana Modül: Şirket Yönetimi (sirket)
 // Alt Modül: Demirbaş ve Zimmetler

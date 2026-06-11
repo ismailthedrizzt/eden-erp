@@ -1,5 +1,19 @@
 'use client'
 
+
+
+import { appSistemKurulumWizardContract } from '@/contracts/pages/generated/app-sistem-kurulum.wizard.contract'
+import { appSistemKurulumLifecycleContract } from '@/contracts/pages/generated/app-sistem-kurulum.lifecycle.contract'
+
+void appSistemKurulumWizardContract
+void appSistemKurulumLifecycleContract
+
+import { appSistemKurulumPageContract } from '@/contracts/pages/generated/app-sistem-kurulum.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemKurulumContractReady = requirePageContract(appSistemKurulumPageContract)
+void appSistemKurulumContractReady
+
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {

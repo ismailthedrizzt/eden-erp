@@ -1,5 +1,21 @@
 'use client'
 
+
+
+import { appSureclerListContract } from '@/contracts/pages/generated/app-surecler.list.contract'
+import { appSureclerWizardContract } from '@/contracts/pages/generated/app-surecler.wizard.contract'
+import { appSureclerLifecycleContract } from '@/contracts/pages/generated/app-surecler.lifecycle.contract'
+
+void appSureclerListContract
+void appSureclerWizardContract
+void appSureclerLifecycleContract
+
+import { appSureclerPageContract } from '@/contracts/pages/generated/app-surecler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSureclerContractReady = requirePageContract(appSureclerPageContract)
+void appSureclerContractReady
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'

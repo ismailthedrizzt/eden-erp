@@ -1,5 +1,6 @@
 'use client'
 
+
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import {
   AlertCircle,
@@ -39,79 +40,41 @@ import {
   type HREmployeeSummary,
 } from '@/lib/services/hr'
 import type { ListMeta } from '@/lib/api/listEndpoint'
+import {
+  employeeDocumentStatusLabels as DOCUMENT_STATUS_LABELS,
+  employeeDocumentTypeLabels as DOCUMENT_TYPE_LABELS,
+  employeeEmploymentStatusLabels as EMPLOYMENT_STATUS_LABELS,
+  employeeEmploymentTypeLabels as EMPLOYMENT_TYPE_LABELS,
+  employeeGenderLabels as GENDER_LABELS,
+  employeeRecordStatusLabels as RECORD_STATUS_LABELS,
+  employeeSgkStatusLabels as SGK_STATUS_LABELS,
+} from '@/contracts/entities/employee.contract'
+import { employeePageContract } from '@/contracts/pages/hr/employee.page.contract'
+import { employeeListContract } from '@/contracts/lists/hr/employee.list.contract'
+import { employeeFormContract, employeeModalContracts } from '@/contracts/forms/hr/employee.form.contract'
+import { employmentStartWizardContract } from '@/contracts/wizards/hr/employment-start.wizard.contract'
+import { employmentTerminationWizardContract } from '@/contracts/wizards/hr/employment-termination.wizard.contract'
+import { assignmentChangeWizardContract } from '@/contracts/wizards/hr/assignment-change.wizard.contract'
+import { sgkEntryWizardContract } from '@/contracts/wizards/hr/sgk-entry.wizard.contract'
+import { sgkExitWizardContract } from '@/contracts/wizards/hr/sgk-exit.wizard.contract'
+import { employeeLifecycleContract } from '@/contracts/lifecycle/hr/employee.lifecycle.contract'
+import { employeeApiServiceFunctions } from '@/contracts/api/hr/employee.api.contract'
 
 type Option = { value: string; label: string; companyId?: string | null; unitId?: string | null }
 type ToastState = { type: 'success' | 'error' | 'warning'; message: string; title?: string } | null
 type ModalKind = 'create' | 'start' | 'terminate' | 'assignment' | 'sgkEntry' | 'sgkExit' | 'document' | null
 
-const RECORD_STATUS_LABELS: Record<string, string> = {
-  draft: 'Taslak',
-  active: 'Aktif',
-  passive: 'Pasif',
+const employeeRenderersByKey: Record<string, ColumnDef['render']> = {
+  employment_badge: (_value, row) => <StatusBadge value={row.employment_status} labels={EMPLOYMENT_STATUS_LABELS} />,
+  sgk_badge: (_value, row) => <SgkBadge value={row.sgk_status} />,
 }
 
-const EMPLOYMENT_STATUS_LABELS: Record<string, string> = {
-  draft: 'Istihdam Yok',
-  active: 'Aktif',
-  suspended: 'Askida',
-  terminated: 'Isten Ayrildi',
-  passive: 'Pasif',
+function buildEmployeeTableDefinition(): ColumnDef[] {
+  return employeeListContract.columns.map(column => ({
+    ...column,
+    render: employeeRenderersByKey[column.key],
+  }))
 }
-
-const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
-  full_time: 'Tam Zamanli',
-  part_time: 'Yari Zamanli',
-  contract: 'Sozlesmeli',
-  intern: 'Stajyer',
-  temporary: 'Gecici',
-  consultant: 'Danisman',
-}
-
-const SGK_STATUS_LABELS: Record<string, string> = {
-  not_required: 'Gerekli Degil',
-  pending: 'Bekliyor',
-  submitted: 'Gonderildi',
-  completed: 'Tamamlandi',
-  failed: 'Hata',
-}
-
-const GENDER_LABELS: Record<string, string> = {
-  male: 'Erkek',
-  female: 'Kadin',
-  other: 'Diger',
-  unspecified: 'Belirtilmedi',
-}
-
-const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  identity: 'Kimlik',
-  residence: 'Ikametgah',
-  diploma: 'Diploma',
-  health_report: 'Saglik Raporu',
-  criminal_record: 'Adli Sicil',
-  contract: 'Sozlesme',
-  sgk_entry: 'SGK Giris Bildirgesi',
-  sgk_exit: 'SGK Cikis Bildirgesi',
-  training_certificate: 'Egitim / Sertifika',
-  other: 'Diger',
-}
-
-const columns: ColumnDef[] = [
-  { key: 'employment_badge', label: 'Durum', type: 'text', width: 135, render: (_value, row) => <StatusBadge value={row.employment_status} labels={EMPLOYMENT_STATUS_LABELS} /> },
-  { key: 'employee_no', label: 'Calisan No', type: 'text', width: 125, sortable: true },
-  { key: 'full_name', label: 'Ad Soyad', type: 'text', width: 220, sortable: true },
-  { key: 'company_label', label: 'Bagli Sirket', type: 'text', width: 190 },
-  { key: 'branch_label', label: 'Sube', type: 'text', width: 150 },
-  { key: 'unit_label', label: 'Organizasyon Birimi', type: 'text', width: 190 },
-  { key: 'position_label', label: 'Pozisyon', type: 'text', width: 170 },
-  { key: 'employment_type_label', label: 'Istihdam Turu', type: 'text', width: 140 },
-  { key: 'start_date', label: 'Ise Giris', type: 'date', width: 120, sortable: true },
-  { key: 'sgk_badge', label: 'SGK Durumu', type: 'text', width: 130, render: (_value, row) => <SgkBadge value={row.sgk_status} /> },
-  { key: 'phone', label: 'Telefon', type: 'text', width: 135 },
-  { key: 'email', label: 'E-posta', type: 'text', width: 190 },
-  { key: 'education_level', label: 'Egitim', type: 'text', width: 130 },
-  { key: 'gender_label', label: 'Cinsiyet', type: 'text', width: 110 },
-  { key: 'updated_at', label: 'Son Guncelleme', type: 'date', width: 145, sortable: true },
-]
 
 export default function HREmployeesPage() {
   const { can } = usePermissions()
@@ -153,11 +116,15 @@ export default function HREmployeesPage() {
     selectedRecordId: selected?.id || null,
     selectedRecordStatus: selected?.employment_status || selected?.record_status || null,
     companyId: selected?.company_id || filters.company_id || null,
-    route: '/app/ik/calisanlar',
+    route: employeePageContract.route,
     context: {
       branchId: selected?.branch_id || filters.branch_id || null,
       organizationUnitId: selected?.organization_unit_id || filters.organization_unit_id || null,
       positionId: selected?.position_id || filters.position_id || null,
+      contractEntity: employeePageContract.owningEntity,
+      contractLifecycleTable: employeeLifecycleContract.transactionTable,
+      contractFormFields: employeeFormContract.fieldOrder,
+      contractServiceFunctions: employeeApiServiceFunctions,
     },
     availableModules: ['hr', 'companies', 'branches', 'organization'],
   })
@@ -269,12 +236,14 @@ export default function HREmployeesPage() {
   })), [employees, labels])
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
-    { key: 'total', label: 'Toplam Calisan', render: () => summary?.total_employees ?? meta.total ?? tableData.length },
-    { key: 'active', label: 'Aktif', render: () => summary?.active_employees ?? tableData.filter(row => row.employment_status === 'active').length },
-    { key: 'draft', label: 'Taslak Kart', render: () => summary?.draft_employees ?? tableData.filter(row => row.record_status === 'draft').length },
-    { key: 'terminated', label: 'Isten Ayrilan', render: () => summary?.terminated_employees ?? tableData.filter(row => row.employment_status === 'terminated').length },
-    { key: 'sgk', label: 'SGK Bekleyen', render: () => summary?.pending_sgk ?? tableData.filter(row => row.sgk_status === 'pending').length },
+    { key: 'total', label: employeeListContract.widgets[0].label, render: () => summary?.total_employees ?? meta.total ?? tableData.length },
+    { key: 'active', label: employeeListContract.widgets[1].label, render: () => summary?.active_employees ?? tableData.filter(row => row.employment_status === 'active').length },
+    { key: 'draft', label: employeeListContract.widgets[2].label, render: () => summary?.draft_employees ?? tableData.filter(row => row.record_status === 'draft').length },
+    { key: 'terminated', label: employeeListContract.widgets[3].label, render: () => summary?.terminated_employees ?? tableData.filter(row => row.employment_status === 'terminated').length },
+    { key: 'sgk', label: employeeListContract.widgets[4].label, render: () => summary?.pending_sgk ?? tableData.filter(row => row.sgk_status === 'pending').length },
   ], [meta.total, summary, tableData])
+
+  const tableDefinition = useMemo(() => buildEmployeeTableDefinition(), [])
 
   const handleSortChange = (sorts: SortConfig[]) => {
     const sort = sorts[0]
@@ -297,7 +266,7 @@ export default function HREmployeesPage() {
         icon={<Users size={24} />}
         onBackClick={selected ? () => setSelected(null) : undefined}
         onAddClick={!selected && can(HR_PERMISSIONS.employeeCreate) ? () => setModal('create') : undefined}
-        addButtonText="Calisan Ekle"
+        addButtonText={employeeListContract.primaryActionLabel}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
@@ -315,7 +284,7 @@ export default function HREmployeesPage() {
           <div className="mt-5">
             <EdenSmartList>
               <SmartDataTable
-                columns={columns}
+                columns={tableDefinition}
                 data={tableData}
                 loading={loading}
                 widgets={widgets}
@@ -361,7 +330,7 @@ export default function HREmployeesPage() {
         <CreateEmployeeModal
           companyOptions={companyOptions}
           onClose={() => setModal(null)}
-          onCreated={employee => refreshAfterMutation(employee, 'Calisan karti taslak olarak olusturuldu.', 'Taslak olusturuldu')}
+          onCreated={employee => refreshAfterMutation(employee, employeeModalContracts.create.successMessage, 'Taslak olusturuldu')}
         />
       )}
       {selected && modal === 'start' && (
@@ -372,14 +341,14 @@ export default function HREmployeesPage() {
           unitOptions={unitOptions}
           positionOptions={positionOptions}
           onClose={() => setModal(null)}
-          onSaved={employee => refreshAfterMutation(employee, 'Ise giris lifecycle kaydi tamamlandi.', 'Ise giris tamamlandi')}
+          onSaved={employee => refreshAfterMutation(employee, employmentStartWizardContract.successMessage, 'Ise giris tamamlandi')}
         />
       )}
       {selected && modal === 'terminate' && (
         <TerminateEmploymentModal
           employee={selected}
           onClose={() => setModal(null)}
-          onSaved={employee => refreshAfterMutation(employee, 'Isten cikis lifecycle kaydi tamamlandi.', 'Isten cikis tamamlandi')}
+          onSaved={employee => refreshAfterMutation(employee, employmentTerminationWizardContract.successMessage, 'Isten cikis tamamlandi')}
         />
       )}
       {selected && modal === 'assignment' && (
@@ -389,7 +358,7 @@ export default function HREmployeesPage() {
           unitOptions={unitOptions}
           positionOptions={positionOptions}
           onClose={() => setModal(null)}
-          onSaved={employee => refreshAfterMutation(employee, 'Organizasyon ve pozisyon degisikligi kaydedildi.', 'Atama guncellendi')}
+          onSaved={employee => refreshAfterMutation(employee, assignmentChangeWizardContract.successMessage, 'Atama guncellendi')}
         />
       )}
       {selected && modal === 'sgkEntry' && (
@@ -397,7 +366,7 @@ export default function HREmployeesPage() {
           title="SGK Girisi Yapildi"
           onClose={() => setModal(null)}
           onSave={payload => employmentService.sgkEntryCompleted(selected.id, payload)}
-          onSaved={employee => refreshAfterMutation(employee, 'SGK girisi manuel tamamlandi.', 'SGK tamamlandi')}
+          onSaved={employee => refreshAfterMutation(employee, sgkEntryWizardContract.successMessage, 'SGK tamamlandi')}
         />
       )}
       {selected && modal === 'sgkExit' && (
@@ -405,7 +374,7 @@ export default function HREmployeesPage() {
           title="SGK Cikisi Yapildi"
           onClose={() => setModal(null)}
           onSave={payload => employmentService.sgkExitCompleted(selected.id, payload)}
-          onSaved={employee => refreshAfterMutation(employee, 'SGK cikisi manuel tamamlandi.', 'SGK tamamlandi')}
+          onSaved={employee => refreshAfterMutation(employee, sgkExitWizardContract.successMessage, 'SGK tamamlandi')}
         />
       )}
       {selected && modal === 'document' && (
@@ -748,11 +717,11 @@ function StartEmploymentModal({ employee, companyOptions, branchOptions, unitOpt
     }
   }
   return (
-    <Modal title="Ise Giris / Istihdam Baslatma" onClose={onClose}>
+    <Modal title={employmentStartWizardContract.wizardName} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Hint>Calisan karti taslagi aktif istihdam anlamina gelmez. Bu islem sirket, sube, organizasyon, pozisyon ve SGK baslangic bilgilerini lifecycle kaydi olarak tamamlar.</Hint>
         <EdenWizardShell>
-          <WizardSteps items={['On Kontrol', 'Kart Ozeti', 'Sirket / Sube', 'Organizasyon / Pozisyon', 'Istihdam', 'SGK', 'Belgeler', 'Onay']} />
+          <WizardSteps items={employmentStartWizardContract.steps.map(step => step.label)} />
           <div className="grid gap-3 sm:grid-cols-2">
             <Select label="Sirket" required value={form.company_id} options={companyOptions} onChange={company_id => setForm(prev => ({ ...prev, company_id }))} />
             <Select label="Sube" value={form.branch_id} options={scopedBranches} onChange={branch_id => setForm(prev => ({ ...prev, branch_id }))} />
@@ -785,11 +754,11 @@ function TerminateEmploymentModal({ employee, onClose, onSaved }: { employee: HR
     }
   }
   return (
-    <Modal title="Isten Cikis" onClose={onClose}>
+    <Modal title={employmentTerminationWizardContract.wizardName} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Hint>Temsilci yetkisi, zimmet veya acik gorev etkileri ayrica kontrol edilmelidir. HR isten cikis kaydi temsil yetkisini kendiliginden sonlandirmaz.</Hint>
         <EdenWizardShell>
-          <WizardSteps items={['On Kontrol', 'Calisan Ozeti', 'Ayrilis', 'SGK Cikis', 'Etkiler', 'Belgeler', 'Onay']} />
+          <WizardSteps items={employmentTerminationWizardContract.steps.map(step => step.label)} />
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label="Cikis Tarihi" required type="date" value={form.end_date} onChange={end_date => setForm(prev => ({ ...prev, end_date }))} />
             <Input label="Ayrilis Nedeni" required value={form.termination_reason} onChange={termination_reason => setForm(prev => ({ ...prev, termination_reason }))} />
@@ -833,7 +802,7 @@ function AssignmentModal({ employee, branchOptions, unitOptions, positionOptions
     }
   }
   return (
-    <Modal title="Organizasyon / Pozisyon Degisikligi" onClose={onClose}>
+    <Modal title={assignmentChangeWizardContract.wizardName} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Hint>Pozisyon degisikligi calisan karti duzenlemesi degil, istihdam islemi olarak kaydedilir.</Hint>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -909,7 +878,7 @@ function DocumentModal({ employee, onClose, onSaved }: { employee: HREmployee; o
         <div className="grid gap-3 sm:grid-cols-2">
           <Select label="Belge Turu" required value={form.document_type} options={optionsFromLabels(DOCUMENT_TYPE_LABELS)} onChange={document_type => setForm(prev => ({ ...prev, document_type }))} />
           <Input label="Dosya Adi / Referans" value={form.file_name} onChange={file_name => setForm(prev => ({ ...prev, file_name }))} />
-          <Select label="Durum" value={form.status} options={optionsFromLabels({ missing: 'Eksik', uploaded: 'Yuklendi', expired: 'Suresi Doldu', rejected: 'Reddedildi', verified: 'Dogrulandi' })} onChange={status => setForm(prev => ({ ...prev, status }))} />
+          <Select label="Durum" value={form.status} options={optionsFromLabels(DOCUMENT_STATUS_LABELS)} onChange={status => setForm(prev => ({ ...prev, status }))} />
           <Field label="Zorunlu">
             <label className="flex h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
               <input type="checkbox" checked={form.required} onChange={event => setForm(prev => ({ ...prev, required: event.target.checked }))} />

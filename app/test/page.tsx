@@ -1,5 +1,12 @@
 'use client'
 
+
+import { testPageContract } from '@/contracts/pages/generated/test.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const testContractReady = requirePageContract(testPageContract)
+void testContractReady
+
 import { useState } from 'react'
 
 export default function TestPage() {

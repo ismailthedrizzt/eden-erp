@@ -1,5 +1,23 @@
 'use client'
 
+
+
+import { appIkPersonelListContract } from '@/contracts/pages/generated/app-ik-personel.list.contract'
+import { appIkPersonelFormContract } from '@/contracts/pages/generated/app-ik-personel.form.contract'
+import { appIkPersonelWizardContract } from '@/contracts/pages/generated/app-ik-personel.wizard.contract'
+import { appIkPersonelLifecycleContract } from '@/contracts/pages/generated/app-ik-personel.lifecycle.contract'
+
+void appIkPersonelListContract
+void appIkPersonelFormContract
+void appIkPersonelWizardContract
+void appIkPersonelLifecycleContract
+
+import { appIkPersonelPageContract } from '@/contracts/pages/generated/app-ik-personel.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appIkPersonelContractReady = requirePageContract(appIkPersonelPageContract)
+void appIkPersonelContractReady
+
 /**
  * ERP PAGE TEMPLATE: Çalışan Yönetimi
  * 

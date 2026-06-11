@@ -1,889 +1,1851 @@
 {
-    "schemaVersion":  "1.0.0",
-    "standard":  "Eden ERP Page / Flow Delivery Contract",
-    "documents":  {
-                      "standard":  "docs/architecture/PageFlowDeliveryContract.md",
-                      "checklist":  "docs/templates/PageFlowDeliveryChecklist.md",
-                      "audit":  "docs/audit/PageFlowContractAuditReport.md"
-                  },
-    "fieldNormalization":  {
-                               "dateFields":  [
-                                                  "effective_date",
-                                                  "decision_date",
-                                                  "start_date",
-                                                  "end_date",
-                                                  "opening_date",
-                                                  "closing_date",
-                                                  "establishment_date"
-                                              ],
-                               "datetimeFields":  [
-                                                      "created_at",
-                                                      "updated_at",
-                                                      "base_updated_at"
-                                                  ],
-                               "uuidFields":  [
-                                                  "tenant_id",
-                                                  "workspace_id",
-                                                  "company_id",
-                                                  "representative_id",
-                                                  "person_id",
-                                                  "branch_id",
-                                                  "document_id",
-                                                  "entity_id"
-                                              ],
-                               "enumFields":  [
-                                                  "status",
-                                                  "record_status",
-                                                  "workflow_status",
-                                                  "operation_type",
-                                                  "lifecycle_state",
-                                                  "transaction_type"
-                                              ],
-                               "jsonbFields":  [
-                                                   "payload_json",
-                                                   "result_json",
-                                                   "error_json",
-                                                   "metadata_json",
-                                                   "theme_json"
-                                               ]
-                           },
-    "flows":  [
-                  {
-                      "id":  "company-create-wizard",
-                      "pageName":  "Company create wizard",
-                      "route":  "/app/sirket/companies",
-                      "module":  "company-management",
-                      "entity":  "company",
-                      "operationType":  "wizard",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/companies"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies"
-                                    ],
-                      "tables":  [
-                                     "companies",
-                                     "company_contacts",
-                                     "company_documents"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#companyCreateWizardPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "CompanyCreateWizardPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/companies",
-                                              "operationId":  "create_company_card_api_v1_companies_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "create_company_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "companies.insert_company"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id"
-                                                      ],
-                                             "date":  [
-                                                          "establishment_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "company_type",
-                                                          "record_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "contact_points",
-                                                           "documents"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Backend contract parses ISO timestamp fields before repository use.",
-                                    "uuid":  "UUID identifiers are validated by frontend schema and Pydantic model.",
-                                    "enum":  "Canonical values are stored separately from Turkish labels.",
-                                    "rawDict":  "Payload shape is pinned by shared contract references."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_company_create_wizard_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testCompanyCreateWizardPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testCompanyCreateWizardHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "representative-create",
-                      "pageName":  "Representative create",
-                      "route":  "/app/sirket/companies/representatives",
-                      "module":  "company-management",
-                      "entity":  "representative",
-                      "operationType":  "CRUD",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/representatives",
-                                               "PATCH /api/v1/representatives/{representative_id}"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies/representatives",
-                                        "PATCH /api/companies/representatives/{representative_id}"
-                                    ],
-                      "tables":  [
-                                     "company_representatives",
-                                     "person_master",
-                                     "organization_master"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#representativeCreatePayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "RepresentativeCreatePayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/representatives",
-                                              "operationId":  "create_representative_record_api_v1_representatives_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "create_representative_draft_command",
-                                              "update_representative_card_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "representatives.insert_draft",
-                                                "representatives.update_card"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id",
-                                                          "representative_id",
-                                                          "person_id",
-                                                          "organization_id"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "person_kind",
-                                                          "source_type",
-                                                          "record_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "representative_profile",
-                                                           "photo_logo",
-                                                           "contact_points",
-                                                           "entity_bank_accounts"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "base_updated_at is normalized as datetime at contract boundary.",
-                                    "uuid":  "Company and person identifiers reject empty strings.",
-                                    "enum":  "Person kind uses canonical value set.",
-                                    "rawDict":  "Contract schema covers the create payload keys."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_representative_create_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testRepresentativeCreatePayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testRepresentativeCreateHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "representative-authority-wizard",
-                      "pageName":  "Representative authority wizard",
-                      "route":  "/app/sirket/companies/representatives",
-                      "module":  "company-management",
-                      "entity":  "representative_authority",
-                      "operationType":  "wizard",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/representatives/{representative_id}/authority-transactions"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies/representatives/{representative_id}/authority-transactions"
-                                    ],
-                      "tables":  [
-                                     "operation_requests",
-                                     "company_representative_authority_transactions",
-                                     "company_representatives"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#representativeAuthorityWizardPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "RepresentativeAuthorityWizardPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/representatives/{representative_id}/authority-transactions",
-                                              "operationId":  "representative_authority_transaction_api_v1_representatives__representative_id__authority_transactions_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "perform_authority_transaction_for_request"
-                                          ],
-                      "repositoryMethods":  [
-                                                "authority_transactions.insert",
-                                                "operation_requests.create_or_get"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id",
-                                                          "representative_id",
-                                                          "branch_id",
-                                                          "organization_unit_id",
-                                                          "facility_id"
-                                                      ],
-                                             "date":  [
-                                                          "effective_date",
-                                                          "end_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "transaction_type",
-                                                          "scope_type",
-                                                          "authority_record_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "payload_json",
-                                                           "document_files",
-                                                           "scope",
-                                                           "limits",
-                                                           "new_values"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Operation service stores normalized datetime payloads.",
-                                    "uuid":  "Route and scope identifiers are validated by payload contract.",
-                                    "enum":  "Authority transactions use canonical enum values.",
-                                    "rawDict":  "Operation payload registry validates by operation_type."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_representative_authority_wizard_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testRepresentativeAuthorityWizardPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testRepresentativeAuthorityHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "partner-create",
-                      "pageName":  "Partner create",
-                      "route":  "/app/sirket/companies/partners",
-                      "module":  "company-management",
-                      "entity":  "partner",
-                      "operationType":  "CRUD",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/partners",
-                                               "PATCH /api/v1/partners/{partner_id}"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies/partners",
-                                        "PATCH /api/companies/partners/{partner_id}"
-                                    ],
-                      "tables":  [
-                                     "company_partners",
-                                     "ownership_transactions"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#partnerCreatePayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "PartnerCreatePayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/partners",
-                                              "operationId":  "create_partner_card_api_v1_partners_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "create_partner_command",
-                                              "update_partner_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "partners.insert",
-                                                "partners.update"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id",
-                                                          "partner_id",
-                                                          "person_id",
-                                                          "organization_id"
-                                                      ],
-                                             "date":  [
-                                                          "start_date",
-                                                          "end_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "partner_type",
-                                                          "record_status"
-                                                      ],
-                                             "percentage":  [
-                                                                "share_percentage"
-                                                            ],
-                                             "money":  [
-                                                           "capital_amount"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Ownership dates remain date-only fields.",
-                                    "uuid":  "Target identifiers use UUID validation.",
-                                    "enum":  "Partner type uses canonical value mapping.",
-                                    "rawDict":  "Partner payload is represented by a Zod and Pydantic contract."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_partner_create_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testPartnerCreatePayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testPartnerCreateHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "ownership-transactions",
-                      "pageName":  "Ownership transactions",
-                      "route":  "/app/sirket/companies/partners",
-                      "module":  "company-management",
-                      "entity":  "ownership_transaction",
-                      "operationType":  "lifecycle",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/ownership-transactions"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies/partners/ownership-transactions"
-                                    ],
-                      "tables":  [
-                                     "operation_requests",
-                                     "ownership_transactions",
-                                     "company_partners"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#ownershipTransactionPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "OwnershipTransactionPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/ownership/transactions",
-                                              "operationId":  "create_ownership_transaction_api_v1_ownership_transactions_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "ownership_transaction_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "ownership_transactions.insert",
-                                                "operation_requests.create_or_get"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id",
-                                                          "partner_id",
-                                                          "transaction_id"
-                                                      ],
-                                             "date":  [
-                                                          "decision_date",
-                                                          "effective_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "transaction_type",
-                                                          "workflow_status"
-                                                      ],
-                                             "percentage":  [
-                                                                "share_percentage"
-                                                            ],
-                                             "money":  [
-                                                           "capital_amount"
-                                                       ],
-                                             "jsonb":  [
-                                                           "payload_json"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Decision and effective dates are separate from audit timestamps.",
-                                    "uuid":  "Ownership target identifiers are UUID checked.",
-                                    "enum":  "Operation type maps to canonical payload schema.",
-                                    "rawDict":  "Operation request payload is typed by operation_type."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_ownership_transaction_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testOwnershipTransactionPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testOwnershipLifecycleHappyPath"
-                                            ]
-                                },
-                      "status":  "development",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "branch-create",
-                      "pageName":  "Branch create",
-                      "route":  "/app/sirket/companies/branches",
-                      "module":  "company-management",
-                      "entity":  "branch",
-                      "operationType":  "CRUD",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/branches",
-                                               "PATCH /api/v1/branches/{branch_id}"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/companies/branches",
-                                        "PATCH /api/companies/branches/{branch_id}"
-                                    ],
-                      "tables":  [
-                                     "company_branches"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#branchCreatePayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "BranchCreatePayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/branches",
-                                              "operationId":  "create_branch_record_api_v1_branches_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "create_branch_command",
-                                              "update_branch_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "branches.insert",
-                                                "branches.update"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "company_id",
-                                                          "branch_id"
-                                                      ],
-                                             "date":  [
-                                                          "opening_date",
-                                                          "closing_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "branch_type",
-                                                          "record_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "address_json",
-                                                           "contact_points"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Opening and closing dates stay date-only.",
-                                    "uuid":  "Company identifier is required and UUID checked.",
-                                    "enum":  "Branch type uses canonical values.",
-                                    "rawDict":  "Branch payload has explicit schemas."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_branch_create_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testBranchCreatePayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testBranchCreateHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "document-upload",
-                      "pageName":  "Document upload",
-                      "route":  "/app/belgeler",
-                      "module":  "documents",
-                      "entity":  "document",
-                      "operationType":  "operation_request",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/documents",
-                                               "POST /api/v1/documents/{document_id}/files"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/documents",
-                                        "POST /api/documents/{document_id}/files"
-                                    ],
-                      "tables":  [
-                                     "documents",
-                                     "document_files",
-                                     "document_requirements"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#documentUploadPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "DocumentUploadPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/documents/upload",
-                                              "operationId":  "documents_upload_api_v1_documents_upload_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "document_upload_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "documents.insert",
-                                                "document_files.insert"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "document_id",
-                                                          "entity_id"
-                                                      ],
-                                             "datetime":  [
-                                                              "created_at",
-                                                              "updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "document_type",
-                                                          "requirement_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "payload_json",
-                                                           "metadata_json",
-                                                           "storage_metadata"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Audit timestamps are backend-owned.",
-                                    "uuid":  "Document and entity identifiers are UUID checked.",
-                                    "enum":  "Document type stores canonical values.",
-                                    "rawDict":  "Multipart metadata is bounded by contract schema."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_document_upload_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testDocumentUploadPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testDocumentUploadHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "employee-create",
-                      "pageName":  "Employee create",
-                      "route":  "/app/ik/calisanlar",
-                      "module":  "human-resources",
-                      "entity":  "employee",
-                      "operationType":  "CRUD",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/hr/employees",
-                                               "PATCH /api/v1/hr/employees/{employee_id}"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/employees",
-                                        "PATCH /api/employees/{employeeId}"
-                                    ],
-                      "tables":  [
-                                     "employees",
-                                     "person_master"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#employeeCreatePayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "EmployeeCreatePayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/hr/employees",
-                                              "operationId":  "employees_create_api_v1_hr_employees_post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "create_employee_command",
-                                              "update_employee_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "employees.insert",
-                                                "employees.update"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "employee_id",
-                                                          "person_id"
-                                                      ],
-                                             "date":  [
-                                                          "start_date",
-                                                          "end_date"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "employment_status",
-                                                          "record_status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "employment_profile",
-                                                           "contact_points"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Employment dates are separate from audit timestamps.",
-                                    "uuid":  "Person and employee identifiers are UUID checked.",
-                                    "enum":  "Employment status uses canonical values.",
-                                    "rawDict":  "Employee payload is schema-backed."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_employee_create_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testEmployeeCreatePayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeCreateHappyPath"
-                                            ]
-                                },
-                      "status":  "preview",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "themes-management",
-                      "pageName":  "Themes management",
-                      "route":  "/app/development/temalarimiz",
-                      "module":  "admin-console",
-                      "entity":  "workspace_theme",
-                      "operationType":  "lifecycle",
-                      "backendEndpoints":  [
-                                               "GET /api/theme/export",
-                                               "POST /api/theme/import"
-                                           ],
-                      "bffRoutes":  [
-                                        "GET /api/theme/export",
-                                        "POST /api/theme/import"
-                                    ],
-                      "tables":  [
-                                     "theme_management_local_storage",
-                                     "theme_asset_slots"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#themesManagementPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "ThemeManagementPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/admin/settings/{settings_key}",
-                                              "operationId":  "patch_settings_api_v1_admin_settings__settings_key__patch",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "theme_validate_command",
-                                              "theme_activate_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "theme_management.upsertManagedThemeRecord"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id"
-                                                      ],
-                                             "datetime":  [
-                                                              "updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "status"
-                                                      ],
-                                             "jsonb":  [
-                                                           "theme_json"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Theme updates use ISO datetime metadata.",
-                                    "uuid":  "Tenant identifier is optional for local development storage.",
-                                    "enum":  "Theme status is limited to draft, inactive and active in the form.",
-                                    "rawDict":  "Theme JSON import is validated by schema before activation."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_themes_management_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testThemesManagementPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testThemesManagementHappyPath"
-                                            ]
-                                },
-                      "status":  "development",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  },
-                  {
-                      "id":  "generic-lifecycle-operations",
-                      "pageName":  "Generic lifecycle operations",
-                      "route":  "/app/surecler",
-                      "module":  "operations",
-                      "entity":  "operation_request",
-                      "operationType":  "operation_request",
-                      "backendEndpoints":  [
-                                               "POST /api/v1/operations"
-                                           ],
-                      "bffRoutes":  [
-                                        "POST /api/operations"
-                                    ],
-                      "tables":  [
-                                     "operation_requests"
-                                 ],
-                      "frontendSchemas":  [
-                                              "lib/contracts/pageFlowSchemas.ts#genericLifecycleOperationPayloadSchema"
-                                          ],
-                      "backendSchemas":  [
-                                             "GenericLifecycleOperationPayloadContract"
-                                         ],
-                      "responseSchemas":  [
-                                              "PageFlowContractResponse"
-                                          ],
-                      "generatedClient":  {
-                                              "openApiPath":  "/api/v1/integrity/operation/{operation_key}",
-                                              "operationId":  "post_operation_integrity_check_api_v1_integrity_operation__operation_key__post",
-                                              "type":  "paths"
-                                          },
-                      "serviceCommands":  [
-                                              "operation_request_command"
-                                          ],
-                      "repositoryMethods":  [
-                                                "operation_requests.create_or_get"
-                                            ],
-                      "fieldContracts":  {
-                                             "uuid":  [
-                                                          "tenant_id",
-                                                          "entity_id"
-                                                      ],
-                                             "datetime":  [
-                                                              "base_updated_at"
-                                                          ],
-                                             "enum":  [
-                                                          "operation_type",
-                                                          "lifecycle_state"
-                                                      ],
-                                             "jsonb":  [
-                                                           "payload_json"
-                                                       ]
-                                         },
-                      "risks":  {
-                                    "dateTime":  "Operation timestamps are normalized by payload registry.",
-                                    "uuid":  "Entity identifiers are UUID checked.",
-                                    "enum":  "Operation type selects a registered payload model.",
-                                    "rawDict":  "Raw payload is rejected when operation_type is unmapped."
-                                },
-                      "tests":  {
-                                    "backend":  [
-                                                    "backend/app/tests/test_page_flow_contracts.py#test_generic_lifecycle_operations_backend_contract"
-                                                ],
-                                    "frontend":  [
-                                                     "tests/frontend/page-flow-contracts.test.ts#testGenericLifecycleOperationPayloadShape"
-                                                 ],
-                                    "e2e":  [
-                                                "tests/e2e/page-flow-happy-paths.test.ts#testGenericLifecycleOperationHappyPath"
-                                            ]
-                                },
-                      "status":  "development",
-                      "requiredFixes":  [
-                                            "Contract references verified"
-                                        ]
-                  }
-              ]
+  "schemaVersion": "1.0.0",
+  "standard": "Eden ERP Page / Flow Delivery Contract",
+  "documents": {
+    "standard": "docs/architecture/PageFlowDeliveryContract.md",
+    "checklist": "docs/templates/PageFlowDeliveryChecklist.md",
+    "audit": "docs/audit/PageFlowContractAuditReport.md"
+  },
+  "fieldNormalization": {
+    "dateFields": [
+      "effective_date",
+      "decision_date",
+      "start_date",
+      "end_date",
+      "opening_date",
+      "closing_date",
+      "establishment_date"
+    ],
+    "datetimeFields": [
+      "created_at",
+      "updated_at",
+      "base_updated_at"
+    ],
+    "uuidFields": [
+      "tenant_id",
+      "workspace_id",
+      "company_id",
+      "representative_id",
+      "person_id",
+      "branch_id",
+      "document_id",
+      "entity_id"
+    ],
+    "enumFields": [
+      "status",
+      "record_status",
+      "workflow_status",
+      "operation_type",
+      "lifecycle_state",
+      "transaction_type"
+    ],
+    "jsonbFields": [
+      "payload_json",
+      "result_json",
+      "error_json",
+      "metadata_json",
+      "theme_json"
+    ]
+  },
+  "flows": [
+    {
+      "id": "company-create-wizard",
+      "pageName": "Company create wizard",
+      "route": "/app/sirket/companies",
+      "module": "company-management",
+      "entity": "company",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "POST /api/v1/companies"
+      ],
+      "bffRoutes": [
+        "POST /api/companies"
+      ],
+      "tables": [
+        "companies",
+        "company_contacts",
+        "company_documents"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#companyCreateWizardPayloadSchema"
+      ],
+      "backendSchemas": [
+        "CompanyCreateWizardPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/companies",
+        "operationId": "create_company_card_api_v1_companies_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "create_company_command"
+      ],
+      "repositoryMethods": [
+        "companies.insert_company"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id"
+        ],
+        "date": [
+          "establishment_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "company_type",
+          "record_status"
+        ],
+        "jsonb": [
+          "contact_points",
+          "documents"
+        ]
+      },
+      "risks": {
+        "dateTime": "Backend contract parses ISO timestamp fields before repository use.",
+        "uuid": "UUID identifiers are validated by frontend schema and Pydantic model.",
+        "enum": "Canonical values are stored separately from Turkish labels.",
+        "rawDict": "Payload shape is pinned by shared contract references."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_company_create_wizard_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testCompanyCreateWizardPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testCompanyCreateWizardHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "representative-create",
+      "pageName": "Representative create",
+      "route": "/app/sirket/companies/representatives",
+      "module": "company-management",
+      "entity": "representative",
+      "operationType": "CRUD",
+      "backendEndpoints": [
+        "POST /api/v1/representatives",
+        "PATCH /api/v1/representatives/{representative_id}"
+      ],
+      "bffRoutes": [
+        "POST /api/companies/representatives",
+        "PATCH /api/companies/representatives/{representative_id}"
+      ],
+      "tables": [
+        "company_representatives",
+        "person_master",
+        "organization_master"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#representativeCreatePayloadSchema"
+      ],
+      "backendSchemas": [
+        "RepresentativeCreatePayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/representatives",
+        "operationId": "create_representative_record_api_v1_representatives_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "create_representative_draft_command",
+        "update_representative_card_command"
+      ],
+      "repositoryMethods": [
+        "representatives.insert_draft",
+        "representatives.update_card"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id",
+          "representative_id",
+          "person_id",
+          "organization_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "person_kind",
+          "source_type",
+          "record_status"
+        ],
+        "jsonb": [
+          "representative_profile",
+          "photo_logo",
+          "contact_points",
+          "entity_bank_accounts"
+        ]
+      },
+      "risks": {
+        "dateTime": "base_updated_at is normalized as datetime at contract boundary.",
+        "uuid": "Company and person identifiers reject empty strings.",
+        "enum": "Person kind uses canonical value set.",
+        "rawDict": "Contract schema covers the create payload keys."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_representative_create_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testRepresentativeCreatePayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testRepresentativeCreateHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "representative-authority-wizard",
+      "pageName": "Representative authority wizard",
+      "route": "/app/sirket/companies/representatives",
+      "module": "company-management",
+      "entity": "representative_authority",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "POST /api/v1/representatives/{representative_id}/authority-transactions"
+      ],
+      "bffRoutes": [
+        "POST /api/companies/representatives/{representative_id}/authority-transactions"
+      ],
+      "tables": [
+        "operation_requests",
+        "company_representative_authority_transactions",
+        "company_representatives"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#representativeAuthorityWizardPayloadSchema"
+      ],
+      "backendSchemas": [
+        "RepresentativeAuthorityWizardPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/representatives/{representative_id}/authority-transactions",
+        "operationId": "representative_authority_transaction_api_v1_representatives__representative_id__authority_transactions_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "perform_authority_transaction_for_request"
+      ],
+      "repositoryMethods": [
+        "authority_transactions.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id",
+          "representative_id",
+          "branch_id",
+          "organization_unit_id",
+          "facility_id"
+        ],
+        "date": [
+          "effective_date",
+          "end_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "transaction_type",
+          "scope_type",
+          "authority_record_status"
+        ],
+        "jsonb": [
+          "payload_json",
+          "document_files",
+          "scope",
+          "limits",
+          "new_values"
+        ]
+      },
+      "risks": {
+        "dateTime": "Operation service stores normalized datetime payloads.",
+        "uuid": "Route and scope identifiers are validated by payload contract.",
+        "enum": "Authority transactions use canonical enum values.",
+        "rawDict": "Operation payload registry validates by operation_type."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_representative_authority_wizard_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testRepresentativeAuthorityWizardPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testRepresentativeAuthorityHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "partner-create",
+      "pageName": "Partner create",
+      "route": "/app/sirket/companies/partners",
+      "module": "company-management",
+      "entity": "partner",
+      "operationType": "CRUD",
+      "backendEndpoints": [
+        "POST /api/v1/partners",
+        "PATCH /api/v1/partners/{partner_id}"
+      ],
+      "bffRoutes": [
+        "POST /api/companies/partners",
+        "PATCH /api/companies/partners/{partner_id}"
+      ],
+      "tables": [
+        "company_partners",
+        "ownership_transactions"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#partnerCreatePayloadSchema"
+      ],
+      "backendSchemas": [
+        "PartnerCreatePayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/partners",
+        "operationId": "create_partner_card_api_v1_partners_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "create_partner_command",
+        "update_partner_command"
+      ],
+      "repositoryMethods": [
+        "partners.insert",
+        "partners.update"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id",
+          "partner_id",
+          "person_id",
+          "organization_id"
+        ],
+        "date": [
+          "start_date",
+          "end_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "partner_type",
+          "record_status"
+        ],
+        "percentage": [
+          "share_percentage"
+        ],
+        "money": [
+          "capital_amount"
+        ]
+      },
+      "risks": {
+        "dateTime": "Ownership dates remain date-only fields.",
+        "uuid": "Target identifiers use UUID validation.",
+        "enum": "Partner type uses canonical value mapping.",
+        "rawDict": "Partner payload is represented by a Zod and Pydantic contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_partner_create_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testPartnerCreatePayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testPartnerCreateHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "branch-create",
+      "pageName": "Branch create",
+      "route": "/app/sirket/companies/branches",
+      "module": "company-management",
+      "entity": "branch",
+      "operationType": "CRUD",
+      "backendEndpoints": [
+        "POST /api/v1/branches",
+        "PATCH /api/v1/branches/{branch_id}"
+      ],
+      "bffRoutes": [
+        "POST /api/companies/branches",
+        "PATCH /api/companies/branches/{branch_id}"
+      ],
+      "tables": [
+        "company_branches"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#branchCreatePayloadSchema"
+      ],
+      "backendSchemas": [
+        "BranchCreatePayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/branches",
+        "operationId": "create_branch_record_api_v1_branches_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "create_branch_command",
+        "update_branch_command"
+      ],
+      "repositoryMethods": [
+        "branches.insert",
+        "branches.update"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id",
+          "branch_id"
+        ],
+        "date": [
+          "opening_date",
+          "closing_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "branch_type",
+          "record_status"
+        ],
+        "jsonb": [
+          "address_json",
+          "contact_points"
+        ]
+      },
+      "risks": {
+        "dateTime": "Opening and closing dates stay date-only.",
+        "uuid": "Company identifier is required and UUID checked.",
+        "enum": "Branch type uses canonical values.",
+        "rawDict": "Branch payload has explicit schemas."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_branch_create_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testBranchCreatePayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testBranchCreateHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "document-upload",
+      "pageName": "Document upload",
+      "route": "/app/belgeler",
+      "module": "documents",
+      "entity": "document",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "POST /api/v1/documents",
+        "POST /api/v1/documents/{document_id}/files"
+      ],
+      "bffRoutes": [
+        "POST /api/documents",
+        "POST /api/documents/{document_id}/files"
+      ],
+      "tables": [
+        "documents",
+        "document_files",
+        "document_requirements"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#documentUploadPayloadSchema"
+      ],
+      "backendSchemas": [
+        "DocumentUploadPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/documents/upload",
+        "operationId": "documents_upload_api_v1_documents_upload_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "document_upload_command"
+      ],
+      "repositoryMethods": [
+        "documents.insert",
+        "document_files.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "document_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "created_at",
+          "updated_at"
+        ],
+        "enum": [
+          "document_type",
+          "requirement_status"
+        ],
+        "jsonb": [
+          "payload_json",
+          "metadata_json",
+          "storage_metadata"
+        ]
+      },
+      "risks": {
+        "dateTime": "Audit timestamps are backend-owned.",
+        "uuid": "Document and entity identifiers are UUID checked.",
+        "enum": "Document type stores canonical values.",
+        "rawDict": "Multipart metadata is bounded by contract schema."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_document_upload_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testDocumentUploadPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testDocumentUploadHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employee-create",
+      "pageName": "Employee create",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "CRUD",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees",
+        "PATCH /api/v1/hr/employees/{employee_id}"
+      ],
+      "bffRoutes": [
+        "POST /api/employees",
+        "PATCH /api/employees/{employeeId}"
+      ],
+      "tables": [
+        "employees",
+        "person_master"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employeeCreatePayloadSchema"
+      ],
+      "backendSchemas": [
+        "EmployeeCreatePayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees",
+        "operationId": "employees_create_api_v1_hr_employees_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "create_employee_command",
+        "update_employee_command"
+      ],
+      "repositoryMethods": [
+        "employees.insert",
+        "employees.update"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "person_id"
+        ],
+        "date": [
+          "start_date",
+          "end_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "employment_status",
+          "record_status"
+        ],
+        "jsonb": [
+          "employment_profile",
+          "contact_points"
+        ]
+      },
+      "risks": {
+        "dateTime": "Employment dates are separate from audit timestamps.",
+        "uuid": "Person and employee identifiers are UUID checked.",
+        "enum": "Employment status uses canonical values.",
+        "rawDict": "Employee payload is schema-backed."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_employee_create_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmployeeCreatePayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeCreateHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employment-start",
+      "pageName": "Employment start",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/employment/start"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/operations"
+      ],
+      "tables": [
+        "hr_employees",
+        "hr_employee_lifecycle_events",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employmentStartPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/employment/start",
+        "operationId": "employment_start_api_v1_hr_employees__employee_id__employment_start_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employment_start_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_lifecycle_events.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "entity_id"
+        ],
+        "date": [
+          "start_date",
+          "trial_period_end_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "employment_type",
+          "sgk_status",
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employment_start_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmploymentStartPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmploymentStartHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employment-termination",
+      "pageName": "Employment termination",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/employment/terminate"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/operations"
+      ],
+      "tables": [
+        "hr_employees",
+        "hr_employee_lifecycle_events",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employmentTerminationPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/employment/terminate",
+        "operationId": "employment_terminate_api_v1_hr_employees__employee_id__employment_terminate_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employment_termination_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_lifecycle_events.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "entity_id"
+        ],
+        "date": [
+          "end_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "sgk_status",
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employment_termination_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmploymentTerminationPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmploymentTerminationHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employee-assignment-change",
+      "pageName": "Employee assignment change",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/employment/assignment-change"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/operations"
+      ],
+      "tables": [
+        "hr_employees",
+        "hr_employee_lifecycle_events",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employeeAssignmentChangePayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/employment/assignment-change",
+        "operationId": "employment_assignment_change_api_v1_hr_employees__employee_id__employment_assignment_change_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employee_assignment_change_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_lifecycle_events.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "branch_id",
+          "organization_unit_id",
+          "position_id",
+          "entity_id"
+        ],
+        "date": [
+          "effective_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employee_assignment_change_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmployeeAssignmentChangePayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeAssignmentChangeHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employee-sgk-entry-completed",
+      "pageName": "Employee SGK entry completed",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/sgk/entry-completed"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/operations"
+      ],
+      "tables": [
+        "hr_employees",
+        "hr_employee_lifecycle_events",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employeeSgkCompletedPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/sgk/entry-completed",
+        "operationId": "sgk_entry_completed_api_v1_hr_employees__employee_id__sgk_entry_completed_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employee_sgk_entry_completed_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_lifecycle_events.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "entity_id"
+        ],
+        "date": [
+          "completed_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employee_sgk_entry_completed_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmployeeSgkEntryCompletedPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeSgkEntryCompletedHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employee-sgk-exit-completed",
+      "pageName": "Employee SGK exit completed",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/sgk/exit-completed"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/operations"
+      ],
+      "tables": [
+        "hr_employees",
+        "hr_employee_lifecycle_events",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#employeeSgkCompletedPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/sgk/exit-completed",
+        "operationId": "sgk_exit_completed_api_v1_hr_employees__employee_id__sgk_exit_completed_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employee_sgk_exit_completed_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_lifecycle_events.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "entity_id"
+        ],
+        "date": [
+          "completed_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employee_sgk_exit_completed_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testEmployeeSgkExitCompletedPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeSgkExitCompletedHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "employee-document-upload",
+      "pageName": "Employee document upload",
+      "route": "/app/ik/calisanlar",
+      "module": "human-resources",
+      "entity": "employee",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "POST /api/v1/hr/employees/{employee_id}/documents"
+      ],
+      "bffRoutes": [
+        "POST /api/hr/employees/{employee_id}/documents"
+      ],
+      "tables": [
+        "hr_employee_documents",
+        "document_files",
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#documentUploadPayloadSchema"
+      ],
+      "backendSchemas": [
+        "DocumentUploadPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/hr/employees/{employee_id}/documents",
+        "operationId": "documents_create_api_v1_hr_employees__employee_id__documents_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "employee_document_upload_command"
+      ],
+      "repositoryMethods": [
+        "hr_employee_documents.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "employee_id",
+          "document_id",
+          "entity_id"
+        ],
+        "date": [
+          "issue_date",
+          "expiry_date"
+        ],
+        "datetime": [
+          "created_at",
+          "updated_at"
+        ],
+        "enum": [
+          "document_type",
+          "status"
+        ],
+        "jsonb": [
+          "payload_json",
+          "file_ref"
+        ]
+      },
+      "risks": {
+        "dateTime": "ISO datetime values are normalized before repository calls.",
+        "uuid": "Tenant, entity and employee identifiers are UUID checked.",
+        "enum": "Canonical enum values are stored separately from display labels.",
+        "rawDict": "Payload shape is pinned by frontend schema and Pydantic operation contract."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_employee_contracts.py#test_employee_document_upload_requires_operation_record"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testDocumentUploadPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testEmployeeDocumentUploadHappyPath"
+        ]
+      },
+      "status": "preview",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "themes-management",
+      "pageName": "Themes management",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "lifecycle",
+      "backendEndpoints": [
+        "GET /api/theme/export",
+        "POST /api/theme/import"
+      ],
+      "bffRoutes": [
+        "GET /api/theme/export",
+        "POST /api/theme/import"
+      ],
+      "tables": [
+        "theme_management_local_storage",
+        "theme_asset_slots"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themesManagementPayloadSchema"
+      ],
+      "backendSchemas": [
+        "ThemeManagementPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_validate_command",
+        "theme_activate_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id"
+        ],
+        "datetime": [
+          "updated_at"
+        ],
+        "enum": [
+          "status"
+        ],
+        "jsonb": [
+          "theme_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme updates use ISO datetime metadata.",
+        "uuid": "Tenant identifier is optional for local development storage.",
+        "enum": "Theme status is limited to draft, inactive and active in the form.",
+        "rawDict": "Theme JSON import is validated by schema before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_themes_management_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemesManagementPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemesManagementHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-draft-create",
+      "pageName": "Theme draft create",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "CRUD",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themesManagementPayloadSchema"
+      ],
+      "backendSchemas": [
+        "ThemeManagementPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_draft_create_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id"
+        ],
+        "datetime": [
+          "updated_at"
+        ],
+        "enum": [
+          "status"
+        ],
+        "jsonb": [
+          "theme_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_themes_management_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemesManagementPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeDraftCreateHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-import",
+      "pageName": "Theme import",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "wizard",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themeImportPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_import_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "source_type",
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json",
+          "theme_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_theme_management_contracts.py#test_theme_import_requires_lifecycle_operation"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemeImportPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeImportHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-validation",
+      "pageName": "Theme validation",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themeValidationPayloadSchema"
+      ],
+      "backendSchemas": [
+        "ThemeManagementPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_validation_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id"
+        ],
+        "datetime": [
+          "updated_at"
+        ],
+        "enum": [
+          "status"
+        ],
+        "jsonb": [
+          "theme_json",
+          "validation_result_json",
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_theme_management_contracts.py#test_theme_invalid_json_rejected_before_activation"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemeValidationPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeValidationHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-activation",
+      "pageName": "Theme activation",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "lifecycle",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themeActivationPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_activation_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "operation_type",
+          "lifecycle_state",
+          "status"
+        ],
+        "jsonb": [
+          "payload_json",
+          "theme_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_theme_management_contracts.py#test_theme_activation_requires_lifecycle_operation"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemeActivationPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeActivationHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-export",
+      "pageName": "Theme export",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "report",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themeExportPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_export_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "format",
+          "operation_type"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_theme_management_contracts.py#test_theme_export_requires_contract_payload"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemeExportPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeExportHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "theme-asset-upload",
+      "pageName": "Theme asset upload",
+      "route": "/app/development/temalarimiz",
+      "module": "admin-console",
+      "entity": "workspace_theme",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "PATCH /api/v1/admin/settings/{settings_key}"
+      ],
+      "bffRoutes": [
+        "POST /api/theme/management"
+      ],
+      "tables": [
+        "workspace_themes",
+        "workspace_theme_assets",
+        "workspace_theme_lifecycle_events"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#themeAssetUploadPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/admin/settings/{settings_key}",
+        "operationId": "patch_settings_api_v1_admin_settings__settings_key__patch",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "theme_asset_upload_command"
+      ],
+      "repositoryMethods": [
+        "theme_management.upsertManagedThemeRecord",
+        "workspace_theme_lifecycle_events.insert"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "asset_kind",
+          "operation_type"
+        ],
+        "jsonb": [
+          "payload_json",
+          "asset_ref"
+        ]
+      },
+      "risks": {
+        "dateTime": "Theme update timestamps are normalized before storage.",
+        "uuid": "Tenant and workspace identifiers are UUID checked when present.",
+        "enum": "Theme status and export format are canonical values.",
+        "rawDict": "Theme JSON is schema validated before activation."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_theme_management_contracts.py#test_theme_asset_upload_requires_contract_payload"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testThemeAssetUploadPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testThemeAssetUploadHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "generic-lifecycle-operations",
+      "pageName": "Generic lifecycle operations",
+      "route": "/app/surecler",
+      "module": "operations",
+      "entity": "operation_request",
+      "operationType": "operation_request",
+      "backendEndpoints": [
+        "POST /api/v1/operations"
+      ],
+      "bffRoutes": [
+        "POST /api/operations"
+      ],
+      "tables": [
+        "operation_requests"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#genericLifecycleOperationPayloadSchema"
+      ],
+      "backendSchemas": [
+        "GenericLifecycleOperationPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/integrity/operation/{operation_key}",
+        "operationId": "post_operation_integrity_check_api_v1_integrity_operation__operation_key__post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "operation_request_command"
+      ],
+      "repositoryMethods": [
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "entity_id"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "operation_type",
+          "lifecycle_state"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Operation timestamps are normalized by payload registry.",
+        "uuid": "Entity identifiers are UUID checked.",
+        "enum": "Operation type selects a registered payload model.",
+        "rawDict": "Raw payload is rejected when operation_type is unmapped."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_generic_lifecycle_operations_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testGenericLifecycleOperationPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testGenericLifecycleOperationHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    },
+    {
+      "id": "ownership-transactions",
+      "pageName": "Ownership transactions",
+      "route": "/app/sirket/companies/partners",
+      "module": "company-management",
+      "entity": "ownership_transaction",
+      "operationType": "lifecycle",
+      "backendEndpoints": [
+        "POST /api/v1/ownership-transactions"
+      ],
+      "bffRoutes": [
+        "POST /api/companies/partners/ownership-transactions"
+      ],
+      "tables": [
+        "operation_requests",
+        "ownership_transactions",
+        "company_partners"
+      ],
+      "frontendSchemas": [
+        "lib/contracts/pageFlowSchemas.ts#ownershipTransactionPayloadSchema"
+      ],
+      "backendSchemas": [
+        "OwnershipTransactionPayloadContract"
+      ],
+      "responseSchemas": [
+        "PageFlowContractResponse"
+      ],
+      "generatedClient": {
+        "openApiPath": "/api/v1/ownership/transactions",
+        "operationId": "create_ownership_transaction_api_v1_ownership_transactions_post",
+        "type": "paths"
+      },
+      "serviceCommands": [
+        "ownership_transaction_command"
+      ],
+      "repositoryMethods": [
+        "ownership_transactions.insert",
+        "operation_requests.create_or_get"
+      ],
+      "fieldContracts": {
+        "uuid": [
+          "tenant_id",
+          "company_id",
+          "partner_id",
+          "transaction_id"
+        ],
+        "date": [
+          "decision_date",
+          "effective_date"
+        ],
+        "datetime": [
+          "base_updated_at"
+        ],
+        "enum": [
+          "transaction_type",
+          "workflow_status"
+        ],
+        "percentage": [
+          "share_percentage"
+        ],
+        "money": [
+          "capital_amount"
+        ],
+        "jsonb": [
+          "payload_json"
+        ]
+      },
+      "risks": {
+        "dateTime": "Decision and effective dates are separate from audit timestamps.",
+        "uuid": "Ownership target identifiers are UUID checked.",
+        "enum": "Operation type maps to canonical payload schema.",
+        "rawDict": "Operation request payload is typed by operation_type."
+      },
+      "tests": {
+        "backend": [
+          "backend/app/tests/test_page_flow_contracts.py#test_ownership_transaction_backend_contract"
+        ],
+        "frontend": [
+          "tests/frontend/page-flow-contracts.test.ts#testOwnershipTransactionPayloadShape"
+        ],
+        "e2e": [
+          "tests/e2e/page-flow-happy-paths.test.ts#testOwnershipLifecycleHappyPath"
+        ]
+      },
+      "status": "development",
+      "requiredFixes": [
+        "Contract references verified"
+      ]
+    }
+  ]
 }

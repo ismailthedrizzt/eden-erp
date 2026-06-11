@@ -1,58 +1,9 @@
 const fs = require('fs')
 const path = require('path')
 
-const STRICT_ROUTES = new Set([
-  '/app/development/temalarimiz',
-  '/app/ik/calisanlar',
-])
-
-const STANDARD_DEBT_BASELINE = new Set([
-  '/app/crm/firsatlar',
-  '/app/crm/leadler',
-  '/app/crm/paydaslar',
-  '/app/crm/pipeline',
-  '/app/crm/pipeline-ayarlari',
-  '/app/crm/takipler',
-  '/app/gorev-ve-proje-yonetimi',
-  '/app/gorev-ve-proje-yonetimi/backlog',
-  '/app/gorev-ve-proje-yonetimi/gorevler',
-  '/app/gorev-ve-proje-yonetimi/is-akislari',
-  '/app/gorev-ve-proje-yonetimi/kanban-board',
-  '/app/gorev-ve-proje-yonetimi/projeler',
-  '/app/gorev-ve-proje-yonetimi/raporlar',
-  '/app/gorev-ve-proje-yonetimi/sprintler',
-  '/app/gorev-ve-proje-yonetimi/takvim',
-  '/app/gorev-ve-proje-yonetimi/zaman-takibi',
-  '/app/muhasebe',
-  '/app/muhasebe/banka-hesaplari-ve-kartlari',
-  '/app/muhasebe/banka-kart-hareketleri',
-  '/app/muhasebe/cari-hareketler',
-  '/app/muhasebe/cari-kartlar',
-  '/app/muhasebe/hesap-ve-kart-hareketleri',
-  '/app/muhasebe/on-muhasebe-hareketleri',
-  '/app/satis-sonrasi',
-  '/app/satis-sonrasi/bakimi-gelenler',
-  '/app/satis-sonrasi/bakim-planlari',
-  '/app/satis-sonrasi/bakim-sozlesme-takip',
-  '/app/satis-sonrasi/checklistler',
-  '/app/satis-sonrasi/garanti-takip',
-  '/app/satis-sonrasi/kurulu-urunler',
-  '/app/satis-sonrasi/lisans-takip',
-  '/app/satis-sonrasi/mobil-servis/[assignment_id]',
-  '/app/satis-sonrasi/musterideki-urunler',
-  '/app/satis-sonrasi/saha-gorevleri',
-  '/app/satis-sonrasi/servis-destek-kayitlari',
-  '/app/satis-sonrasi/servis-kayitlari',
-  '/app/satis-sonrasi/servis-talepleri',
-  '/app/urun-ve-hizmetler',
-  '/app/urun-ve-hizmetler/bakim-paketleri',
-  '/app/urun-ve-hizmetler/garanti-sablonlari',
-  '/app/urun-ve-hizmetler/hizmet-kartlari',
-  '/app/urun-ve-hizmetler/katalog',
-  '/app/urun-ve-hizmetler/lisans-abonelik-urunleri',
-  '/app/urun-ve-hizmetler/seri-numarali-urunler',
-  '/app/urun-ve-hizmetler/urun-kartlari',
-])
+const root = process.cwd()
+const errors = []
+const warnings = []
 
 const REQUIRED_STANDARD_COMPONENTS = [
   'EdenPageShell',
@@ -71,68 +22,78 @@ const REQUIRED_STANDARD_COMPONENTS = [
   'EdenWizardShell',
 ]
 
-const errors = []
-const warnings = []
 const componentSourcePath = path.join('components', 'ui', 'eden-standard.tsx')
-const componentSource = fs.readFileSync(componentSourcePath, 'utf8')
-const pages = walk('app').filter(file => file.endsWith(`${path.sep}page.tsx`) || file === path.join('app', 'page.tsx'))
-
+const componentSource = fs.existsSync(componentSourcePath) ? fs.readFileSync(componentSourcePath, 'utf8') : ''
 for (const component of REQUIRED_STANDARD_COMPONENTS) {
   if (!componentSource.includes(`function ${component}`)) {
     errors.push(`${componentSourcePath} missing ${component}`)
   }
 }
 
+const registry = parsePageContractRegistry(readOptional('contracts/pages/page-contract-registry.ts'))
+const exceptions = parseExceptions(readOptional('contracts/allowlists/contract-exceptions.ts'))
+const pages = walk('app').filter((file) => file.endsWith(`${path.sep}page.tsx`) || file === path.join('app', 'page.tsx'))
+const strictRoutes = new Set(
+  registry
+    .filter((entry) => entry.route === '/app/ik/calisanlar' || entry.route === '/app/development/temalarimiz')
+    .map((entry) => entry.route)
+)
+
+for (const exception of exceptions) {
+  for (const field of ['rule', 'route', 'file', 'reason', 'owner', 'expiresAt', 'removalPlan']) {
+    if (!exception[field]) errors.push(`Frontend standard exception missing ${field}: ${JSON.stringify(exception)}`)
+  }
+  if (exception.expiresAt && new Date(exception.expiresAt) < new Date()) {
+    errors.push(`Frontend standard exception expired for ${exception.route} ${exception.rule}`)
+  }
+}
+
 for (const file of pages) {
   const source = fs.readFileSync(file, 'utf8')
   const route = pageRoute(file)
-  const strict = STRICT_ROUTES.has(route)
+  const strict = strictRoutes.has(route)
 
   const hasListSignal = /PageBanner|SmartDataTable|<table\b|EdenSmartList/.test(source)
   const hasFormSignal = /<form\b|Kaydet|Save|FormHeader|EdenFormShell|activeTab|TextField|TextArea/.test(source)
   const hasWizardSignal = /<Wizard|WizardSteps|stepper|currentStep|activeStep|EdenWizardShell/.test(source)
 
-  const hasListShell = /EdenListPageShell/.test(source) && /EdenSmartList/.test(source)
-  const hasFormHeader = /EdenFormHeader/.test(source)
-  const hasFormHero = /EdenFormHero/.test(source) || /data-eden-standard=["']form-hero["']/.test(source)
-  const hasFormActionBar = /EdenFormActionBar|data-eden-standard=["']form-action-bar["']/.test(source)
-  const hasFormShell = /EdenFormShell/.test(source) && hasFormHeader && hasFormHero
-  const hasTabs = !/activeTab|setActiveTab|const \[tab/.test(source) || /EdenFormTabs/.test(source)
-  const hasWizardShell = !hasWizardSignal || /EdenWizardShell/.test(source)
-  const saveMatches = source.match(/Kaydet|Kaydediliyor|Save/g) || []
-  const hasSavePlacement = saveMatches.length === 0 || hasFormHeader || hasFormActionBar
-  const hasStatusStandard = !/Aktifle|Pasife Al|Onayla|Arsiv|Yeni Versiyon|Incelemeye/.test(source) || /EdenStatusActionButton/.test(source)
-  const uploaderViolation = /<ImageSlotUploader|<DocumentSlotUploader/.test(source)
-  const heroLongHelpWarning = strict && hasFormHero && /EdenFormHero[\s\S]{0,2200}(Aktivasyon|V2 tema|dokumantasyon)/i.test(source)
-  const uploadButtonViolation = strict
-    && /<button[^>]*(Upload|Yukle|Indir|Download)|<[^>]*>\s*(Upload|Yukle|Indir|Download)/.test(source)
-    && !/EdenHeroImageUploader|EdenHeroDocumentUploader/.test(source)
+  const violations = []
+  if (strict && hasListSignal && !(/EdenListPageShell/.test(source) && /EdenSmartList/.test(source))) {
+    violations.push(['frontend-list-shell', 'must use EdenListPageShell + EdenSmartList'])
+  }
+  if (strict && hasFormSignal && !(/EdenFormShell/.test(source) && /EdenFormHeader/.test(source) && (/EdenFormHero/.test(source) || /data-eden-standard=["']form-hero["']/.test(source)))) {
+    violations.push(['frontend-form-shell', 'must use EdenFormShell + EdenFormHeader + EdenFormHero'])
+  }
+  if (strict && /activeTab|setActiveTab|const \[tab/.test(source) && !/EdenFormTabs/.test(source)) {
+    violations.push(['frontend-tabs', 'tabbed form content must use EdenFormTabs'])
+  }
+  if (strict && hasWizardSignal && !/EdenWizardShell/.test(source)) {
+    violations.push(['frontend-wizard-shell', 'wizard content must use EdenWizardShell'])
+  }
+  if (strict && /<ImageSlotUploader|<DocumentSlotUploader/.test(source)) {
+    violations.push(['frontend-hero-uploader', 'must use EdenHeroImageUploader/EdenHeroDocumentUploader'])
+  }
 
-  if (strict) {
-    if (hasListSignal && !hasListShell) errors.push(`${route} must use EdenListPageShell + EdenSmartList (${file})`)
-    if (hasFormSignal && !hasFormShell) errors.push(`${route} must use EdenFormShell + EdenFormHeader + EdenFormHero (${file})`)
-    if (!hasTabs) errors.push(`${route} tabbed form content must use EdenFormTabs (${file})`)
-    if (!hasWizardShell) errors.push(`${route} wizard content must use EdenWizardShell (${file})`)
-    if (!hasSavePlacement) errors.push(`${route} has non-standard save placement (${file})`)
-    if (!hasStatusStandard) errors.push(`${route} has non-standard status/lifecycle action placement (${file})`)
-    if (uploaderViolation) errors.push(`${route} must use EdenHeroImageUploader/EdenHeroDocumentUploader, not raw slot uploaders (${file})`)
-    if (uploadButtonViolation) errors.push(`${route} has upload/download action outside hero uploader (${file})`)
-    if (heroLongHelpWarning) warnings.push(`${route} form hero contains long technical/help copy; move it to tabs, tooltip, or docs (${file})`)
-  } else if ((hasListSignal || hasFormSignal || hasWizardSignal) && route.startsWith('/app') && !STANDARD_DEBT_BASELINE.has(route)) {
-    const deviations = []
-    if (hasListSignal && !hasListShell) deviations.push('list shell')
-    if (hasFormSignal && !hasFormShell) deviations.push('form shell')
-    if (hasWizardSignal && !hasWizardShell) deviations.push('wizard shell')
-    if (deviations.length && process.env.EDEN_FRONTEND_STANDARD_REPORT_DEBT === '1') {
-      warnings.push(`${route} has pending standardization debt: ${deviations.join(', ')}`)
-    }
+  for (const [rule, message] of violations) {
+    if (!hasException(rule, route, file)) errors.push(`${route} ${message} (${file})`)
+  }
+
+  if (route === '/app/ik/calisanlar') {
+    validateStrictEmployeePage(file, source)
+  }
+  if (route === '/app/development/temalarimiz') {
+    validateStrictThemeManagementPage(file, source)
+  }
+
+  if (!strict && (hasListSignal || hasFormSignal || hasWizardSignal) && process.env.EDEN_FRONTEND_STANDARD_REPORT_DEBT === '1') {
+    warnings.push(`${route} is contract-covered but not strict frontend-standard enforced yet (${file})`)
   }
 }
 
 console.log('Frontend standard contract check')
 console.log(`Pages scanned: ${pages.length}`)
-console.log(`Strict routes: ${STRICT_ROUTES.size}`)
-console.log(`Baseline debt routes: ${STANDARD_DEBT_BASELINE.size}`)
+console.log(`Strict routes: ${strictRoutes.size}`)
+console.log(`Explicit exceptions: ${exceptions.length}`)
 console.log(`Warnings: ${warnings.length}`)
 console.log(`Errors: ${errors.length}`)
 
@@ -144,10 +105,122 @@ if (errors.length) {
   process.exit(1)
 }
 
-function walk(root) {
-  if (!fs.existsSync(root)) return []
-  return fs.readdirSync(root, { withFileTypes: true }).flatMap(entry => {
-    const fullPath = path.join(root, entry.name)
+function validateStrictEmployeePage(file, source) {
+  const route = '/app/ik/calisanlar'
+  const requiredImports = [
+    '@/contracts/entities/employee.contract',
+    '@/contracts/pages/hr/employee.page.contract',
+    '@/contracts/lists/hr/employee.list.contract',
+    '@/contracts/forms/hr/employee.form.contract',
+    '@/contracts/wizards/hr/employment-start.wizard.contract',
+    '@/contracts/wizards/hr/employment-termination.wizard.contract',
+    '@/contracts/wizards/hr/assignment-change.wizard.contract',
+    '@/contracts/wizards/hr/sgk-entry.wizard.contract',
+    '@/contracts/wizards/hr/sgk-exit.wizard.contract',
+    '@/contracts/lifecycle/hr/employee.lifecycle.contract',
+    '@/contracts/api/hr/employee.api.contract',
+  ]
+  for (const importPath of requiredImports) requireSourceImport(route, file, source, importPath)
+
+  forbidSourcePattern(route, file, source, /const\s+columns\s*[:=]\s*\[/, 'employee-hardcoded-columns', 'employee columns must come from employeeListContract')
+  forbidSourcePattern(route, file, source, /const\s+(RECORD|EMPLOYMENT|SGK|GENDER|DOCUMENT)_.*LABELS\s*[:=]/, 'employee-hardcoded-labels', 'employee labels/status maps must come from employee entity contract')
+
+  const apiContract = readOptional('contracts/api/hr/employee.api.contract.ts')
+  const serviceCalls = Array.from(source.matchAll(/\b(employeesService|employmentService)\.([A-Za-z0-9_]+)/g))
+    .map((match) => `${match[1]}.${match[2]}`)
+    .filter((value, index, items) => items.indexOf(value) === index)
+  for (const serviceCall of serviceCalls) {
+    if (!apiContract.includes(`serviceFunction: '${serviceCall}'`) && !apiContract.includes(`serviceFunction: "${serviceCall}"`)) {
+      errors.push(`${route} service call is not listed in employee API contract: ${serviceCall} (${file})`)
+    }
+  }
+}
+
+function validateStrictThemeManagementPage(file, source) {
+  const route = '/app/development/temalarimiz'
+  const requiredImports = [
+    '@/contracts/entities/workspace-theme.contract',
+    '@/contracts/pages/system/themes-management.page.contract',
+    '@/contracts/lists/system/themes-management.list.contract',
+    '@/contracts/forms/system/themes-management.form.contract',
+    '@/contracts/wizards/system/theme-import.wizard.contract',
+    '@/contracts/wizards/system/theme-activation.wizard.contract',
+    '@/contracts/lifecycle/system/theme-management.lifecycle.contract',
+    '@/contracts/api/system/theme-management.api.contract',
+  ]
+  for (const importPath of requiredImports) requireSourceImport(route, file, source, importPath)
+
+  forbidSourcePattern(route, file, source, /const\s+STATUS_LABELS\s*[:=]/, 'theme-hardcoded-status-labels', 'theme status labels must come from workspace theme contract')
+  forbidSourcePattern(route, file, source, /const\s+STATUS_CLASS\s*[:=]/, 'theme-hardcoded-status-classes', 'theme status classes must come from workspace theme contract')
+  forbidSourcePattern(route, file, source, /const\s+FILTERS\s*[:=]/, 'theme-hardcoded-filters', 'theme filters must come from list contract')
+  forbidSourcePattern(route, file, source, /const\s+TABS\s*[:=]/, 'theme-hardcoded-tabs', 'theme tabs must come from form contract')
+  forbidSourcePattern(route, file, source, /const\s+IMAGE_SLOTS\s*[:=]/, 'theme-hardcoded-image-slots', 'theme image slots must come from form contract')
+  forbidSourcePattern(route, file, source, /const\s+DOCUMENT_SLOTS\s*[:=]/, 'theme-hardcoded-document-slots', 'theme document slots must come from form contract')
+  forbidSourcePattern(route, file, source, /const\s+COLOR_FIELDS\s*[:=]/, 'theme-hardcoded-color-fields', 'theme color fields must come from form contract')
+  forbidSourcePattern(route, file, source, /<th[^>]*>\s*(Tema adi|Tema kodu|Durum|Versiyon|Aktif tema|Son guncelleme)/, 'theme-hardcoded-list-columns', 'theme list headers must render from themeManagementListContract.columns')
+}
+
+function requireSourceImport(route, file, source, importPath) {
+  if (!source.includes(importPath)) {
+    errors.push(`${route} missing contract import ${importPath} (${file})`)
+  }
+}
+
+function forbidSourcePattern(route, file, source, pattern, rule, message) {
+  if (pattern.test(source) && !hasException(rule, route, file)) {
+    errors.push(`${route} ${message} (${file})`)
+  }
+}
+
+function hasException(rule, route, file) {
+  const normalized = file.split(path.sep).join('/')
+  return exceptions.some((exception) => exception.rule === rule && exception.route === route && exception.file === normalized)
+}
+
+function parsePageContractRegistry(source) {
+  const bodyMatch = source.match(/export const pageContractRegistry = \[([\s\S]*?)\] as const/)
+  if (!bodyMatch) return []
+  return bodyMatch[1]
+    .split(/\n\s*\},\n\s*\{/)
+    .map((part) => part.replace(/^\s*\{/, '').replace(/\}\s*$/, ''))
+    .filter((part) => part.includes('route:'))
+    .map((part) => ({
+      route: field(part, 'route'),
+      implementationStatus: field(part, 'implementationStatus'),
+    }))
+}
+
+function parseExceptions(source) {
+  const bodyMatch = source.match(/export const contractExceptions[^=]*=\s*\[([\s\S]*?)\]/)
+  const body = bodyMatch ? bodyMatch[1] : ''
+  const matches = body.match(/\{[\s\S]*?\}/g) || []
+  return matches
+    .filter((item) => item.includes('rule:'))
+    .map((item) => ({
+      rule: field(item, 'rule'),
+      route: field(item, 'route'),
+      file: field(item, 'file'),
+      reason: field(item, 'reason'),
+      owner: field(item, 'owner'),
+      expiresAt: field(item, 'expiresAt'),
+      removalPlan: field(item, 'removalPlan'),
+    }))
+}
+
+function field(source, name) {
+  const match = source.match(new RegExp(`${name}:\\s*['"]([^'"]*)['"]`))
+  return match ? match[1] : undefined
+}
+
+function readOptional(relativePath) {
+  const full = path.join(root, relativePath)
+  return fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : ''
+}
+
+function walk(directory) {
+  if (!fs.existsSync(directory)) return []
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name)
     if (entry.isDirectory()) return walk(fullPath)
     return [fullPath]
   })
@@ -156,6 +229,5 @@ function walk(root) {
 function pageRoute(file) {
   const normalized = file.split(path.sep).join('/')
   const withoutApp = normalized.replace(/^app/, '')
-  const route = withoutApp.replace(/\/page\.tsx$/, '') || '/'
-  return route || '/'
+  return withoutApp.replace(/\/page\.tsx$/, '') || '/'
 }

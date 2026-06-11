@@ -1,5 +1,14 @@
 'use client'
 
+
+import { appSirketCompaniesRepresentativesFormContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.form.contract'
+import { appSirketCompaniesRepresentativesWizardContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.wizard.contract'
+import { appSirketCompaniesRepresentativesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.lifecycle.contract'
+
+void appSirketCompaniesRepresentativesFormContract
+void appSirketCompaniesRepresentativesWizardContract
+void appSirketCompaniesRepresentativesLifecycleContract
+
 import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'

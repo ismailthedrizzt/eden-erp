@@ -1,5 +1,17 @@
 'use client'
 
+
+
+import { appSistemEPostalarListContract } from '@/contracts/pages/generated/app-sistem-e-postalar.list.contract'
+
+void appSistemEPostalarListContract
+
+import { appSistemEPostalarPageContract } from '@/contracts/pages/generated/app-sistem-e-postalar.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appSistemEPostalarContractReady = requirePageContract(appSistemEPostalarPageContract)
+void appSistemEPostalarContractReady
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, Mail, RefreshCw, RotateCcw, Send } from 'lucide-react'
 import { Toast, type ToastType } from '@/components/ui/Toast'

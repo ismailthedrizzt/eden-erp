@@ -1,5 +1,23 @@
 'use client'
 
+
+
+import { appMuhasebeOnMuhasebeHareketleriListContract } from '@/contracts/pages/generated/app-muhasebe-on-muhasebe-hareketleri.list.contract'
+import { appMuhasebeOnMuhasebeHareketleriFormContract } from '@/contracts/pages/generated/app-muhasebe-on-muhasebe-hareketleri.form.contract'
+import { appMuhasebeOnMuhasebeHareketleriWizardContract } from '@/contracts/pages/generated/app-muhasebe-on-muhasebe-hareketleri.wizard.contract'
+import { appMuhasebeOnMuhasebeHareketleriLifecycleContract } from '@/contracts/pages/generated/app-muhasebe-on-muhasebe-hareketleri.lifecycle.contract'
+
+void appMuhasebeOnMuhasebeHareketleriListContract
+void appMuhasebeOnMuhasebeHareketleriFormContract
+void appMuhasebeOnMuhasebeHareketleriWizardContract
+void appMuhasebeOnMuhasebeHareketleriLifecycleContract
+
+import { appMuhasebeOnMuhasebeHareketleriPageContract } from '@/contracts/pages/generated/app-muhasebe-on-muhasebe-hareketleri.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+
+const appMuhasebeOnMuhasebeHareketleriContractReady = requirePageContract(appMuhasebeOnMuhasebeHareketleriPageContract)
+void appMuhasebeOnMuhasebeHareketleriContractReady
+
 import { useEffect, useMemo, useState } from 'react'
 import { Download, FileText, Filter, RefreshCw } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
