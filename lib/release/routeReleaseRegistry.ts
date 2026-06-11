@@ -51,8 +51,8 @@ export const routeReleaseRegistry = [
     requiresPermission: ['documents.view'],
     notes: INTERNAL_NOTES,
   }),
-  route('/app/design-lab', 'adminConsole', 'Legacy Temalarımız alias', 'hidden', false, false, false, {
-    notes: 'Deprecated alias. Use /app/development/temalarimiz.',
+  route('/app/design-lab', 'adminConsole', 'Deprecated Temalarimiz route', 'hidden', false, false, false, {
+    notes: 'Deprecated route. Use /app/development/temalarimiz.',
   }),
   route('/app/development/temalarimiz', 'adminConsole', 'Temalarımız', 'development_internal', true, true, true, {
     requiresPermission: ['adminConsole.manage', 'system.admin'],
@@ -70,7 +70,7 @@ export const routeReleaseRegistry = [
   route('/app/sirket/araclar', 'assets', 'Araclar', 'development', true, true, true),
   route('/app/sirket/demirbas', 'assets', 'Demirbas', 'development', true, true, true),
   route('/app/sirket/surecler', 'process', 'Sirket surecleri', 'development', true, true, true),
-  route('/app/sirket/paydaslar', 'crm', 'Legacy sirket paydaslar alias', 'hidden', false, false, false),
+  route('/app/sirket/paydaslar', 'crm', 'Deprecated sirket paydaslar route', 'hidden', false, false, false),
 
   route('/app/muhasebe', 'accounting', 'Muhasebe dashboard', 'development', true, true, true),
   route('/app/muhasebe/cari-kartlar', 'accounting', 'Cari Kartlar', 'development', true, true, true),

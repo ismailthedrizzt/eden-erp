@@ -15,12 +15,29 @@ function normalizeLocation(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
 }
 
+function scopedBaseResponse(
+  locations: ReturnType<typeof getFallbackTurkeyLocations>,
+  scope: string,
+  limit: number
+) {
+  if (scope !== 'provinces') return null
+  const provinces = limit > 0 ? locations.provinces.slice(0, limit) : locations.provinces
+  return NextResponse.json(
+    { provinces },
+    { headers: { 'cache-control': 'no-store, max-age=0' } }
+  )
+}
+
 export async function GET(request: NextRequest) {
   const locations = getFallbackTurkeyLocations()
-  const scope = request.nextUrl.searchParams.get('scope') || ''
+  const scope = request.nextUrl.searchParams.get('scope') || 'provinces'
+  const scopedMode = scope || 'provinces'
   const provinceQuery = request.nextUrl.searchParams.get('province') || ''
   const query = request.nextUrl.searchParams.get('q') || request.nextUrl.searchParams.get('query') || ''
   const limit = Number(request.nextUrl.searchParams.get('limit') || 0)
+
+  const scopedResponse = !query && !provinceQuery ? scopedBaseResponse(locations, scopedMode, limit) : null
+  if (scopedResponse) return scopedResponse
 
   if (provinceQuery) {
     const key = normalizeLocation(provinceQuery)

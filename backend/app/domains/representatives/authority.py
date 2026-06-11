@@ -18,6 +18,7 @@ from app.domains.operations.service import (
 )
 from app.domains.outbox.service import enqueue_outbox_event_required
 from app.domains.representatives.schemas import (
+    AUTHORITY_TRANSACTION_LABELS,
     AUTHORITY_TRANSACTION_TYPES,
     RepresentativeAuthorityScope,
     RepresentativeAuthorityTransactionRequest,
@@ -132,6 +133,7 @@ def validate_transaction_allowed(
     current_authority: dict[str, Any] | None,
     transaction_type: str,
 ) -> None:
+    transaction_type = AUTHORITY_TRANSACTION_LABELS.get(transaction_type, transaction_type)
     card_status = representative_card_status(representative)
     current_status = authority_status(current_authority)
     if transaction_type == "authority_start" and card_status not in DRAFT_CARD_STATUSES:

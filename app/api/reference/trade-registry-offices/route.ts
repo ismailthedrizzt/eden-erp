@@ -3,10 +3,17 @@
 // TARGET_FASTAPI_ENDPOINT: /api/v1/search/trade-registry-offices
 // NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+import { NextRequest } from 'next/server'
+import { fastApiUnavailableResponse, proxyToFastApi } from '@/lib/backend/fastApiProxy'
+import { referenceQueryRequiredResponse, wantsFullReferencePayload } from '../_boundedQuery'
 
 export const runtime = 'nodejs'
 
-const handler = createFastApiProxyHandler('/api/v1/search/trade-registry-offices')
+export async function GET(request: NextRequest) {
+  const explicitFullPayload = wantsFullReferencePayload(request.nextUrl.searchParams)
+  const boundedResponse = referenceQueryRequiredResponse(request.nextUrl.searchParams)
+  if (boundedResponse && !explicitFullPayload) return boundedResponse
 
-export { handler as GET }
+  const response = await proxyToFastApi(request, '/api/v1/search/trade-registry-offices', { internal: true })
+  return response || fastApiUnavailableResponse()
+}
