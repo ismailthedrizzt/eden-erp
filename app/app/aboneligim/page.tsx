@@ -5,7 +5,6 @@ import { appAboneligimPageContract } from '@/contracts/pages/generated/app-abone
 import { requirePageContract } from '@/contracts/tests/contract-test-utils'
 
 const appAboneligimContractReady = requirePageContract(appAboneligimPageContract)
-void appAboneligimContractReady
 
 import { useEffect, useState } from 'react'
 import { BadgeCheck, CreditCard, Database, ShieldCheck } from 'lucide-react'
@@ -82,4 +81,3 @@ function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string
     </div>
   )
 }
-

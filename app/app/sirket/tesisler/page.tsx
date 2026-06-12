@@ -1,22 +1,14 @@
 'use client'
 
 
-
+import { appSirketTesislerPageContract } from '@/contracts/pages/generated/app-sirket-tesisler.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
 import { appSirketTesislerListContract } from '@/contracts/pages/generated/app-sirket-tesisler.list.contract'
 import { appSirketTesislerFormContract } from '@/contracts/pages/generated/app-sirket-tesisler.form.contract'
 import { appSirketTesislerWizardContract } from '@/contracts/pages/generated/app-sirket-tesisler.wizard.contract'
 import { appSirketTesislerLifecycleContract } from '@/contracts/pages/generated/app-sirket-tesisler.lifecycle.contract'
 
-void appSirketTesislerListContract
-void appSirketTesislerFormContract
-void appSirketTesislerWizardContract
-void appSirketTesislerLifecycleContract
-
-import { appSirketTesislerPageContract } from '@/contracts/pages/generated/app-sirket-tesisler.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
 const appSirketTesislerContractReady = requirePageContract(appSirketTesislerPageContract)
-void appSirketTesislerContractReady
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'

@@ -1,16 +1,11 @@
 'use client'
 
 
-
-import { appProfilFormContract } from '@/contracts/pages/generated/app-profil.form.contract'
-
-void appProfilFormContract
-
 import { appProfilPageContract } from '@/contracts/pages/generated/app-profil.page.contract'
 import { requirePageContract } from '@/contracts/tests/contract-test-utils'
+import { appProfilFormContract } from '@/contracts/pages/generated/app-profil.form.contract'
 
 const appProfilContractReady = requirePageContract(appProfilPageContract)
-void appProfilContractReady
 
 import { FormEvent, useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Loader2, Save, Trash2, Upload, UserRound } from 'lucide-react'

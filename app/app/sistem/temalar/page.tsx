@@ -5,7 +5,6 @@ import { appSistemTemalarPageContract } from '@/contracts/pages/generated/app-si
 import { requirePageContract } from '@/contracts/tests/contract-test-utils'
 
 const appSistemTemalarContractReady = requirePageContract(appSistemTemalarPageContract)
-void appSistemTemalarContractReady
 
 import { useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Download, Eye, FileJson, Loader2, Palette, ShieldCheck, Upload } from 'lucide-react'

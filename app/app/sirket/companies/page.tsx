@@ -5,9 +5,6 @@ import { appSirketCompaniesFormContract } from '@/contracts/pages/generated/app-
 import { appSirketCompaniesWizardContract } from '@/contracts/pages/generated/app-sirket-companies.wizard.contract'
 import { appSirketCompaniesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies.lifecycle.contract'
 
-void appSirketCompaniesFormContract
-void appSirketCompaniesWizardContract
-void appSirketCompaniesLifecycleContract
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
@@ -142,6 +139,8 @@ const FIELD_LABELS: Record<string, string> = {
   phone: 'Telefon',
   email: 'E-posta',
   website: 'Web Sitesi',
+  contact_points: 'İrtibat Noktaları',
+  entity_bank_accounts: 'Banka Hesapları',
   legal_entity: 'Tüzel Kişilik',
   electronic_notification_address: 'Elektronik Tebligat Adresi',
   trade_registry_office: 'Ticaret Sicili Müdürlüğü',
@@ -341,6 +340,25 @@ const tabs: FormTab[] = [
       {
         name: 'company_branches_summary',
         label: 'Şubeler / Lokasyonlar',
+        type: 'custom',
+        colSpan: 3,
+      },
+    ],
+  },
+  {
+    id: 'contact_finance',
+    label: 'Banka ve İrtibat',
+    icon: <BriefcaseBusiness size={16} />,
+    fields: [
+      {
+        name: 'contact_points',
+        label: 'İrtibat Noktaları',
+        type: 'custom',
+        colSpan: 3,
+      },
+      {
+        name: 'entity_bank_accounts',
+        label: 'Banka Hesapları',
         type: 'custom',
         colSpan: 3,
       },
@@ -1898,8 +1916,9 @@ export default function SirketlerPage() {
                     ...nextField,
                     render: ({ data }) => {
                       const rows = Array.isArray((selectedSirket as any)?.company_nace_codes) ? (selectedSirket as any).company_nace_codes : []
-                      const primary = rows.find((row: any) => row?.is_primary && row?.status !== 'passive')
-                      const hazardClass = formatHazardClass(primary?.nace_code?.hazard_class || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.risk_class) || 'Birincil NACE seçilmemiş'
+                      const primary = rows.find((row: any) => isPrimaryNaceRow(row) && !isPassiveNaceRow(row)) || rows.find((row: any) => !isPassiveNaceRow(row))
+                      const primaryNace = normalizeCompanyNaceRow(primary)
+                      const hazardClass = formatHazardClass(primaryNace.hazardClass || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.risk_class) || 'Birincil NACE seçilmemiş'
 
                       return (
                         <div className="space-y-3">
@@ -1944,6 +1963,32 @@ export default function SirketlerPage() {
                     ...nextField,
                     render: ({ data }) => (
                       <CompanyNaceActivitySummary data={(data as Sirket) || selectedSirket} />
+                    ),
+                  }
+                }
+
+                if (nextField.name === 'contact_points') {
+                  return {
+                    ...nextField,
+                    render: ({ value, onChange, readOnly }) => (
+                      <CompanyContactPointsPanel
+                        rows={Array.isArray(value) ? value : (Array.isArray((selectedSirket as any)?.contact_points) ? (selectedSirket as any).contact_points : [])}
+                        readOnly={readOnly}
+                        onChange={onChange}
+                      />
+                    ),
+                  }
+                }
+
+                if (nextField.name === 'entity_bank_accounts') {
+                  return {
+                    ...nextField,
+                    render: ({ value, onChange, readOnly }) => (
+                      <CompanyBankAccountsPanel
+                        rows={Array.isArray(value) ? value : (Array.isArray((selectedSirket as any)?.entity_bank_accounts) ? (selectedSirket as any).entity_bank_accounts : [])}
+                        readOnly={readOnly}
+                        onChange={onChange}
+                      />
                     ),
                   }
                 }
@@ -2239,17 +2284,18 @@ function getPublicRegistrationReadiness(company?: Partial<Sirket> | null) {
 
 function CompanyNaceActivitySummary({ data }: { data?: Partial<Sirket> | null }) {
   const rows = Array.isArray((data as any)?.company_nace_codes) ? (data as any).company_nace_codes : []
-  const activeRows = rows.filter((row: any) => !row?.is_deleted && String(row?.status || 'active').toLocaleLowerCase('tr-TR') !== 'passive')
-  const primary = activeRows.find((row: any) => row?.is_primary)
-  const secondaryCount = activeRows.filter((row: any) => !row?.is_primary).length
-  const hazardClass = formatHazardClass(primary?.nace_code?.hazard_class || (data as any)?.public_sgk?.risk_class || (data as any)?.risk_class)
+  const activeRows = rows.filter((row: any) => !isPassiveNaceRow(row))
+  const primary = activeRows.find((row: any) => isPrimaryNaceRow(row)) || activeRows[0]
+  const primaryNace = normalizeCompanyNaceRow(primary)
+  const secondaryCount = activeRows.filter((row: any) => !isPrimaryNaceRow(row)).length
+  const hazardClass = formatHazardClass(primaryNace.hazardClass || (data as any)?.public_sgk?.risk_class || (data as any)?.risk_class)
   const activitySubject = String((data as any)?.activity_subject || '').trim()
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-5">
-        <SummaryMetric label="Birincil NACE" value={primary?.nace_code?.nace_code || '-'} />
-        <SummaryMetric label="Birincil NACE Adı" value={primary?.nace_code?.description || '-'} />
+        <SummaryMetric label="Birincil NACE" value={primaryNace.code || '-'} />
+        <SummaryMetric label="Birincil NACE Adı" value={primaryNace.description || '-'} />
         <SummaryMetric label="SGK Tehlike Sınıfı" value={hazardClass || '-'} />
         <SummaryMetric label="İkincil NACE" value={String(secondaryCount)} />
         <SummaryMetric label="Faaliyet Konusu" value={activitySubject ? `${activitySubject.slice(0, 80)}${activitySubject.length > 80 ? '...' : ''}` : '-'} />
@@ -2258,6 +2304,165 @@ function CompanyNaceActivitySummary({ data }: { data?: Partial<Sirket> | null })
         Aktif şirketlerde NACE kodları, faaliyet konusu ve SGK tehlike sınıfı normal form editinden değil ilgili resmi değişiklik wizardları üzerinden güncellenir.
       </div>
     </div>
+  )
+}
+
+function isPassiveNaceRow(row: any) {
+  if (!row || row?.is_deleted) return true
+  return String(row?.status || row?.record_status || 'active').toLocaleLowerCase('tr-TR') === 'passive'
+}
+
+function isPrimaryNaceRow(row: any) {
+  return row?.is_primary === true || row?.primary === true || row?.isPrimary === true
+}
+
+function normalizeCompanyNaceRow(row: any) {
+  const nested = row?.nace_code && typeof row.nace_code === 'object' ? row.nace_code : {}
+  const codeValue = typeof row?.nace_code === 'string' ? row.nace_code : undefined
+  return {
+    code: firstNonEmpty(row?.code, row?.nace_code_value, row?.nace_code_text, row?.naceCode, nested?.nace_code, nested?.code, codeValue),
+    description: firstNonEmpty(row?.description, row?.nace_description, row?.activity_description, row?.title, nested?.description, nested?.title),
+    hazardClass: firstNonEmpty(row?.hazard_class, row?.risk_class, row?.danger_class, nested?.hazard_class, nested?.risk_class),
+  }
+}
+
+function firstNonEmpty(...values: unknown[]) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue
+    const text = String(value).trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function CompanyContactPointsPanel({
+  rows,
+  readOnly,
+  onChange,
+}: {
+  rows: Array<Record<string, any>>
+  readOnly?: boolean
+  onChange?: (value: Array<Record<string, any>>) => void
+}) {
+  const normalizedRows = rows.length ? rows : []
+  const updateRow = (index: number, key: string, value: string) => {
+    const nextRows = normalizedRows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row)
+    onChange?.(nextRows)
+  }
+  const addRow = () => onChange?.([...normalizedRows, { label: 'Birincil', contact_person: '', phone: '', email: '', role: '' }])
+  const removeRow = (index: number) => onChange?.(normalizedRows.filter((_, rowIndex) => rowIndex !== index))
+
+  return (
+    <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950/40">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">İrtibat Noktaları</h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Şirket kartına bağlı operasyonel iletişim kişileri ve kanalları.</p>
+        </div>
+        {!readOnly && (
+          <button type="button" onClick={addRow} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+            Ekle
+          </button>
+        )}
+      </div>
+      {normalizedRows.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">İrtibat noktası eklenmedi.</p>
+      ) : (
+        <div className="space-y-2">
+          {normalizedRows.map((row, index) => (
+            <div key={row.id || index} className="grid gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/60 md:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+              <CompanyCompactInput label="Etiket" value={row.label || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'label', value)} />
+              <CompanyCompactInput label="Kişi" value={row.contact_person || row.name || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'contact_person', value)} />
+              <CompanyCompactInput label="Telefon" value={row.phone || row.mobile_phone || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'phone', value)} />
+              <CompanyCompactInput label="E-posta" value={row.email || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'email', value)} />
+              {!readOnly && (
+                <button type="button" onClick={() => removeRow(index)} className="self-end rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
+                  Kaldır
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CompanyBankAccountsPanel({
+  rows,
+  readOnly,
+  onChange,
+}: {
+  rows: Array<Record<string, any>>
+  readOnly?: boolean
+  onChange?: (value: Array<Record<string, any>>) => void
+}) {
+  const normalizedRows = rows.length ? rows : []
+  const updateRow = (index: number, key: string, value: string) => {
+    const nextRows = normalizedRows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row)
+    onChange?.(nextRows)
+  }
+  const addRow = () => onChange?.([...normalizedRows, { label: 'Birincil', bank_name: '', iban: '', account_number: '', currency: 'TRY' }])
+  const removeRow = (index: number) => onChange?.(normalizedRows.filter((_, rowIndex) => rowIndex !== index))
+
+  return (
+    <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950/40">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Banka Hesapları</h4>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Şirket kartında kullanılacak banka, IBAN ve hesap bilgileri.</p>
+        </div>
+        {!readOnly && (
+          <button type="button" onClick={addRow} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+            Ekle
+          </button>
+        )}
+      </div>
+      {normalizedRows.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">Banka hesabı eklenmedi.</p>
+      ) : (
+        <div className="space-y-2">
+          {normalizedRows.map((row, index) => (
+            <div key={row.id || index} className="grid gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/60 md:grid-cols-[0.8fr_1fr_1.4fr_1fr_0.6fr_auto]">
+              <CompanyCompactInput label="Etiket" value={row.label || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'label', value)} />
+              <CompanyCompactInput label="Banka" value={row.bank_name || row.bankName || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'bank_name', value)} />
+              <CompanyCompactInput label="IBAN" value={row.iban || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'iban', value)} />
+              <CompanyCompactInput label="Hesap No" value={row.account_number || row.accountNumber || ''} readOnly={readOnly} onChange={(value) => updateRow(index, 'account_number', value)} />
+              <CompanyCompactInput label="Para" value={row.currency || 'TRY'} readOnly={readOnly} onChange={(value) => updateRow(index, 'currency', value)} />
+              {!readOnly && (
+                <button type="button" onClick={() => removeRow(index)} className="self-end rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
+                  Kaldır
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CompanyCompactInput({
+  label,
+  value,
+  readOnly,
+  onChange,
+}: {
+  label: string
+  value: string
+  readOnly?: boolean
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+      {label}
+      <input
+        value={value}
+        readOnly={readOnly}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 h-9 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 read-only:bg-gray-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-950 dark:read-only:bg-gray-900"
+      />
+    </label>
   )
 }
 

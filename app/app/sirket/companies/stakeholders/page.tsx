@@ -1,18 +1,12 @@
 'use client'
 
 
-
+import { appSirketCompaniesStakeholdersPageContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.page.contract'
+import { requirePageContract } from '@/contracts/tests/contract-test-utils'
 import { appSirketCompaniesStakeholdersListContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.list.contract'
 import { appSirketCompaniesStakeholdersFormContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.form.contract'
 
-void appSirketCompaniesStakeholdersListContract
-void appSirketCompaniesStakeholdersFormContract
-
-import { appSirketCompaniesStakeholdersPageContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
 const appSirketCompaniesStakeholdersContractReady = requirePageContract(appSirketCompaniesStakeholdersPageContract)
-void appSirketCompaniesStakeholdersContractReady
 
 import { useEffect, useMemo, useState } from 'react'
 import { Handshake } from 'lucide-react'

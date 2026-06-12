@@ -109,6 +109,16 @@ function validateRegistryEntry(entry) {
     errors.push(`${entry.route}: pageContractPath does not exist: ${entry.pageContractPath}`)
     return
   }
+  const pageContractGenerated = /(^|[\\/])generated[\\/]/.test(entry.pageContractPath || '')
+  if (entry.implementationStatus === 'contract_ready' && pageContractGenerated && entry.contractSource !== 'generated_from_existing_page') {
+    errors.push(`${entry.route}: generated placeholder contracts cannot be marked contract_ready without contractSource generated_from_existing_page`)
+  }
+  if (entry.contractSource === 'generated_placeholder' && entry.implementationStatus === 'contract_ready') {
+    errors.push(`${entry.route}: generated_placeholder cannot be contract_ready`)
+  }
+  if (release?.releaseStatus === 'release' && entry.apiContractPath && entry.contractDepth && !['page_list_form_api', 'full_lifecycle'].includes(entry.contractDepth)) {
+    errors.push(`${entry.route}: release route with API contract must be at least page_list_form_api`)
+  }
 
   const contractSource = read(entry.pageContractPath)
   if (!contractSource.includes('satisfies EdenPageContract')) {
@@ -227,6 +237,9 @@ function parsePageContractRegistry(source) {
       apiContractPath: field(part, 'apiContractPath'),
       lifecycleContractPath: field(part, 'lifecycleContractPath'),
       sourcePagePath: field(part, 'sourcePagePath'),
+      contractDepth: field(part, 'contractDepth'),
+      contractSource: field(part, 'contractSource'),
+      businessCriticality: field(part, 'businessCriticality'),
       notes: field(part, 'notes'),
     }))
 }
