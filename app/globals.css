@@ -137,6 +137,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html[data-auth-surface],
+  html[data-auth-surface] body {
+    background: #020711 !important;
+    color: #f4f8ff !important;
+  }
+
   select,
   select option {
     color: var(--eden-text);

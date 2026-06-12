@@ -127,6 +127,28 @@ async def build_company_detail_read_model(
     branch_summary = await get_branch_summary_for_company(session, tenant_id, company_id)
     warnings.extend(branch_summary.warnings)
     ownership = await _current_ownership_or_warning(session, tenant_id, company_id, warnings)
+    partner_rows = await _company_related_rows_or_warning(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_partners",
+        warnings=warnings,
+    )
+    representatives = await _company_related_rows_or_warning(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_representatives",
+        warnings=warnings,
+    )
+    stakeholders = await _company_related_rows_or_warning(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_stakeholders",
+        warnings=warnings,
+    )
+    partners = _merge_partner_rows_with_ownership(partner_rows, ownership)
 
     return {
         "company": company,
@@ -135,6 +157,9 @@ async def build_company_detail_read_model(
         "public_registry": context.get("public_registry"),
         "public_channels": context.get("public_channels"),
         "current_ownership": ownership,
+        "partners": partners,
+        "representatives": representatives,
+        "stakeholders": stakeholders,
         "company_nace_codes": await load_company_nace_codes(session, tenant_id, company_id),
         "lifecycle_events": [],
         "branches": branch_summary.data.get("branches", []),
@@ -160,6 +185,71 @@ async def _current_ownership_or_warning(
     except (DomainError, SQLAlchemyError):
         warnings.append("CURRENT_OWNERSHIP_VIEW_MISSING_FALLBACK_USED")
         return []
+
+
+async def _company_related_rows_or_warning(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    company_id: str,
+    table_name: str,
+    warnings: list[str],
+) -> list[dict[str, Any]]:
+    if not await table_exists(session, f"public.{table_name}"):
+        warnings.append(f"{table_name.upper()}_TABLE_MISSING")
+        return []
+    columns_result = await session.execute(
+        text(
+            """
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = :table_name
+            """
+        ),
+        {"table_name": table_name},
+    )
+    columns = {str(row[0]) for row in columns_result.all()}
+    deleted_clause = "and coalesce(is_deleted, false) = false" if "is_deleted" in columns else ""
+    order_parts = []
+    if "updated_at" in columns:
+        order_parts.append("updated_at desc nulls last")
+    if "created_at" in columns:
+        order_parts.append("created_at desc nulls last")
+    order_sql = ", ".join(order_parts) if order_parts else "id"
+    result = await session.execute(
+        text(
+            f"""
+            select *
+            from public.{table_name}
+            where tenant_id = :tenant_id
+              and company_id = :company_id
+              {deleted_clause}
+            order by {order_sql}
+            limit 200
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    return [dict(row) for row in result.mappings().all()]
+
+
+def _merge_partner_rows_with_ownership(
+    partner_rows: list[dict[str, Any]],
+    ownership_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not partner_rows:
+        return ownership_rows
+    ownership_by_partner = {
+        str(row.get("partner_id") or row.get("id")): row
+        for row in ownership_rows
+        if row.get("partner_id") or row.get("id")
+    }
+    merged: list[dict[str, Any]] = []
+    for partner in partner_rows:
+        ownership = ownership_by_partner.get(str(partner.get("id")))
+        merged.append({**partner, **(ownership or {})})
+    return merged
 
 
 def _definition(key: str) -> ProjectionDefinition:

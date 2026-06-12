@@ -61,6 +61,9 @@ for (const file of pages) {
   if (strict && hasListSignal && !(/EdenListPageShell/.test(source) && /EdenSmartList/.test(source))) {
     violations.push(['frontend-list-shell', 'must use EdenListPageShell + EdenSmartList'])
   }
+  if (strict && hasListSignal && !/SmartDataTable/.test(source)) {
+    violations.push(['frontend-smart-data-table', 'list pages must render the standard SmartDataTable inside EdenSmartList'])
+  }
   if (strict && hasFormSignal && !(/EdenFormShell/.test(source) && /EdenFormHeader/.test(source) && (/EdenFormHero/.test(source) || /data-eden-standard=["']form-hero["']/.test(source)))) {
     violations.push(['frontend-form-shell', 'must use EdenFormShell + EdenFormHeader + EdenFormHero'])
   }
@@ -158,6 +161,21 @@ function validateStrictThemeManagementPage(file, source) {
   forbidSourcePattern(route, file, source, /const\s+DOCUMENT_SLOTS\s*[:=]/, 'theme-hardcoded-document-slots', 'theme document slots must come from form contract')
   forbidSourcePattern(route, file, source, /const\s+COLOR_FIELDS\s*[:=]/, 'theme-hardcoded-color-fields', 'theme color fields must come from form contract')
   forbidSourcePattern(route, file, source, /<th[^>]*>\s*(Tema adi|Tema kodu|Durum|Versiyon|Aktif tema|Son guncelleme)/, 'theme-hardcoded-list-columns', 'theme list headers must render from themeManagementListContract.columns')
+  forbidSourcePattern(route, file, source, /documents=\{selected\.documents\s+as\s+SlotDocument\[\]\}/, 'theme-document-uploader-raw-documents', 'theme document uploader must receive generated contract documents, not raw record documents')
+  forbidSourcePattern(route, file, source, /documents=\{selected\.documents\}/, 'theme-document-uploader-raw-documents', 'theme document uploader must receive generated contract documents, not raw record documents')
+  if (!/SmartDataTable<ThemeTableRow>|SmartDataTable/.test(source)) {
+    errors.push(`${route} must use SmartDataTable for the theme list (${file})`)
+  }
+  if (!/themeManagementFormContract\.reactiveFields/.test(source)) {
+    errors.push(`${route} reactive document behavior must be driven by themeManagementFormContract.reactiveFields (${file})`)
+  }
+  const formContract = readOptional('contracts/forms/system/themes-management.form.contract.ts')
+  if (!/reactiveFields:\s*themeReactiveFieldContracts/.test(formContract)) {
+    errors.push(`${route} theme form contract must expose reactiveFields for document-driven hydration`)
+  }
+  if (!/generatedFrom:/.test(formContract) || !/hydratesFields:/.test(formContract)) {
+    errors.push(`${route} theme document slots must declare generatedFrom and hydratesFields behavior in the form contract`)
+  }
 }
 
 function requireSourceImport(route, file, source, importPath) {

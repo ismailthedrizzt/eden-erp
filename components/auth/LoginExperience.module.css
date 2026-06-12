@@ -39,6 +39,45 @@
   font: inherit;
 }
 
+.root input,
+.root select,
+.root textarea,
+:global(html[data-eden-theme]) .root input,
+:global(html[data-eden-theme]) .root select,
+:global(html[data-eden-theme]) .root textarea,
+:global(html[data-visual-theme]) .root input,
+:global(html[data-visual-theme]) .root select,
+:global(html[data-visual-theme]) .root textarea {
+  min-height: unset;
+  border-color: rgba(95, 166, 255, 0.24) !important;
+  border-radius: 12px;
+  background-color: rgba(2, 11, 21, 0.74) !important;
+  color: var(--auth-text) !important;
+  -webkit-text-fill-color: var(--auth-text) !important;
+  box-shadow: none;
+}
+
+.root input::placeholder,
+:global(html[data-eden-theme]) .root input::placeholder,
+:global(html[data-visual-theme]) .root input::placeholder {
+  color: rgba(168, 184, 200, 0.72) !important;
+  -webkit-text-fill-color: rgba(168, 184, 200, 0.72) !important;
+}
+
+.root input:focus,
+.root select:focus,
+.root textarea:focus,
+:global(html[data-eden-theme]) .root input:focus,
+:global(html[data-eden-theme]) .root select:focus,
+:global(html[data-eden-theme]) .root textarea:focus,
+:global(html[data-visual-theme]) .root input:focus,
+:global(html[data-visual-theme]) .root select:focus,
+:global(html[data-visual-theme]) .root textarea:focus {
+  border-color: rgba(0, 216, 255, 0.72) !important;
+  background-color: rgba(4, 15, 28, 0.9) !important;
+  box-shadow: 0 0 0 4px rgba(0, 216, 255, 0.14), 0 0 22px rgba(31, 115, 255, 0.2) !important;
+}
+
 .root ::selection {
   background: rgba(0, 216, 255, 0.24);
   color: #ffffff;

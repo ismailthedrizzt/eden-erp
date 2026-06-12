@@ -9,12 +9,12 @@ import {
   Layers,
   Palette,
   Save,
-  Search,
   Upload,
   XCircle,
 } from 'lucide-react'
 import PageBanner from '@/components/ui/PageBanner'
 import { Toast, type ToastType } from '@/components/ui/Toast'
+import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import type { ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
 import type { DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import {
@@ -55,7 +55,7 @@ import {
   type ManagedThemeRecord,
   type ManagedThemeStatus,
 } from '@/lib/theme/themeManagement'
-import type { EdenThemePackage, ThemeAppearance, ThemeValidationIssue } from '@/lib/theme/themeSchema'
+import type { EdenThemePackage, ThemeAppearance, ThemeValidationIssue, ThemeValidationResult } from '@/lib/theme/themeSchema'
 import { cn } from '@/lib/utils'
 import { workspaceThemeStatusClass as STATUS_CLASS, workspaceThemeStatusLabels as STATUS_LABELS } from '@/contracts/entities/workspace-theme.contract'
 import { themeManagementPageContract } from '@/contracts/pages/system/themes-management.page.contract'
@@ -77,16 +77,61 @@ import { themeManagementLifecycleContract } from '@/contracts/lifecycle/system/t
 import { themeManagementApiServiceFunctions } from '@/contracts/api/system/theme-management.api.contract'
 
 type ToastState = { type: ToastType; title?: string; message: string }
+type ThemeTableRow = ManagedThemeRecord & { isActive: boolean }
+type GeneratedThemeDocument = SlotDocument & { generated?: boolean }
+
+const themeColumnRenderersByKey: Record<string, ColumnDef['render']> = {
+  displayName: (_value, row: ThemeTableRow) => (
+    <div className="flex items-center gap-3">
+      <span
+        className="h-9 w-9 shrink-0 rounded-lg border border-[var(--eden-border)]"
+        style={{ backgroundColor: row.package.modes.light.colors.primary }}
+      />
+      <div className="min-w-0">
+        <div className="truncate font-semibold text-[var(--eden-text)]">{row.displayName}</div>
+        <div className="truncate text-xs text-[var(--eden-text-muted)]">{sourceLabel(row.source)}</div>
+      </div>
+    </div>
+  ),
+  themeKey: value => <span className="font-mono text-xs text-[var(--eden-text-muted)]">{String(value || '')}</span>,
+  status: value => <StatusBadge status={value as ManagedThemeStatus} />,
+  isActive: (_value, row: ThemeTableRow) => row.isActive ? 'Evet' : 'Hayir',
+  updatedAt: value => <span className="text-[var(--eden-text-muted)]">{formatDate(String(value || ''))}</span>,
+}
+
+function buildThemeTableDefinition(): ColumnDef[] {
+  return themeManagementListContract.columns.map(column => ({
+    key: column.key,
+    label: column.label,
+    type: themeColumnType(column.key),
+    sortable: Boolean('sortable' in column && column.sortable),
+    filterable: Boolean('filterable' in column && column.filterable),
+    searchable: Boolean('searchable' in column && column.searchable),
+    visible: true,
+    hideable: false,
+    width: column.width,
+    minWidth: column.width,
+    fixedWidth: Boolean(column.width),
+    render: themeColumnRenderersByKey[column.key],
+  }))
+}
+
+function themeColumnType(key: string): ColumnDef['type'] {
+  if (key === 'status') return 'badge'
+  if (key === 'isActive') return 'boolean'
+  if (key === 'updatedAt') return 'date'
+  return 'text'
+}
 
 export default function DevelopmentThemesPage() {
   const [records, setRecords] = useState<ManagedThemeRecord[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ThemeTab>(themeManagementFormContract.tabs[0].id)
   const [filter, setFilter] = useState<ThemeFilter>('all')
-  const [search, setSearch] = useState('')
   const [mode, setMode] = useState<ThemeAppearance>('light')
   const [importText, setImportText] = useState('')
   const [toast, setToast] = useState<ToastState | null>(null)
+  const themeTableColumns = useMemo(() => buildThemeTableDefinition(), [])
   const themeContractContext = useMemo(() => ({
     route: themeManagementPageContract.route,
     lifecycleTable: themeManagementLifecycleContract.transactionTable,
@@ -116,7 +161,15 @@ export default function DevelopmentThemesPage() {
   )
   const allRecords = useMemo(() => [...visibleSystemRecords, ...records], [records, visibleSystemRecords])
   const selected = allRecords.find(record => record.id === selectedId) || null
-  const listRecords = allRecords.filter(record => filterRecord(record, filter, search))
+  const listRecords = allRecords.filter(record => filterRecord(record, filter))
+  const tableRows: ThemeTableRow[] = useMemo(
+    () => listRecords.map(record => ({ ...record, isActive: record.package.meta.isActive })),
+    [listRecords]
+  )
+  const selectedDocuments = useMemo(
+    () => selected ? getThemeDocumentsForUploader(selected) : [],
+    [selected]
+  )
   const editable = Boolean(selected && selected.source !== 'system' && selected.status !== 'inactive')
   const canCreateDraftTheme = themeManagementPageContract.allowedActions.includes('create_draft')
     && themeContractContext.serviceFunctions.includes('createDraftThemeRecord')
@@ -277,9 +330,35 @@ export default function DevelopmentThemesPage() {
   }
 
   function handleDocumentsChange(documents: SlotDocument[]) {
+    void applyDocumentsChange(documents)
+  }
+
+  async function applyDocumentsChange(documents: SlotDocument[]) {
+    if (!selected || selected.source === 'system') return
+    const changedImportDoc = findChangedImportDocument(selected.documents as SlotDocument[], documents)
+    if (changedImportDoc) {
+      try {
+        const text = await readThemeDocumentText(changedImportDoc)
+        const result = parseThemeImportTextV2(text)
+        if (!result.theme) {
+          const defaultMessage = result.kind === 'figma-tokens'
+            ? 'Figma Tokens dosyasi runtime tema degildir. Eden Theme JSON import edin.'
+            : 'Yuklenen belge Eden Theme JSON V2 validation gecemedi.'
+          notify('error', result.validation.errors[0]?.message || defaultMessage, 'Belge import reddedildi')
+          return
+        }
+        updateSelected(record => applyImportedThemeToExistingRecord(record, result.theme!, result.validation))
+        notify('success', 'Tema JSON belgesi okundu; form alanlari ve uretilecek belgeler guncellendi.')
+        return
+      } catch (error) {
+        notify('error', error instanceof Error ? error.message : 'Belge icerigi okunamadi.', 'Belge import reddedildi')
+        return
+      }
+    }
+
     updateSelected(record => ({
       ...record,
-      documents: documents as ManagedThemeAssetDocument[],
+      documents: cleanCustomDocuments(documents),
       updatedAt: new Date().toISOString(),
     }))
   }
@@ -342,7 +421,7 @@ export default function DevelopmentThemesPage() {
               />
               <EdenHeroDocumentUploader
                 slots={DOCUMENT_SLOTS}
-                documents={selected.documents as SlotDocument[]}
+                documents={selectedDocuments}
                 onChange={handleDocumentsChange}
                 readOnly={!editable}
                 mode={editable ? 'update' : 'view'}
@@ -419,80 +498,57 @@ export default function DevelopmentThemesPage() {
         addButtonText="Ekle"
       />
 
-      <EdenSmartList className="overflow-hidden rounded-xl border border-[var(--eden-smart-list-border,var(--eden-border))] bg-[var(--eden-smart-list-bg,var(--eden-surface))] shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-[var(--eden-border)] bg-[var(--eden-smart-list-header-bg,var(--eden-surface-raised))] p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--eden-text-muted)]" size={18} />
-            <input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder="Tema ara..."
-              className="h-10 w-full rounded-lg border border-[var(--eden-input-border)] bg-[var(--eden-input-bg)] pl-10 pr-3 text-sm text-[var(--eden-text)] outline-none focus:border-[var(--eden-input-focus)]"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {FILTERS.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setFilter(item.id)}
-                className={cn(
-                  'rounded-lg border px-3 py-2 text-xs font-semibold',
-                  filter === item.id
-                    ? 'border-[var(--eden-accent)] bg-[var(--eden-accent-soft)] text-[var(--eden-accent)]'
-                    : 'border-[var(--eden-border)] bg-[var(--eden-surface)] text-[var(--eden-text-muted)] hover:text-[var(--eden-text)]'
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+      <EdenSmartList>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {FILTERS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setFilter(item.id)}
+              className={cn(
+                'rounded-lg border px-3 py-2 text-xs font-semibold',
+                filter === item.id
+                  ? 'border-[var(--eden-accent)] bg-[var(--eden-accent-soft)] text-[var(--eden-accent)]'
+                  : 'border-[var(--eden-border)] bg-[var(--eden-surface)] text-[var(--eden-text-muted)] hover:text-[var(--eden-text)]'
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-[var(--eden-table-header-bg)] text-[var(--eden-text-muted)]">
-              <tr>
-                {themeManagementListContract.columns.map(column => (
-                  <th key={column.key} className="px-4 py-3 text-left font-semibold">{column.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {listRecords.map(record => (
-                <tr
-                  key={record.id}
-                  onClick={() => {
-                    setSelectedId(record.id)
-                    setActiveTab(themeManagementFormContract.tabs[0].id)
-                  }}
-                  className="cursor-pointer border-t border-[var(--eden-border)] bg-[var(--eden-surface)] transition-colors hover:bg-[var(--eden-table-row-hover)]"
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="h-9 w-9 shrink-0 rounded-lg border border-[var(--eden-border)]" style={{ backgroundColor: record.package.modes.light.colors.primary }} />
-                      <div>
-                        <div className="font-semibold text-[var(--eden-text)]">{record.displayName}</div>
-                        <div className="text-xs text-[var(--eden-text-muted)]">{record.source}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--eden-text-muted)]">{record.themeKey}</td>
-                  <td className="px-4 py-3"><StatusBadge status={record.status} /></td>
-                  <td className="px-4 py-3 text-[var(--eden-text)]">{record.version}</td>
-                  <td className="px-4 py-3 text-[var(--eden-text)]">{record.package.meta.isActive ? 'Evet' : 'Hayir'}</td>
-                  <td className="px-4 py-3 text-[var(--eden-text-muted)]">{formatDate(record.updatedAt)}</td>
-                </tr>
-              ))}
-              {!listRecords.length && (
-                <tr>
-                  <td colSpan={themeManagementListContract.columns.length} className="px-4 py-12 text-center text-sm text-[var(--eden-text-muted)]">{themeManagementListContract.emptyState.title}</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <SmartDataTable<ThemeTableRow>
+          columns={themeTableColumns}
+          data={tableRows}
+          loading={false}
+          defaultView="list"
+          storageKey="themes-management-smart-list"
+          emptyText={<ThemeListEmptyState onCreate={canCreateDraftTheme ? () => createDraft() : undefined} />}
+          onRowClick={record => {
+            setSelectedId(record.id)
+            setActiveTab(themeManagementFormContract.tabs[0].id)
+          }}
+          onRefresh={() => setRecords(readManagedThemeRecords())}
+          defaultPageSize={10}
+        />
       </EdenSmartList>
     </EdenListPageShell>
+  )
+}
+
+function ThemeListEmptyState({ onCreate }: { onCreate?: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--eden-border)] bg-[var(--eden-surface-raised)] text-[var(--eden-accent)]">
+        <Palette size={22} />
+      </div>
+      <h3 className="mt-3 text-sm font-semibold text-[var(--eden-text)]">{themeManagementListContract.emptyState.title}</h3>
+      <p className="mt-1 max-w-md text-sm text-[var(--eden-text-muted)]">{themeManagementListContract.emptyState.message}</p>
+      {onCreate && (
+        <button onClick={onCreate} className={cn(primaryButtonClass, 'mt-4')}>
+          Ekle
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -1090,13 +1146,210 @@ function numericLike(value: unknown) {
   return typeof value === 'number'
 }
 
-function filterRecord(record: ManagedThemeRecord, filter: ThemeFilter, search: string) {
-  const query = search.trim().toLowerCase()
-  const matchesSearch = !query
-    || record.displayName.toLowerCase().includes(query)
-    || record.themeKey.toLowerCase().includes(query)
-    || record.description.toLowerCase().includes(query)
-  if (!matchesSearch) return false
+function getThemeDocumentsForUploader(record: ManagedThemeRecord): SlotDocument[] {
+  const generated = createGeneratedThemeDocuments(record)
+  const generatedBySlot = new Map(generated.map(doc => [doc.slotId, doc]))
+  const customDocuments = cleanCustomDocuments(record.documents as SlotDocument[])
+  const activeCustomBySlot = new Map(
+    customDocuments
+      .filter(isActiveThemeDocument)
+      .map(doc => [doc.slotId, doc])
+  )
+  const mergedActive = DOCUMENT_SLOTS.map(slot => activeCustomBySlot.get(slot.id) || generatedBySlot.get(slot.id))
+    .filter((doc): doc is SlotDocument => Boolean(doc))
+  const history = customDocuments.filter(doc => !isActiveThemeDocument(doc))
+  return [...mergedActive, ...history]
+}
+
+function createGeneratedThemeDocuments(record: ManagedThemeRecord): GeneratedThemeDocument[] {
+  const runtimePackage = toRuntimeThemePackageV2(record.package)
+  const validation = record.validation || validateEdenThemePackage(record.package).validation
+  const figmaTokens = edenThemeRuntimePackageV2ToFigmaTokens(runtimePackage)
+  const cssVariables = runtimeThemePackageV2ToCssVariables(runtimePackage)
+  const updatedAt = record.updatedAt || new Date().toISOString()
+  return [
+    generatedDocument(record, 'designer-note', `${record.themeKey}.designer-note.md`, designerNoteMarkdown(record), 'text/markdown', updatedAt),
+    generatedDocument(record, 'technical-doc', `${record.themeKey}.technical-doc.md`, technicalDocumentMarkdown(record), 'text/markdown', updatedAt),
+    generatedDocument(record, 'figma-token-export', `${record.themeKey}.figma-tokens.json`, JSON.stringify(figmaTokens, null, 2), 'application/json', updatedAt),
+    generatedDocument(record, 'css-variable-export', `${record.themeKey}.css-variables.css`, cssVariables, 'text/css', updatedAt),
+    generatedDocument(record, 'theme-json-export', `${record.themeKey}.eden-theme.json`, JSON.stringify(runtimePackage, null, 2), 'application/json', updatedAt),
+    generatedDocument(record, 'validation-report', `${record.themeKey}.validation-report.json`, JSON.stringify({
+      themeKey: record.themeKey,
+      displayName: record.displayName,
+      generatedAt: updatedAt,
+      validation,
+    }, null, 2), 'application/json', updatedAt),
+  ]
+}
+
+function generatedDocument(
+  record: ManagedThemeRecord,
+  slotId: string,
+  name: string,
+  body: string,
+  type: string,
+  updatedAt: string
+): GeneratedThemeDocument {
+  return {
+    slotId,
+    documentId: `generated:${record.id}:${slotId}`,
+    name,
+    size: textByteSize(body),
+    type,
+    uploadedAt: updatedAt,
+    updatedAt,
+    status: 'active',
+    version: 1,
+    slotTitle: DOCUMENT_SLOTS.find(slot => slot.id === slotId)?.title || slotId,
+    url: textDataUrl(body, type),
+    previewUrl: textDataUrl(body, type),
+    generated: true,
+  }
+}
+
+function designerNoteMarkdown(record: ManagedThemeRecord) {
+  return [
+    `# ${record.displayName} - Tasarimci Notu`,
+    '',
+    `Tema kodu: ${record.themeKey}`,
+    `Versiyon: ${record.version}`,
+    `Durum: ${STATUS_LABELS[record.status]}`,
+    '',
+    '## Sanat Yonu',
+    record.artDirection || '-',
+    '',
+    '## Ilham Notu',
+    record.inspiration || '-',
+    '',
+    '## Kurallar',
+    '- Eden ERP is akislari ve sayfa iskeleti degistirilmez.',
+    '- Sadece token, yuzey, motif, banner ve asset referanslari uzerinden calisilir.',
+    '- Light ve dark varyantlari birlikte teslim edilir.',
+  ].join('\n')
+}
+
+function technicalDocumentMarkdown(record: ManagedThemeRecord) {
+  const validation = record.validation || validateEdenThemePackage(record.package).validation
+  return [
+    `# ${record.displayName} - Tema Teknik Dokumani`,
+    '',
+    `Theme key: ${record.themeKey}`,
+    `Schema version: ${record.package.schemaVersion}`,
+    `Author: ${record.author}`,
+    `Updated at: ${record.updatedAt}`,
+    '',
+    '## Paket',
+    `- Runtime export: ${record.themeKey}.eden-theme.json`,
+    `- Figma tokens: ${record.themeKey}.figma-tokens.json`,
+    `- CSS variables: ${record.themeKey}.css-variables.css`,
+    '',
+    '## Validation',
+    `- Valid: ${validation.valid ? 'yes' : 'no'}`,
+    `- Errors: ${validation.errors.length}`,
+    `- Warnings: ${validation.warnings.length + validation.contrast.light.length + validation.contrast.dark.length}`,
+    `- Activation blocked: ${validation.activationBlocked ? 'yes' : 'no'}`,
+  ].join('\n')
+}
+
+function findChangedImportDocument(previousDocuments: SlotDocument[], nextDocuments: SlotDocument[]) {
+  const previousIds = new Set(cleanCustomDocuments(previousDocuments).map(themeDocumentIdentity))
+  const hydratingSlotIds = new Set(themeManagementFormContract.reactiveFields
+    .filter(item => item.className === 'eden-reactive-document-slot' && item.completionRule === 'valid_eden_theme_json')
+    .flatMap(item => item.source.slotIds || [])
+  )
+  return nextDocuments.find(doc => {
+    if (isGeneratedThemeDocument(doc) || !isActiveThemeDocument(doc)) return false
+    if (!hydratingSlotIds.has(doc.slotId)) return false
+    return !previousIds.has(themeDocumentIdentity(doc))
+  }) || null
+}
+
+async function readThemeDocumentText(doc: SlotDocument) {
+  if (doc.file) return doc.file.text()
+  const url = doc.url || doc.previewUrl
+  if (!url) throw new Error('Yuklenen belge icerigi okunamadi.')
+  const response = await fetch(url, { credentials: 'same-origin' })
+  if (!response.ok) throw new Error('Yuklenen belge icerigi indirilemedi.')
+  return response.text()
+}
+
+function applyImportedThemeToExistingRecord(
+  record: ManagedThemeRecord,
+  themePackage: EdenThemePackage,
+  validation: ThemeValidationResult
+) {
+  const imported = createImportedThemeRecord(themePackage, validation, record.createdBy)
+  const now = new Date().toISOString()
+  return validateManagedTheme({
+    ...record,
+    themeKey: imported.themeKey,
+    displayName: imported.displayName,
+    description: imported.description,
+    status: imported.status,
+    source: 'imported',
+    artDirection: imported.artDirection,
+    inspiration: imported.inspiration,
+    category: imported.category,
+    supportsLight: imported.supportsLight,
+    supportsDark: imported.supportsDark,
+    notes: imported.notes,
+    author: imported.author,
+    version: imported.version,
+    package: imported.package,
+    componentTokens: imported.componentTokens,
+    motif: imported.motif,
+    validation,
+    updatedAt: now,
+    documents: [],
+    audit: [
+      { eventType: 'theme_imported', timestamp: now, summary: 'Theme JSON document imported from hero document uploader.' },
+      ...record.audit,
+    ].slice(0, 100),
+  })
+}
+
+function cleanCustomDocuments(documents: SlotDocument[]) {
+  return documents
+    .filter(doc => !isGeneratedThemeDocument(doc))
+    .map(doc => {
+      const copy: SlotDocument = { ...doc }
+      delete copy.file
+      return copy as ManagedThemeAssetDocument
+    })
+}
+
+function isGeneratedThemeDocument(doc: SlotDocument): doc is GeneratedThemeDocument {
+  return Boolean((doc as GeneratedThemeDocument).generated)
+    || String(doc.documentId || '').startsWith('generated:')
+    || String(doc.url || '').startsWith('data:')
+}
+
+function isActiveThemeDocument(doc: SlotDocument) {
+  return doc.status !== 'archived' && doc.status !== 'deleted' && !doc.deletedAt && !doc.isDeleted
+}
+
+function themeDocumentIdentity(doc: SlotDocument) {
+  return [
+    doc.slotId,
+    doc.documentId || '',
+    doc.storagePath || '',
+    doc.name || '',
+    doc.size || 0,
+    doc.type || '',
+    doc.uploadedAt ? String(doc.uploadedAt) : '',
+    doc.updatedAt ? String(doc.updatedAt) : '',
+  ].join(':')
+}
+
+function textDataUrl(body: string, type: string) {
+  return `data:${type};charset=utf-8,${encodeURIComponent(body)}`
+}
+
+function textByteSize(body: string) {
+  return typeof TextEncoder === 'undefined' ? body.length : new TextEncoder().encode(body).length
+}
+
+function filterRecord(record: ManagedThemeRecord, filter: ThemeFilter) {
   if (filter === 'all') return true
   if (filter === 'invalid') return Boolean(record.validation && !record.validation.valid)
   if (filter === 'inactive') return record.status !== 'draft' && record.status !== 'active'

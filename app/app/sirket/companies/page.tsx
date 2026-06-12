@@ -104,7 +104,7 @@ const emptyDetailSectionState: DetailSectionState = {
   detailsReady: false,
   detailsError: false,
 }
-const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v3'
+const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v4'
 const COMPANY_HISTORY_TAB_ID = LIFECYCLE_HISTORY_TAB_ID
 function waitForStagePaint() {
   return new Promise<void>(resolve => {

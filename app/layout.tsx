@@ -5,7 +5,20 @@ import { APP_CACHE_VERSION, APP_CACHE_VERSION_KEY } from '@/lib/pwa/cacheVersion
 
 const themeInitScript = `
 (() => {
+  const authRoutePattern = /^\\/(login|register|kaydol|forgot-password|auth)(\\/|$)/;
+  const isAuthRoute = authRoutePattern.test(window.location.pathname || '');
+  if (isAuthRoute) {
+    document.documentElement.classList.remove('dark');
+    delete document.documentElement.dataset.appearanceMode;
+    delete document.documentElement.dataset.appearance;
+    delete document.documentElement.dataset.visualTheme;
+    delete document.documentElement.dataset.edenTheme;
+    document.documentElement.dataset.authSurface = 'true';
+    return;
+  }
+
   try {
+    delete document.documentElement.dataset.authSurface;
     const raw = localStorage.getItem('eden.uiPreferences');
     const preferences = raw ? JSON.parse(raw) : {};
     const legacyTheme = localStorage.getItem('theme');
@@ -41,6 +54,10 @@ const themeInitScript = `
     document.documentElement.dataset.edenTheme = normalizedVisualTheme;
   } catch {
     document.documentElement.classList.remove('dark');
+    delete document.documentElement.dataset.appearanceMode;
+    delete document.documentElement.dataset.appearance;
+    delete document.documentElement.dataset.visualTheme;
+    delete document.documentElement.dataset.edenTheme;
   }
 })();
 `

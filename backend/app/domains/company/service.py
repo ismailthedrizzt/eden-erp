@@ -80,6 +80,101 @@ JSON_COMPANY_CARD_FIELDS = {"hero_images", "hero_documents"}
 COMPANY_CARD_METADATA_FIELDS = {"contact_points", "entity_bank_accounts", "notes", "metadata_json"}
 
 
+async def _public_table_columns(session: AsyncSession, table_name: str) -> set[str]:
+    result = await session.execute(
+        text(
+            """
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = :table_name
+            """
+        ),
+        {"table_name": table_name},
+    )
+    return {str(row[0]) for row in result.all()}
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _flatten_company_master_organization(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    metadata = _json_object(row.get("metadata_json"))
+    data = {**metadata, **row}
+    data["metadata_json"] = metadata
+    if data.get("registry_number") and not data.get("trade_registry_no"):
+        data["trade_registry_no"] = data.get("registry_number")
+    if data.get("trade_registry_no") and not data.get("trade_registry_number"):
+        data["trade_registry_number"] = data.get("trade_registry_no")
+    if data.get("trade_name") and not data.get("legal_name"):
+        data["legal_name"] = data.get("trade_name")
+    if data.get("legal_name") and not data.get("trade_name"):
+        data["trade_name"] = data.get("legal_name")
+    return data
+
+
+async def _get_company_master_organization(
+    session: AsyncSession,
+    tenant_id: str,
+    organization_id: Any,
+) -> dict[str, Any] | None:
+    if not organization_id:
+        return None
+    for table_name in ("master_organizations", "organizations"):
+        if not await table_exists(session, f"public.{table_name}"):
+            continue
+        columns = await _public_table_columns(session, table_name)
+        deleted_clause = "and coalesce(is_deleted, false) = false" if "is_deleted" in columns else ""
+        result = await session.execute(
+            text(
+                f"""
+                select *
+                from public.{table_name}
+                where tenant_id = :tenant_id
+                  and id = :organization_id
+                  {deleted_clause}
+                limit 1
+                """
+            ),
+            {"tenant_id": tenant_id, "organization_id": str(organization_id)},
+        )
+        row = result.mappings().one_or_none()
+        if row:
+            return _flatten_company_master_organization(dict(row))
+    return None
+
+
+def _enrich_company_with_master(
+    company: dict[str, Any],
+    master: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not master:
+        return company
+    enriched = {**master, **company}
+    enriched["master"] = master
+    enriched["masterRecord"] = master
+    enriched["master_entity_kind"] = "organization"
+    enriched["master_record_id"] = master.get("id")
+    enriched["organization_id"] = company.get("organization_id") or master.get("id")
+    for field in COMPANY_CARD_METADATA_FIELDS:
+        if enriched.get(field) in (None, "", [], {}):
+            enriched[field] = master.get(field)
+    if not enriched.get("legal_name"):
+        enriched["legal_name"] = master.get("legal_name") or master.get("trade_name")
+    return enriched
+
+
 def hydrate_company_card_metadata(company: dict[str, Any]) -> dict[str, Any]:
     field_history = company.get("field_history")
     if not isinstance(field_history, dict):
@@ -114,7 +209,11 @@ async def get_company_by_id(
         {"tenant_id": tenant_id, "company_id": company_id},
     )
     row = result.mappings().one_or_none()
-    return hydrate_company_card_metadata(dict(row)) if row else None
+    if not row:
+        return None
+    company = hydrate_company_card_metadata(dict(row))
+    master = await _get_company_master_organization(session, tenant_id, company.get("organization_id"))
+    return _enrich_company_with_master(company, master)
 
 
 def is_company_draft(company: dict[str, Any] | None) -> bool:

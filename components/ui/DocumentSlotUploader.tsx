@@ -247,6 +247,10 @@ function acceptsCameraCapture(acceptedTypes: string[]) {
   return acceptedTypes.some(type => type === 'image/*' || type.startsWith('image/'))
 }
 
+function shouldKeepLocalFileForSlot(slot?: DocumentSlot | null) {
+  return !!slot && ('hydratesFields' in slot || 'generatedFrom' in slot)
+}
+
 function getDocumentSignedKey(doc?: SlotDocument | null) {
   if (!doc) return ''
   if (doc.storagePath) return doc.storagePath
@@ -690,6 +694,7 @@ export function DocumentSlotUploader({
         const newDoc: SlotDocument = {
           slotId: targetSlot.id,
           storagePath: uploaded.storagePath,
+          ...(shouldKeepLocalFileForSlot(targetSlot) ? { file } : {}),
           name: uploaded.name,
           size: uploaded.size,
           type: uploaded.type,

@@ -1,6 +1,7 @@
 import type { DocumentSlot } from '../../../components/ui/DocumentSlotUploader'
 import type { ImageSlot } from '../../../components/ui/ImageSlotUploader'
 import type { EdenFormContract } from '../../core/form.contract'
+import type { EdenFieldBadgeContract, EdenReactiveFieldContract } from '../../core/field.contract'
 import { workspaceThemeModes, workspaceThemeScopes, workspaceThemeSources } from '../../entities/workspace-theme.contract'
 
 export type ThemeManagementTab =
@@ -27,6 +28,24 @@ export type ThemeColorGroupContract = {
 export type ThemeComponentSectionContract = {
   title: string
   groups: readonly string[]
+}
+
+export type ThemeGeneratedDocumentKind =
+  | 'designer_note_markdown'
+  | 'technical_document_markdown'
+  | 'figma_tokens_json'
+  | 'css_variables'
+  | 'eden_theme_json'
+  | 'validation_report_json'
+
+export type ThemeDocumentSlotContract = DocumentSlot & {
+  generatedFrom?: {
+    kind: ThemeGeneratedDocumentKind
+    source: 'theme_json'
+    regenerateOn: readonly ('field_change' | 'asset_change' | 'validation_change')[]
+  }
+  hydratesFields?: readonly string[]
+  validationBadge?: EdenFieldBadgeContract
 }
 
 export const themeManagementTabs: Array<{ id: ThemeManagementTab; label: string }> = [
@@ -59,13 +78,59 @@ export const themeImageSlots: ImageSlot[] = [
   { id: 'dark-empty-state', title: 'Dark Empty State', acceptedTypes: ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 5 },
 ]
 
-export const themeDocumentSlots: DocumentSlot[] = [
-  { id: 'designer-note', title: 'Tasarimci Notu', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
-  { id: 'technical-doc', title: 'Tema Teknik Dokumani', acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
-  { id: 'figma-token-export', title: 'Figma Token Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
-  { id: 'css-variable-export', title: 'CSS Variable Export', acceptedTypes: ['text/css', 'text/plain'], maxSizeMB: 5 },
-  { id: 'theme-json-export', title: 'Tema JSON Export', acceptedTypes: ['application/json', 'text/plain'], maxSizeMB: 5 },
-  { id: 'validation-report', title: 'Validation Report', acceptedTypes: ['application/pdf', 'application/json', 'text/markdown', 'text/plain'], maxSizeMB: 10 },
+const generatedDocumentBadge = { label: 'Otomatik', tone: 'info', visibleWhen: 'always' } as const satisfies EdenFieldBadgeContract
+const hydratingDocumentBadge = { label: 'Alanlari Doldurur', tone: 'success', visibleWhen: 'has_value' } as const satisfies EdenFieldBadgeContract
+
+export const themeDocumentSlots: ThemeDocumentSlotContract[] = [
+  {
+    id: 'designer-note',
+    title: 'Tasarimci Notu',
+    acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'],
+    maxSizeMB: 10,
+    generatedFrom: { kind: 'designer_note_markdown', source: 'theme_json', regenerateOn: ['field_change', 'asset_change'] },
+    validationBadge: generatedDocumentBadge,
+  },
+  {
+    id: 'technical-doc',
+    title: 'Tema Teknik Dokumani',
+    acceptedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown', 'text/plain'],
+    maxSizeMB: 10,
+    generatedFrom: { kind: 'technical_document_markdown', source: 'theme_json', regenerateOn: ['field_change', 'asset_change', 'validation_change'] },
+    validationBadge: generatedDocumentBadge,
+  },
+  {
+    id: 'figma-token-export',
+    title: 'Figma Token Export',
+    acceptedTypes: ['application/json', 'text/plain'],
+    maxSizeMB: 5,
+    generatedFrom: { kind: 'figma_tokens_json', source: 'theme_json', regenerateOn: ['field_change', 'asset_change'] },
+    validationBadge: generatedDocumentBadge,
+  },
+  {
+    id: 'css-variable-export',
+    title: 'CSS Variable Export',
+    acceptedTypes: ['text/css', 'text/plain'],
+    maxSizeMB: 5,
+    generatedFrom: { kind: 'css_variables', source: 'theme_json', regenerateOn: ['field_change'] },
+    validationBadge: generatedDocumentBadge,
+  },
+  {
+    id: 'theme-json-export',
+    title: 'Tema JSON Export',
+    acceptedTypes: ['application/json', 'text/plain'],
+    maxSizeMB: 5,
+    generatedFrom: { kind: 'eden_theme_json', source: 'theme_json', regenerateOn: ['field_change', 'asset_change', 'validation_change'] },
+    hydratesFields: ['display_name', 'theme_key', 'version', 'author', 'description', 'theme_json', 'colors', 'background', 'typography', 'components', 'illustrations', 'validation_result'],
+    validationBadge: hydratingDocumentBadge,
+  },
+  {
+    id: 'validation-report',
+    title: 'Validation Report',
+    acceptedTypes: ['application/pdf', 'application/json', 'text/markdown', 'text/plain'],
+    maxSizeMB: 10,
+    generatedFrom: { kind: 'validation_report_json', source: 'theme_json', regenerateOn: ['field_change', 'asset_change', 'validation_change'] },
+    validationBadge: generatedDocumentBadge,
+  },
 ]
 
 export const themeColorFields: ThemeColorFieldContract[] = [
@@ -125,11 +190,27 @@ export const themeComponentSections: ThemeComponentSectionContract[] = [
   { title: 'Toast / Alert', groups: ['toast', 'alert'] },
 ]
 
+export const themeReactiveFieldContracts: EdenReactiveFieldContract[] = [
+  {
+    id: 'theme-json-document-hydrates-theme-form',
+    className: 'eden-reactive-document-slot',
+    source: {
+      kind: 'document_slot',
+      slotIds: ['theme-json-export'],
+      event: 'import',
+    },
+    hydratesFields: ['display_name', 'theme_key', 'version', 'author', 'description', 'theme_json', 'colors', 'background', 'typography', 'components', 'illustrations', 'validation_result'],
+    completionRule: 'valid_eden_theme_json',
+    validationBadge: hydratingDocumentBadge,
+    requiredBeforeSubmit: false,
+  },
+]
+
 export const themeManagementFormContract = {
   fields: [
-    { name: 'display_name', kind: 'string', label: 'Tema adi', required: true },
-    { name: 'theme_key', kind: 'string', label: 'Tema kodu / slug', required: true },
-    { name: 'version', kind: 'string', label: 'Versiyon', required: true },
+    { name: 'display_name', kind: 'string', label: 'Tema adi', required: true, validationUi: { className: 'eden-required-field', emptyTone: 'danger', completeTone: 'success', showBadge: true, badge: { label: 'Zorunlu', tone: 'danger', visibleWhen: 'empty' } } },
+    { name: 'theme_key', kind: 'string', label: 'Tema kodu / slug', required: true, validationUi: { className: 'eden-required-field', emptyTone: 'danger', completeTone: 'success', showBadge: true, badge: { label: 'Zorunlu', tone: 'danger', visibleWhen: 'empty' } } },
+    { name: 'version', kind: 'string', label: 'Versiyon', required: true, validationUi: { className: 'eden-required-field', emptyTone: 'danger', completeTone: 'success', showBadge: true, badge: { label: 'Zorunlu', tone: 'danger', visibleWhen: 'empty' } } },
     { name: 'author', kind: 'string', label: 'Author', optional: true },
     { name: 'scope', kind: 'enum', label: 'Scope', enumValues: workspaceThemeScopes, readonly: true },
     { name: 'default_mode', kind: 'enum', label: 'Default mode', enumValues: workspaceThemeModes, optional: true },
@@ -152,6 +233,7 @@ export const themeManagementFormContract = {
   tabs: themeManagementTabs,
   imageSlots: themeImageSlots,
   documentSlots: themeDocumentSlots,
+  reactiveFields: themeReactiveFieldContracts,
   colorFields: themeColorFields,
   colorGroups: themeColorGroups,
   backgroundRows: themeBackgroundRows,
@@ -160,6 +242,7 @@ export const themeManagementFormContract = {
   tabs: typeof themeManagementTabs
   imageSlots: typeof themeImageSlots
   documentSlots: typeof themeDocumentSlots
+  reactiveFields: typeof themeReactiveFieldContracts
   colorFields: typeof themeColorFields
   colorGroups: typeof themeColorGroups
   backgroundRows: typeof themeBackgroundRows

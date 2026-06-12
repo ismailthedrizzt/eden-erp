@@ -5,9 +5,8 @@ from __future__ import annotations
 import base64
 import json
 import re
-from datetime import date
 from pathlib import PurePath
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
@@ -54,87 +53,129 @@ from app.schemas.common import ApiSuccess
 router = APIRouter(dependencies=[Depends(require_access_context)])
 RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-
 MAX_DOCUMENT_UPLOAD_BYTES = 25 * 1024 * 1024
 ALLOWED_DOCUMENT_MIME_TYPES = {
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'text/plain',
-    'text/csv',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/json",
+    "text/css",
+    "text/markdown",
+    "text/plain",
+    "text/csv",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 }
 
 
 async def document_upload_request_from_http(request: Request) -> DocumentUploadRequest:
-    content_type = request.headers.get('content-type') or ''
-    if 'multipart/form-data' not in content_type.lower():
+    content_type = request.headers.get("content-type", "").lower()
+    if "multipart/form-data" not in content_type:
         return DocumentUploadRequest.model_validate(await request.json())
 
     form = await request.form()
-    file = form.get('file')
+    file = form.get("file")
     if not isinstance(file, UploadFile):
-        raise DomainError('Dosya bulunamadi.', 'DOCUMENT_FILE_REQUIRED', status.HTTP_400_BAD_REQUEST)
-    if _form_string(form, 'storage_path') or _form_string(form, 'storagePath'):
+        raise DomainError("Dosya bulunamadi.", "DOCUMENT_FILE_REQUIRED", status.HTTP_400_BAD_REQUEST)
+
+    if _form_string(form, "storage_path") or _form_string(form, "storagePath"):
         raise DomainError(
-            'Storage path istemci tarafindan belirlenemez.',
-            'DOCUMENT_STORAGE_PATH_CLIENT_CONTROLLED',
+            "Storage path istemci tarafindan belirlenemez.",
+            "DOCUMENT_STORAGE_PATH_CLIENT_CONTROLLED",
             status.HTTP_400_BAD_REQUEST,
         )
 
-    file_name = sanitize_upload_file_name(file.filename or 'document')
-    mime_type = normalize_upload_mime_type(file.content_type)
+    file_name = sanitize_upload_file_name(file.filename or "document")
+    mime_type = normalize_upload_mime_type(file.content_type, file_name)
     if mime_type not in ALLOWED_DOCUMENT_MIME_TYPES:
-        raise DomainError('Dosya turu kabul edilmiyor.', 'DOCUMENT_MIME_TYPE_DENIED', status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        raise DomainError(
+            "Desteklenmeyen belge formati.",
+            "DOCUMENT_MIME_TYPE_NOT_ALLOWED",
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        )
 
     content = await file.read(MAX_DOCUMENT_UPLOAD_BYTES + 1)
     if not content:
-        raise DomainError('Bos dosya yuklenemez.', 'DOCUMENT_FILE_EMPTY', status.HTTP_400_BAD_REQUEST)
+        raise DomainError("Belge dosyasi bos.", "DOCUMENT_FILE_EMPTY", status.HTTP_400_BAD_REQUEST)
     if len(content) > MAX_DOCUMENT_UPLOAD_BYTES:
-        raise DomainError('Dosya boyutu izin verilen siniri asiyor.', 'DOCUMENT_FILE_TOO_LARGE', status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        raise DomainError(
+            "Belge dosyasi en fazla 25 MB olabilir.",
+            "DOCUMENT_FILE_TOO_LARGE",
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+        )
 
     return DocumentUploadRequest(
-        company_id=_form_string(form, 'company_id'),
-        branch_id=_form_string(form, 'branch_id'),
-        owner_entity_type=_form_string(form, 'owner_entity_type') or 'document',
-        owner_entity_id=_form_string(form, 'owner_entity_id') or 'document',
-        document_type=_form_string(form, 'document_type') or _form_string(form, 'slotId') or 'other',
-        document_category=_form_string(form, 'document_category') or 'general',
-        title=_form_string(form, 'title') or file_name,
-        description=_form_string(form, 'description'),
+        company_id=_form_string(form, "company_id"),
+        branch_id=_form_string(form, "branch_id"),
+        owner_entity_type=_form_string(form, "owner_entity_type") or "document",
+        owner_entity_id=_form_string(form, "owner_entity_id") or "document",
+        document_type=_form_string(form, "document_type") or _form_string(form, "slotId") or "other",
+        document_category=_form_string(form, "document_category") or "general",
+        title=_form_string(form, "title") or file_name,
+        description=_form_string(form, "description"),
         file_name=file_name,
         mime_type=mime_type,
         file_size=len(content),
-        content_base64=base64.b64encode(content).decode('ascii'),
-        storage_bucket=_form_string(form, 'storage_bucket'),
-        storage_provider=_form_string(form, 'storage_provider') or 'local',
-        required=_form_bool(form, 'required'),
-        verification_required=_form_bool(form, 'verification_required'),
-        issue_date=_form_date(form, 'issue_date'),
-        expiry_date=_form_date(form, 'expiry_date'),
-        relation_type=cast(Any, _form_string(form, 'relation_type') or 'attachment'),
-        module_key=_form_string(form, 'module_key'),
-        operation_key=_form_string(form, 'operation_key'),
-        operation_id=_form_string(form, 'operation_id'),
-        document_slot_key=_form_string(form, 'document_slot_key') or _form_string(form, 'slotId'),
-        tags=_form_list(form, 'tags'),
-        metadata_json=_form_json_object(form, 'metadata_json'),
+        content_base64=base64.b64encode(content).decode("ascii"),
+        storage_bucket=_form_string(form, "storage_bucket"),
+        storage_provider=_form_string(form, "storage_provider") or "local",
+        required=_form_bool(form, "required"),
+        verification_required=_form_bool(form, "verification_required"),
+        issue_date=_form_string(form, "issue_date"),
+        expiry_date=_form_string(form, "expiry_date"),
+        relation_type=_form_string(form, "relation_type") or "attachment",
+        module_key=_form_string(form, "module_key"),
+        operation_key=_form_string(form, "operation_key"),
+        operation_id=_form_string(form, "operation_id"),
+        document_slot_key=_form_string(form, "document_slot_key") or _form_string(form, "slotId"),
+        tags=_form_list(form, "tags"),
+        metadata_json=_form_json_object(form, "metadata_json"),
     )
 
 
-def sanitize_upload_file_name(value: str) -> str:
-    name = PurePath(value).name.strip().replace('\x00', '')
-    name = re.sub(r'[^A-Za-z0-9._ -]', '_', name)
-    name = re.sub(r'\s+', ' ', name).strip(' .')
-    return name[:180] or 'document'
+def sanitize_upload_file_name(file_name: str) -> str:
+    safe_name = PurePath(file_name).name.strip().replace("\x00", "")
+    safe_name = re.sub(r"[^A-Za-z0-9._ -]+", "_", safe_name).strip(" .")
+    return safe_name[:180] or "document"
 
 
-def normalize_upload_mime_type(value: str | None) -> str:
-    return (value or 'application/octet-stream').split(';')[0].strip().lower()
+def normalize_upload_mime_type(content_type: str | None, file_name: str) -> str:
+    normalized = (content_type or "").split(";", maxsplit=1)[0].strip().lower()
+    suffix = file_name.lower()
+    if normalized == "image/jpg":
+        return "image/jpeg"
+    if normalized and normalized != "application/octet-stream":
+        return normalized
+    if suffix.endswith(".pdf"):
+        return "application/pdf"
+    if suffix.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
+    if suffix.endswith(".png"):
+        return "image/png"
+    if suffix.endswith(".webp"):
+        return "image/webp"
+    if suffix.endswith(".json"):
+        return "application/json"
+    if suffix.endswith(".css"):
+        return "text/css"
+    if suffix.endswith((".md", ".markdown")):
+        return "text/markdown"
+    if suffix.endswith(".txt"):
+        return "text/plain"
+    if suffix.endswith(".csv"):
+        return "text/csv"
+    if suffix.endswith(".doc"):
+        return "application/msword"
+    if suffix.endswith(".docx"):
+        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    if suffix.endswith(".xls"):
+        return "application/vnd.ms-excel"
+    if suffix.endswith(".xlsx"):
+        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return "application/octet-stream"
 
 
 def _form_string(form: Any, key: str) -> str | None:
@@ -143,33 +184,25 @@ def _form_string(form: Any, key: str) -> str | None:
 
 
 def _form_bool(form: Any, key: str) -> bool:
-    value = form.get(key)
-    return str(value or '').strip().lower() in {'1', 'true', 'yes', 'on'}
-
-
-def _form_date(form: Any, key: str) -> date | None:
-    value = _form_string(form, key)
-    if not value:
-        return None
-    return date.fromisoformat(value)
+    return (_form_string(form, key) or "").lower() in {"1", "true", "yes", "on"}
 
 
 def _form_list(form: Any, key: str) -> list[str]:
-    value = form.get(key)
-    if not isinstance(value, str) or not value.strip():
+    value = _form_string(form, key)
+    if not value:
         return []
     try:
-        parsed = json.loads(value)
+      parsed = json.loads(value)
     except json.JSONDecodeError:
-        parsed = None
+      parsed = None
     if isinstance(parsed, list):
         return [str(item).strip() for item in parsed if str(item).strip()]
-    return [item.strip() for item in value.split(',') if item.strip()]
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _form_json_object(form: Any, key: str) -> dict[str, Any]:
-    value = form.get(key)
-    if not isinstance(value, str) or not value.strip():
+    value = _form_string(form, key)
+    if not value:
         return {}
     try:
         parsed = json.loads(value)

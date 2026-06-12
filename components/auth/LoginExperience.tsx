@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ClipboardEvent, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type CSSProperties, type ReactNode } from 'react'
 import Image from 'next/image'
 import {
   ArrowLeft,
@@ -65,6 +65,7 @@ const TRUST_ITEMS = [
 
 const textInputClass = styles.textInput
 const otpInputClass = styles.otpInput
+const AUTH_ROUTE_PATTERN = /^\/(login|register|kaydol|forgot-password|auth)(\/|$)/
 
 type AuthMode = 'login' | 'signup'
 type SignupFlow = 'new_company' | 'join_company'
@@ -223,6 +224,18 @@ function onlyDigits(value: string, maxLength: number) {
   return value.replace(/\D/g, '').slice(0, maxLength)
 }
 
+function restoreDatasetValue(
+  root: HTMLElement,
+  key: 'authSurface' | 'appearanceMode' | 'appearance' | 'visualTheme' | 'edenTheme',
+  value: string | undefined
+) {
+  if (value === undefined) {
+    delete root.dataset[key]
+    return
+  }
+  root.dataset[key] = value
+}
+
 function joinContactIdentifier(form: JoinFormState) {
   return normalizeAuthIdentifier(form.email) || normalizeAuthIdentifier(form.phone)
 }
@@ -359,6 +372,36 @@ export function LoginExperience({
   className,
   signupRedirectPath = '/app/sistem/kurulum',
 }: LoginExperienceProps) {
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const previous = {
+      dark: root.classList.contains('dark'),
+      authSurface: root.dataset.authSurface,
+      appearanceMode: root.dataset.appearanceMode,
+      appearance: root.dataset.appearance,
+      visualTheme: root.dataset.visualTheme,
+      edenTheme: root.dataset.edenTheme,
+    }
+
+    root.classList.remove('dark')
+    root.dataset.authSurface = 'true'
+    delete root.dataset.appearanceMode
+    delete root.dataset.appearance
+    delete root.dataset.visualTheme
+    delete root.dataset.edenTheme
+
+    return () => {
+      if (AUTH_ROUTE_PATTERN.test(window.location.pathname || '')) return
+      if (previous.dark) root.classList.add('dark')
+      else root.classList.remove('dark')
+      restoreDatasetValue(root, 'authSurface', previous.authSurface)
+      restoreDatasetValue(root, 'appearanceMode', previous.appearanceMode)
+      restoreDatasetValue(root, 'appearance', previous.appearance)
+      restoreDatasetValue(root, 'visualTheme', previous.visualTheme)
+      restoreDatasetValue(root, 'edenTheme', previous.edenTheme)
+    }
+  }, [])
+
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [signupFlow, setSignupFlow] = useState<SignupFlow>('new_company')
   const [step, setStep] = useState<'kimlik' | 'otp'>('kimlik')

@@ -340,11 +340,48 @@ def _normalize_partner_profile(value: Any) -> dict[str, Any]:
     return normalized
 
 
+def _flatten_nested_master_metadata(data: dict[str, Any]) -> dict[str, Any]:
+    emergency_contact = _json_object(data.get("emergency_contact"))
+    if emergency_contact:
+        data.setdefault(
+            "emergency_contact_first_name",
+            emergency_contact.get("first_name") or emergency_contact.get("ad"),
+        )
+        data.setdefault(
+            "emergency_contact_last_name",
+            emergency_contact.get("last_name") or emergency_contact.get("soyad"),
+        )
+        data.setdefault(
+            "emergency_contact_relationship",
+            emergency_contact.get("relationship") or emergency_contact.get("yakinlik"),
+        )
+        data.setdefault(
+            "emergency_contact_phone",
+            emergency_contact.get("phone") or emergency_contact.get("telefon"),
+        )
+
+    if not data.get("phones"):
+        data["phones"] = _legacy_contact_rows(
+            data,
+            "phone",
+            "phone",
+            "mobile_phone",
+            "work_phone",
+            "phone_1",
+            "phone_2",
+        )
+    if not data.get("emails"):
+        data["emails"] = _legacy_contact_rows(data, "address", "email", "email_1", "email_2")
+    if not data.get("entity_bank_accounts"):
+        data["entity_bank_accounts"] = _legacy_bank_rows(data)
+    return data
+
+
 def _flatten_master_record(row: dict[str, Any] | None, entity_kind: str) -> dict[str, Any] | None:
     if not row:
         return None
     metadata = _json_object(row.get("metadata_json"))
-    data = {**metadata, **row}
+    data = _flatten_nested_master_metadata({**metadata, **row})
     data["metadata_json"] = metadata
     if entity_kind == "person":
         if data.get("identity_number") and not data.get("national_id"):
@@ -354,8 +391,12 @@ def _flatten_master_record(row: dict[str, Any] | None, entity_kind: str) -> dict
     else:
         if data.get("registry_number") and not data.get("trade_registry_no"):
             data["trade_registry_no"] = data.get("registry_number")
+        if data.get("trade_registry_no") and not data.get("registry_number"):
+            data["registry_number"] = data.get("trade_registry_no")
         if data.get("trade_name") and not data.get("legal_name"):
             data["legal_name"] = data.get("trade_name")
+        if data.get("legal_name") and not data.get("trade_name"):
+            data["trade_name"] = data.get("legal_name")
     return data
 
 

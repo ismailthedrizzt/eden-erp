@@ -1,4 +1,4 @@
-import type { EdenFieldContract } from './field.contract'
+import type { EdenFieldContract, EdenReactiveFieldContract } from './field.contract'
 
 export interface EdenFormContract {
   fields: readonly EdenFieldContract[]
@@ -10,4 +10,5 @@ export interface EdenFormContract {
   cancelBehavior: 'return_to_list' | 'return_to_detail'
   draftSaveBehavior: 'create_draft' | 'update_draft'
   forbiddenBehaviors: readonly string[]
+  reactiveFields?: readonly EdenReactiveFieldContract[]
 }
