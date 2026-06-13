@@ -1,3 +1,7 @@
+// BACKEND_MIGRATION_STATUS: keep_session_bootstrap
+// CANONICAL_BACKEND: Next.js BFF/session adapter
+// TARGET_FASTAPI_ENDPOINT: none
+// Session/auth bootstrap route; may read auth/session context but does not own canonical ERP mutation.
 import { NextRequest, NextResponse } from 'next/server'
 import { createEmailOtp } from '@/lib/auth/emailOtp'
 import { lookupTenantUserAccess, normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'

@@ -1,3 +1,7 @@
+// BACKEND_MIGRATION_STATUS: local_only
+// CANONICAL_BACKEND: Local development adapter
+// TARGET_FASTAPI_ENDPOINT: none
+// Theme import/export is development/internal tooling and is not a canonical ERP backend route.
 import { NextRequest, NextResponse } from 'next/server'
 import { isReleaseEnvironment } from '@/lib/release/environment'
 import { createThemeImportPreview } from '@/lib/theme/themeImport'

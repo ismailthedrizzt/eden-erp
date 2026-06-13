@@ -1,3 +1,6 @@
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/security/policy-test
 import { NextRequest } from 'next/server'
 import { proxyToFastApiSecurity } from '../_proxy'
 

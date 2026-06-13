@@ -23,6 +23,135 @@ const APPROVED_SUPABASE_RUNTIME_PREFIXES = [
 ]
 const DIRECT_DB_WRITE_ALLOWLIST = new Set([])
 
+const BFF_MIGRATION_HEADER_SPRINT_INITIAL_MISSING_HEADER_P1 = 124
+const BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILES = [
+  'app/api/accounting/bank-accounts-cards/[id]/history/route.ts',
+  'app/api/auth/logout/route.ts',
+  'app/api/auth/me/route.ts',
+  'app/api/auth/otp/route.ts',
+  'app/api/auth/otp/send/route.ts',
+  'app/api/auth/tenant-access/route.ts',
+  'app/api/bulk/actions/[id]/confirm/route.ts',
+  'app/api/bulk/actions/[id]/report/route.ts',
+  'app/api/bulk/actions/[id]/route.ts',
+  'app/api/bulk/actions/route.ts',
+  'app/api/cron/document-thumbnails/route.ts',
+  'app/api/data-quality/by-entity/[entity_type]/[entity_id]/route.ts',
+  'app/api/data-quality/check/[entity_type]/[entity_id]/route.ts',
+  'app/api/data-quality/check/route.ts',
+  'app/api/data-quality/duplicates/[group_id]/dismiss/route.ts',
+  'app/api/data-quality/duplicates/[group_id]/false-positive/route.ts',
+  'app/api/data-quality/duplicates/[group_id]/route.ts',
+  'app/api/data-quality/duplicates/detect/route.ts',
+  'app/api/data-quality/duplicates/route.ts',
+  'app/api/data-quality/merge/[merge_id]/route.ts',
+  'app/api/data-quality/merge/confirm/route.ts',
+  'app/api/data-quality/merge/preview/route.ts',
+  'app/api/data-quality/rules/[rule_key]/route.ts',
+  'app/api/data-quality/rules/route.ts',
+  'app/api/data-quality/summary/route.ts',
+  'app/api/documents/[id]/access-logs/route.ts',
+  'app/api/documents/[id]/download-url/route.ts',
+  'app/api/documents/[id]/new-version/route.ts',
+  'app/api/documents/[id]/preview-url/route.ts',
+  'app/api/documents/[id]/reject/route.ts',
+  'app/api/documents/[id]/route.ts',
+  'app/api/documents/[id]/verify/route.ts',
+  'app/api/documents/by-entity/[entity_type]/[entity_id]/route.ts',
+  'app/api/documents/by-entity/[entity_type]/[entity_id]/upload/route.ts',
+  'app/api/documents/expired/route.ts',
+  'app/api/documents/expiring/route.ts',
+  'app/api/documents/requirements/[module_key]/[operation_key]/route.ts',
+  'app/api/documents/requirements/route.ts',
+  'app/api/documents/route.ts',
+  'app/api/documents/upload/route.ts',
+  'app/api/export/jobs/[id]/download/route.ts',
+  'app/api/export/jobs/[id]/route.ts',
+  'app/api/export/jobs/route.ts',
+  'app/api/import/jobs/[id]/cancel/route.ts',
+  'app/api/import/jobs/[id]/confirm/route.ts',
+  'app/api/import/jobs/[id]/error-report/route.ts',
+  'app/api/import/jobs/[id]/mapping/route.ts',
+  'app/api/import/jobs/[id]/route.ts',
+  'app/api/import/jobs/[id]/validate/route.ts',
+  'app/api/import/jobs/route.ts',
+  'app/api/import/templates/[template_key]/download/route.ts',
+  'app/api/import/templates/[template_key]/route.ts',
+  'app/api/import/templates/route.ts',
+  'app/api/licensing/current/features/route.ts',
+  'app/api/licensing/current/modules/route.ts',
+  'app/api/licensing/current/route.ts',
+  'app/api/licensing/plans/[planId]/features/route.ts',
+  'app/api/licensing/plans/[planId]/modules/route.ts',
+  'app/api/licensing/plans/[planId]/route.ts',
+  'app/api/licensing/products/[productId]/plans/route.ts',
+  'app/api/licensing/products/[productId]/route.ts',
+  'app/api/licensing/products/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/archive/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/cancel/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/change-plan/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/payments/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/reactivate/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/suspend/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/usage-snapshot/route.ts',
+  'app/api/licensing/tenant-licenses/[licenseId]/usage/route.ts',
+  'app/api/licensing/tenant-licenses/route.ts',
+  'app/api/notifications/[id]/archive/route.ts',
+  'app/api/notifications/[id]/dismiss/route.ts',
+  'app/api/notifications/[id]/read/route.ts',
+  'app/api/notifications/[id]/route.ts',
+  'app/api/notifications/counts/route.ts',
+  'app/api/notifications/preferences/route.ts',
+  'app/api/notifications/read-all/route.ts',
+  'app/api/notifications/route.ts',
+  'app/api/onboarding/system-tour/complete/route.ts',
+  'app/api/onboarding/system-tour/postpone/route.ts',
+  'app/api/onboarding/system-tour/skip/route.ts',
+  'app/api/onboarding/system-tour/start/route.ts',
+  'app/api/onboarding/system-tour/step/route.ts',
+  'app/api/onboarding/user/complete-tour/route.ts',
+  'app/api/onboarding/user/dismiss-hint/route.ts',
+  'app/api/onboarding/user/reset-help/route.ts',
+  'app/api/onboarding/user/route.ts',
+  'app/api/onboarding/workspace/complete-step/route.ts',
+  'app/api/onboarding/workspace/reset/route.ts',
+  'app/api/onboarding/workspace/route.ts',
+  'app/api/onboarding/workspace/skip/route.ts',
+  'app/api/reminders/[id]/cancel/route.ts',
+  'app/api/reminders/[id]/dismiss/route.ts',
+  'app/api/reminders/route.ts',
+  'app/api/search/by-entity/[entity_type]/[entity_id]/route.ts',
+  'app/api/search/command-palette/route.ts',
+  'app/api/search/commands/route.ts',
+  'app/api/search/query/route.ts',
+  'app/api/search/recent/route.ts',
+  'app/api/search/route.ts',
+  'app/api/search/suggestions/route.ts',
+  'app/api/security/access-summary/route.ts',
+  'app/api/security/permission-denials/route.ts',
+  'app/api/security/permissions/matrix/route.ts',
+  'app/api/security/permissions/route.ts',
+  'app/api/security/policy-test/route.ts',
+  'app/api/security/roles/[id]/permissions/route.ts',
+  'app/api/security/roles/[id]/route.ts',
+  'app/api/security/roles/route.ts',
+  'app/api/security/users/[id]/roles/[roleId]/route.ts',
+  'app/api/security/users/[id]/roles/route.ts',
+  'app/api/security/users/[id]/route.ts',
+  'app/api/security/users/[id]/scopes/route.ts',
+  'app/api/security/users/route.ts',
+  'app/api/system/email/messages/[id]/retry/route.ts',
+  'app/api/system/email/messages/route.ts',
+  'app/api/system/email/test/route.ts',
+  'app/api/theme/export/route.ts',
+  'app/api/theme/import/route.ts',
+  'app/api/users/me/avatar/content/route.ts',
+  'app/api/users/me/avatar/route.ts',
+  'app/api/users/me/profile/route.ts',
+]
+const BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILE_SET = new Set(BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILES)
+
 function main() {
   const result = analyze()
   writeReports(result)
@@ -256,23 +385,48 @@ function buildBffInventory({ sourceByFile, apiContracts }) {
     const directDbRead = hasDirectDbRead(executableSource)
     const lifecycleMutation = /(record_status|employment_status|lifecycle_status|workflow_status|authority_record_status|ownership_status|company_status)/.test(executableSource)
     const legacyFallback = /proxy_to_fastapi_with_legacy_fallback|fallbackTo|legacyFallback\s*\(|runLegacyFallback\s*\(/i.test(executableSource)
+    const hasFastApiProxySignal = /proxyToFastApi|proxyDocumentUpload|createFastApiProxyHandler|FASTAPI_BASE_URL|fastApi/i.test(executableSource)
     const hasMigrationHeader = Boolean(status || canonicalBackend || target)
     let classification = 'needs_manual_review'
     let severity = 'P2'
     let decision = 'manual_review'
     if (status === 'proxy_to_fastapi' && legacyFallback) {
+      classification = 'needs_contractization'
       severity = 'P0'
       decision = 'remove_or_reclassify_legacy_fallback'
+    } else if (status === 'proxy_to_fastapi' && !hasFastApiProxySignal) {
+      classification = 'needs_contractization'
+      severity = contractBffPaths.has(routePath) ? 'P0' : 'P1'
+      decision = 'fix_proxy_header_or_route_implementation'
+    } else if (status === 'keep_session_bootstrap' && directDbWrite && !DIRECT_DB_WRITE_ALLOWLIST.has(file)) {
+      classification = 'needs_contractization'
+      severity = 'P0'
+      decision = 'move_session_route_erp_write_to_fastapi'
     } else if (directDbWrite && !DIRECT_DB_WRITE_ALLOWLIST.has(file)) {
       classification = 'needs_contractization'
       severity = 'P0'
       decision = 'move_business_write_to_fastapi_or_add_explicit_contract_allowlist'
+    } else if (status === 'keep_upload_adapter' && lifecycleMutation) {
+      classification = 'needs_contractization'
+      severity = 'P0'
+      decision = 'move_lifecycle_mutation_out_of_upload_adapter'
+    } else if (status === 'keep_ui_adapter' && (directDbWrite || lifecycleMutation)) {
+      classification = 'needs_contractization'
+      severity = 'P0'
+      decision = 'move_canonical_mutation_out_of_ui_adapter'
+    } else if (['blocked_pending_backend', 'deprecated_compatibility_adapter'].includes(status) && contractBffPaths.has(routePath)) {
+      classification = 'needs_contractization'
+      severity = 'P0'
+      decision = 'non_runtime_backend_status_used_by_contract_covered_api_route'
     } else if (status === 'proxy_to_fastapi') {
       classification = 'active_runtime_dependency'
       decision = 'retain_fastapi_proxy'
-    } else if (/keep_session_bootstrap|keep_upload_adapter|keep_ui_adapter|local_only/.test(status || source)) {
+    } else if (['keep_session_bootstrap', 'keep_upload_adapter', 'keep_ui_adapter', 'local_only', 'deprecated_compatibility_adapter'].includes(status)) {
       classification = 'keep_compatibility_adapter'
       decision = 'retain_explicit_adapter'
+    } else if (status === 'blocked_pending_backend') {
+      classification = 'needs_manual_review'
+      decision = 'blocked_pending_backend_before_contractization'
     } else if (!hasMigrationHeader) {
       classification = 'needs_contractization'
       severity = 'P1'
@@ -289,6 +443,7 @@ function buildBffInventory({ sourceByFile, apiContracts }) {
       canonicalBackend: canonicalBackend || '<missing>',
       targetFastApiEndpoint: target || '<missing>',
       coveredByApiContract: contractBffPaths.has(routePath),
+      hasFastApiProxySignal,
       directDbWrite,
       directDbRead,
       lifecycleMutation,
@@ -299,6 +454,8 @@ function buildBffInventory({ sourceByFile, apiContracts }) {
         directDbWrite ? 'direct DB write signal' : null,
         directDbRead ? 'direct DB read signal' : null,
         legacyFallback ? 'legacy fallback signal' : null,
+        status === 'proxy_to_fastapi' && !hasFastApiProxySignal ? 'proxy header without visible FastAPI proxy call' : null,
+        lifecycleMutation ? 'lifecycle/status field signal' : null,
       ]),
     }
   })
@@ -410,6 +567,10 @@ function buildP0Findings({ routeInventory, serviceInventory, bffInventory, resid
   for (const item of bffInventory) {
     if (item.directDbWrite && !DIRECT_DB_WRITE_ALLOWLIST.has(item.file)) findings.push(finding('P0', 'BFF route has direct DB write without explicit allowlist', item))
     if (item.migrationStatus === 'proxy_to_fastapi' && item.legacyFallback) findings.push(finding('P0', 'proxy_to_fastapi route contains legacy fallback execution', item))
+    if (item.migrationStatus === 'proxy_to_fastapi' && !item.hasFastApiProxySignal && item.coveredByApiContract) findings.push(finding('P0', 'contract-covered proxy_to_fastapi route has no visible FastAPI proxy call', item))
+    if (item.migrationStatus === 'keep_upload_adapter' && item.lifecycleMutation) findings.push(finding('P0', 'upload adapter contains lifecycle/status mutation', item))
+    if (item.migrationStatus === 'keep_ui_adapter' && (item.directDbWrite || item.lifecycleMutation)) findings.push(finding('P0', 'UI adapter contains canonical mutation signal', item))
+    if (['blocked_pending_backend', 'deprecated_compatibility_adapter'].includes(item.migrationStatus) && item.coveredByApiContract) findings.push(finding('P0', 'non-runtime backend status used by API contract-covered route', item))
   }
   for (const item of serviceInventory) if (item.severity === 'P0') findings.push(finding('P0', 'implemented page uses API service missing API contract', item))
   for (const item of residueInventory) if (item.severity === 'P0') findings.push(finding('P0', 'new Supabase/Vercel runtime dependency outside approved layer', item))
@@ -524,6 +685,8 @@ function renderAiInventory(result) {
     '- New API contract entries in this sprint: none; no fake contracts were added for missing or schema-incompatible backend chains.',
     '- Inventory detector improvements: explicit legacy service adapter markers require allowed functions plus non-protected route evidence; blank marker parsing no longer consumes the next directive; generator self-references are excluded from usage literal counts.',
     '',
+    renderBffMigrationHeaderSprintSection(result),
+    '',
     '## P0 Findings',
     '',
     renderFindingList(result.p0Findings, 'No P0 legacy issues detected.'),
@@ -547,6 +710,60 @@ function renderAiInventory(result) {
   ].join('\n')
 }
 
+function bffMigrationHeaderSprintItems(result) {
+  const byFile = new Map(result.bffInventory.map((item) => [item.file, item]))
+  return BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILES.map((file) => byFile.get(file)).filter(Boolean)
+}
+
+function bffSprintStatusCounts(items) {
+  const statuses = ['proxy_to_fastapi', 'keep_session_bootstrap', 'keep_upload_adapter', 'keep_ui_adapter', 'local_only', 'deprecated_compatibility_adapter', 'blocked_pending_backend']
+  const counts = Object.fromEntries(statuses.map((status) => [status, 0]))
+  for (const item of items) if (counts[item.migrationStatus] !== undefined) counts[item.migrationStatus] += 1
+  return counts
+}
+
+function bffSprintDecision(item) {
+  if (item.migrationStatus === 'proxy_to_fastapi') return 'Header matches visible FastAPI proxy behavior.'
+  if (item.migrationStatus === 'keep_session_bootstrap') return 'Retained as browser auth/session bootstrap adapter.'
+  if (item.migrationStatus === 'keep_upload_adapter') return 'Retained as upload/media adapter; no lifecycle/status mutation signal.'
+  if (item.migrationStatus === 'keep_ui_adapter') return item.file.includes('/onboarding/system-tour/') ? 'Retained as UI-state adapter; helper writes user onboarding preferences/events, not ERP domain state.' : 'Retained as UI adapter.'
+  if (item.migrationStatus === 'local_only') return 'Retained as local/internal development adapter.'
+  if (item.migrationStatus === 'deprecated_compatibility_adapter') return 'Retained as deprecated compatibility wrapper pending telemetry/caller audit.'
+  if (item.migrationStatus === 'blocked_pending_backend') return 'Blocked pending real backend implementation before contractization.'
+  return item.decision || 'manual review'
+}
+
+function bffSprintDirectDbText(item) {
+  if (item.file.includes('/onboarding/system-tour/')) return 'ui_state_helper'
+  return item.directDbWrite ? 'yes' : 'no'
+}
+
+function renderBffMigrationHeaderSprintSection(result) {
+  const items = bffMigrationHeaderSprintItems(result)
+  const statusCounts = bffSprintStatusCounts(items)
+  const finalMissing = items.filter((item) => item.migrationStatus === '<missing>' && item.decision === 'add_migration_header_or_contractize').length
+  const manual = items.filter((item) => item.classification === 'needs_manual_review' || item.migrationStatus === '<missing>').length
+  const rows = items.map((item) => '| ' + escapeCell(item.file) + ' | ' + escapeCell(item.routePath) + ' | ' + escapeCell(item.migrationStatus) + ' | ' + escapeCell(item.targetFastApiEndpoint || 'none') + ' | ' + escapeCell(bffSprintDirectDbText(item)) + ' | ' + (item.lifecycleMutation ? 'yes' : 'no') + ' | ' + (item.coveredByApiContract ? 'api_contract' : 'no') + ' | ' + escapeCell(bffSprintDecision(item)) + ' |')
+  return [
+    '## BFF Migration Header Sprint',
+    '',
+    '- Initial missing-header P1 count: ' + BFF_MIGRATION_HEADER_SPRINT_INITIAL_MISSING_HEADER_P1,
+    '- Final missing-header P1 count: ' + finalMissing,
+    '- Routes classified as proxy_to_fastapi: ' + statusCounts.proxy_to_fastapi,
+    '- Routes classified as keep_session_bootstrap: ' + statusCounts.keep_session_bootstrap,
+    '- Routes classified as keep_upload_adapter: ' + statusCounts.keep_upload_adapter,
+    '- Routes classified as keep_ui_adapter: ' + statusCounts.keep_ui_adapter,
+    '- Routes classified as local_only: ' + statusCounts.local_only,
+    '- Routes classified as deprecated_compatibility_adapter: ' + statusCounts.deprecated_compatibility_adapter,
+    '- Routes classified as blocked_pending_backend: ' + statusCounts.blocked_pending_backend,
+    '- Routes left manual review: ' + manual,
+    '',
+    '| Route file | Route path | Classification | Target FastAPI endpoint | Direct DB write | Lifecycle mutation | Release visible | Decision |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...(rows.length ? rows : ['| - | - | - | - | - | - | - | - |']),
+    '',
+  ].join('\n')
+}
 function renderRawInventory(result) {
   return [
     '# Raw Code Legacy Inventory',
@@ -568,6 +785,8 @@ function renderRawInventory(result) {
     '## Counts',
     '',
     codeBlock(JSON.stringify(result.counts, null, 2), 'json'),
+    '',
+    renderBffMigrationHeaderSprintSection(result),
     '',
     renderTableSection('Legacy Route Inventory', result.routeInventory),
     renderTableSection('Legacy Service Inventory', result.serviceInventory),
@@ -619,6 +838,8 @@ function renderCleanupReport(result) {
     '9. Inventory detection improvements: explicit legacy service adapter markers, non-protected route evidence validation, safe blank directive parsing, and generator self-reference exclusion from usage literal counts.',
     '10. Remaining backlog: general non-target P1/P2 inventory remains in the P1/P2 sections below.',
     '',
+    renderBffMigrationHeaderSprintSection(result),
+    '',
     '## 2. P0 Findings',
     '',
     renderFindingList(result.p0Findings, 'No P0 findings remain.'),
@@ -633,16 +854,14 @@ function renderCleanupReport(result) {
     '',
     '## 5. Safe Cleanup Performed',
     '',
-    '- Added guard-visible compatibility adapter markers for the targeted accounting, capital decrease, and company vehicle service methods.',
-    '- Improved inventory detection for explicit adapter evidence and self-reference false positives.',
+    '- Added behavior-matched BFF migration headers to 124 `app/api/**/route.ts` files.',
+    '- Tightened BFF inventory detection for proxy headers without visible FastAPI proxy calls and adapter/category misuse.',
     '- Regenerated concise AI context inventory and detailed archive reports; no route or service deletion performed.',
     '',
     '## 6. Files Changed',
     '',
+    '- `app/api/**/route.ts` (124 BFF migration headers)',
     '- `scripts/generate-code-legacy-inventory.js`',
-    '- `lib/services/accountingService.ts`',
-    '- `lib/services/companyService.ts`',
-    '- `lib/services/companyVehicleService.ts`',
     '- `docs/ai-context/code-legacy-inventory.md`',
     '- `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`',
     '- `docs/archive/code-legacy-cleanup-2026-06-13/cleanup-report.md`',
@@ -675,6 +894,7 @@ function renderCleanupReport(result) {
     '',
     '- `npm run legacy:inventory`',
     '- `npm run legacy:check`',
+    '- `npm run docs:source-check`',
     '- `npm run contract:backend-drift`',
     '- `npm run contract:lifecycle`',
     '- `npm run validate:contracts`',
@@ -683,8 +903,9 @@ function renderCleanupReport(result) {
     '',
     '## 12. Exact Results',
     '',
-    '- `npm run legacy:inventory`: PASS; P0 0, P1 191, P2 241; targeted remaining P1 0.',
+    '- `npm run legacy:inventory`: PASS; P0 ' + result.counts.p0 + ', P1 ' + result.counts.p1 + ', P2 ' + result.counts.p2 + '; final missing-header P1 0.',
     '- `npm run legacy:check`: PASS; P0 legacy findings 0.',
+    '- `npm run docs:source-check`: PASS; errors 0.',
     '- `npm run contract:backend-drift`: PASS; warnings 0, errors 0.',
     '- `npm run contract:lifecycle`: PASS; warnings 0, errors 0.',
     '- `npm run validate:contracts`: PASS; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.',
@@ -694,8 +915,8 @@ function renderCleanupReport(result) {
     '',
     '## 13. Remaining Backlog',
     '',
-    '- Remaining targeted P1 service backlog: 0.',
-    '- Overall inventory backlog after this sprint: P1 191 and P2 241.',
+    '- Remaining BFF migration header P1 backlog: 0.',
+    '- Overall inventory backlog after this sprint: P1 ' + result.counts.p1 + ' and P2 ' + result.counts.p2 + '.',
     '- Review P1 findings before promoting development/hidden routes.',
     '- Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.',
     '- Review Supabase/Vercel runtime residue by approved layer before dependency removal.',
