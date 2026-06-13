@@ -238,10 +238,10 @@ function assertCanonicalApiRoutes() {
 }
 
 function assertDocumentationContract() {
-  assertIncludes('FrontendDataAccessRules.md', 'Pipeline adlandirma ve sozluk kontrati', 'frontend rules must document the canonical naming and glossary contract')
-  assertIncludes('BackendApiMigration.md', 'Pipeline naming contract', 'backend API migration rules must document the full pipeline naming contract')
-  assertIncludes('SupabaseUsagePolicy.md', 'Veritabani adlandirma kontrati', 'Supabase policy must document the database naming contract')
-  assertIncludes('docs/AI_COLLABORATION_GUIDE.md', 'Do not add compatibility aliases', 'AI collaboration guide must reject field-name aliases')
+  assertIncludes('docs/ai-context/contracts-and-guards.md', 'Pipeline adlandirma ve sozluk kontrati', 'frontend rules must document the canonical naming and glossary contract')
+  assertIncludes('docs/ai-context/contracts-and-guards.md', 'Pipeline naming contract', 'backend API migration rules must document the full pipeline naming contract')
+  assertIncludes('docs/ai-context/contracts-and-guards.md', 'Veritabani adlandirma kontrati', 'Supabase policy must document the database naming contract')
+  assertIncludes('docs/ai-context/collaboration-guide.md', 'Do not add compatibility aliases', 'AI collaboration guide must reject field-name aliases')
   assertIncludes('lib/projectGlossary.ts', 'export const projectGlossary', 'project glossary must be the shared home for user-facing labels')
 }
 
