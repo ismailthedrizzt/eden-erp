@@ -19,6 +19,11 @@ import {
 // TARGET_BACKEND_MODULE: generated-client
 // TARGET_FASTAPI_ENDPOINT: /openapi.json
 // NOTES: Public service methods keep the frontend contract stable while endpoint DTOs move to generated OpenAPI types.
+// CODE_LEGACY_ADAPTER: company.capital_decrease_blocked_lifecycle_adapter
+// CODE_LEGACY_DECISION: retain_blocked_capital_decrease_request_until_operation_backend_exists
+// CODE_LEGACY_ALLOWED_FUNCTIONS: companyService.requestCapitalDecrease
+// CODE_LEGACY_CONSUMER_ROUTES:
+// CODE_LEGACY_CONSUMER_SYMBOLS: requestCapitalDecrease
 
 export type CompanyServiceBackendContracts = {
   companyList: BackendPaths['/api/v1/companies']['get']

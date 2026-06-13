@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T16:51:30.654Z
+Generated: 2026-06-13T17:34:08.137Z
 
 ## Related Contracts
 
@@ -28,21 +28,24 @@ Generated: 2026-06-13T16:51:30.654Z
 - generatedContractItems: 146
 - orphanCandidates: 0
 - p0: 0
-- p1: 194
-- p2: 238
+- p1: 191
+- p2: 241
 - safeDeleteCandidates: 11
-- needsManualReview: 323
-- activeRuntimeDependency: 897
+- needsManualReview: 354
+- activeRuntimeDependency: 866
 
 ## API Contractization Sprint Delta
 
-1. Initial P1 service debt count: 30 raw targeted inventory rows at sprint start; 18 real method-level API-call findings after detector normalization.
-2. Final P1 service debt count for targeted files: 10.
-3. Services newly covered by API contracts: `facilityService.list`, `facilityService.detail`, `facilityService.create`, `facilityService.update`, `companyService.stakeholdersList`, `companyService.stakeholderDetail`, `companyService.partners`, `companyService.representatives`.
-4. Services left for manual review: `accountingService.list/create/update/delete` because `/api/muhasebe/islemler` uses legacy `NakitIslem` payload/response semantics and no matching FastAPI cash transaction contract exists; `companyService.requestCapitalDecrease` because BFF points to a missing FastAPI POST; `companyVehicleService.list/references/create/update/delete` because company vehicle payload/reference semantics do not match the after-sales installed asset backend schema.
-5. Inventory detection improvements: method-level API call attribution, nested generic `apiClient.get<Pick<...>>` detection, untracked non-ignored contract files included in scans, path-template parameter equivalence, and raw serviceFunction visibility in archive inventory tables.
-6. FastAPI/BFF/contract changes: added facility API contracts, CRM stakeholder list/detail contracts, partner/representative alias contract entries; no BFF route deletion or service deletion performed.
-7. Backend schema changes: `FacilityCreateRequest` and `FacilityUpdateRequest` now use `extra="forbid"` for contract-ready request validation.
+1. Initial targeted remaining P1: 10.
+2. Final targeted remaining P1: 0.
+3. Accounting/NakitIslem decision: `accountingService.list/create/update/delete` stay as `keep_compatibility_adapter` for blocked/generated development accounting pages; no fake cash transaction contract was added because `/api/v1/accounting/cash-transactions` has no real FastAPI/domain owner.
+4. Capital decrease decision: `companyService.requestCapitalDecrease` stays as a blocked lifecycle compatibility adapter with no protected page usage until a real operation-recorded capital decrease backend exists.
+5. Company vehicle domain/schema decision: `companyVehicleService.list/references/create/update/delete` stay as `keep_compatibility_adapter`; current BFF proxies to after-sales installed assets, but company vehicle payload/reference semantics do not match backend DTOs.
+6. API contract entries added/updated: none in this sprint; contract entries were intentionally not added for missing or schema-incompatible backend chains.
+7. Backend/BFF files changed: none; no route or service was deleted.
+8. Tests added: none; this pass added guard-visible adapter evidence and detector precision only.
+9. Inventory detection improvements: explicit legacy service adapter markers, non-protected route evidence validation, safe blank directive parsing, and generator self-reference exclusion from usage literal counts.
+10. Remaining backlog: general non-target P1/P2 inventory remains in the P1/P2 sections below.
 
 ## 2. P0 Findings
 
@@ -57,10 +60,7 @@ Generated: 2026-06-13T16:51:30.654Z
 - P1: contractize_before_promotion (lib/services/accounting/cariTransactions.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/accounting/eDocuments.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/accounting/reconciliation.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/accountingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/admin/adminService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/companyService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/companyVehicleService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/dataQuality/dataQualityService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/documents/documentRequirements.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/documents/documentService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
@@ -100,6 +100,9 @@ Generated: 2026-06-13T16:51:30.654Z
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/[merge_id]/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/confirm/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/preview/route.ts) - missing migration header
+- P1: add_migration_header_or_contractize (app/api/data-quality/rules/[rule_key]/route.ts) - missing migration header
+- P1: add_migration_header_or_contractize (app/api/data-quality/rules/route.ts) - missing migration header
+- P1: add_migration_header_or_contractize (app/api/data-quality/summary/route.ts) - missing migration header
 
 ## 4. P2 Findings
 
@@ -108,16 +111,19 @@ Generated: 2026-06-13T16:51:30.654Z
 - P2: delete_later_after_reference_scan (lib/api/serverResponseCache.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/accounting/accountingService.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/accounting/accountingService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accountingService.ts) - missing API contract coverage
+- P2: retain_legacy_cash_adapter_until_accounting_domain_consolidation (lib/services/accountingService.ts) - legacy adapter evidence: accounting.cash_legacy_adapter; /app/muhasebe/borclar:development/blocked/generated_from_existing_page, /app/muhasebe/dashboard:development/blocked/generated_from_existing_page, /app/muhasebe/hesaplar:development/blocked/generated_from_existing_page, /app/muhasebe/islemler:development/blocked/generated_from_existing_page, /app/muhasebe/projeler:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api
+- P2: manual_review (lib/services/accountingService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/admin/adminService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/after-sales/afterSales.service.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/after-sales/afterSales.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/ai/aiCopilot.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/automation/automationService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/companyService.ts) - serviceFunction appears in contracts/api
-- P2: retain_used_service_or_helper (lib/services/companyService.ts) - missing API contract coverage
+- P2: manual_review (lib/services/companyService.ts) - serviceFunction appears in contracts/api
+- P2: manual_review (lib/services/companyService.ts) - missing API contract coverage
 - P2: retain_contract_covered_service (lib/services/companyService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
-- P2: retain_used_service_or_helper (lib/services/companyVehicleService.ts) - missing API contract coverage
+- P2: retain_blocked_capital_decrease_request_until_operation_backend_exists (lib/services/companyService.ts) - legacy adapter evidence: company.capital_decrease_blocked_lifecycle_adapter; no direct protected consumer route references; 1 API call(s); API path not covered by contracts/api
+- P2: retain_company_vehicle_adapter_until_vehicle_domain_contractization (lib/services/companyVehicleService.ts) - legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api
+- P2: manual_review (lib/services/companyVehicleService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/contracts/contractService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/crm/crmService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/documents/documentService.ts) - missing API contract coverage
@@ -150,26 +156,23 @@ Generated: 2026-06-13T16:51:30.654Z
 - P2: manual_review_runtime_residue (app/api/accounting/_banking.ts) - Supabase, @supabase/supabase-js in app/api/accounting/_banking.ts
 - P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts
 - P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/route.ts
-- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts
-- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/_shared.ts) - Supabase, @supabase/supabase-js in app/api/accounting/bank-accounts-cards/_shared.ts
-- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/route.ts
 
 ## 5. Safe Cleanup Performed
 
-- Added legacy inventory generation and P0-only legacy guard scripts.
-- Added concise AI context inventory and detailed archive reports.
-- Corrected release-visible blocked metadata only where validated as real active pages; no route or service deletion performed.
+- Added guard-visible compatibility adapter markers for the targeted accounting, capital decrease, and company vehicle service methods.
+- Improved inventory detection for explicit adapter evidence and self-reference false positives.
+- Regenerated concise AI context inventory and detailed archive reports; no route or service deletion performed.
 
 ## 6. Files Changed
 
 - `scripts/generate-code-legacy-inventory.js`
-- `scripts/check-code-legacy-inventory.js`
-- `package.json`
+- `lib/services/accountingService.ts`
+- `lib/services/companyService.ts`
+- `lib/services/companyVehicleService.ts`
 - `docs/ai-context/code-legacy-inventory.md`
-- `docs/ai-context/collaboration-guide.md`
-- `docs/ai-context/contracts-and-guards.md`
-- `docs/archive/code-legacy-cleanup-2026-06-13/**`
-- `contracts/pages/page-contract-registry.ts` when release-visible blocked metadata is corrected.
+- `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`
+- `docs/archive/code-legacy-cleanup-2026-06-13/cleanup-report.md`
+- `docs/archive/code-legacy-cleanup-2026-06-13/risk-register.md`
 
 ## 7. Files Intentionally Not Deleted
 
@@ -254,25 +257,26 @@ Generated: 2026-06-13T16:51:30.654Z
 - `npm run legacy:inventory`
 - `npm run legacy:check`
 - `npm run contract:backend-drift`
+- `npm run contract:lifecycle`
 - `npm run validate:contracts`
 - `npm run build`
 - `npm run typecheck`
-- `cd backend && .venv/bin/python -m pytest`
 
 ## 12. Exact Results
 
-- `npm run legacy:inventory`: PASS; P0 0, P1 194, P2 238.
+- `npm run legacy:inventory`: PASS; P0 0, P1 191, P2 241; targeted remaining P1 0.
 - `npm run legacy:check`: PASS; P0 legacy findings 0.
 - `npm run contract:backend-drift`: PASS; warnings 0, errors 0.
-- `npm run validate:contracts`: PASS; contract usage warnings 3, errors 0; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.
-- `npm run build`: PASS; Next.js build completed with existing lint warnings only.
-- `npm run typecheck`: PASS; targeted TypeScript check passed.
-- `cd backend && .venv/bin/python -m pytest`: PASS; 282 passed, 7 skipped, 4 warnings.
+- `npm run contract:lifecycle`: PASS; warnings 0, errors 0.
+- `npm run validate:contracts`: PASS; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.
+- `npm run build`: PASS; Next.js build completed.
+- `npm run typecheck`: PASS.
+- Backend pytest: not run in this sprint because backend files were not changed.
 
 ## 13. Remaining Backlog
 
-- Remaining targeted P1 service backlog: 10 manual-review items across accounting legacy cash transactions, capital decrease POST, and company vehicle compatibility semantics.
-- Overall inventory backlog: P1 194 and P2 238 after stricter method-level detection.
+- Remaining targeted P1 service backlog: 0.
+- Overall inventory backlog after this sprint: P1 191 and P2 241.
 - Review P1 findings before promoting development/hidden routes.
 - Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.
 - Review Supabase/Vercel runtime residue by approved layer before dependency removal.

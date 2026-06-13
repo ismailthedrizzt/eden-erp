@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T16:51:30.654Z
+Generated: 2026-06-13T17:34:08.137Z
 
 ## Related Contracts
 
@@ -26,11 +26,11 @@ Generated: 2026-06-13T16:51:30.654Z
   "generatedContractItems": 146,
   "orphanCandidates": 0,
   "p0": 0,
-  "p1": 194,
-  "p2": 238,
+  "p1": 191,
+  "p2": 241,
   "safeDeleteCandidates": 11,
-  "needsManualReview": 323,
-  "activeRuntimeDependency": 897
+  "needsManualReview": 354,
+  "activeRuntimeDependency": 866
 }
 ```
 
@@ -249,11 +249,11 @@ Total: 534
 | P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.unmatched | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
 | P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.match | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
 | P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.unmatch | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/accountingService.ts#accountingService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | keep_compatibility_adapter | lib/services/accountingService.ts#accountingService.list | retain_legacy_cash_adapter_until_accounting_domain_consolidation | legacy adapter evidence: accounting.cash_legacy_adapter; /app/muhasebe/borclar:development/blocked/generated_from_existing_page, /app/muhasebe/dashboard:development/blocked/generated_from_existing_page, /app/muhasebe/hesaplar:development/blocked/generated_from_existing_page, /app/muhasebe/islemler:development/blocked/generated_from_existing_page, /app/muhasebe/projeler:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/accountingService.ts#accountingService.create | retain_legacy_cash_adapter_until_accounting_domain_consolidation | legacy adapter evidence: accounting.cash_legacy_adapter; /app/muhasebe/borclar:development/blocked/generated_from_existing_page, /app/muhasebe/dashboard:development/blocked/generated_from_existing_page, /app/muhasebe/hesaplar:development/blocked/generated_from_existing_page, /app/muhasebe/islemler:development/blocked/generated_from_existing_page, /app/muhasebe/projeler:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/accountingService.ts#accountingService.update | retain_legacy_cash_adapter_until_accounting_domain_consolidation | legacy adapter evidence: accounting.cash_legacy_adapter; /app/muhasebe/borclar:development/blocked/generated_from_existing_page, /app/muhasebe/dashboard:development/blocked/generated_from_existing_page, /app/muhasebe/hesaplar:development/blocked/generated_from_existing_page, /app/muhasebe/islemler:development/blocked/generated_from_existing_page, /app/muhasebe/projeler:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/accountingService.ts#accountingService.delete | retain_legacy_cash_adapter_until_accounting_domain_consolidation | legacy adapter evidence: accounting.cash_legacy_adapter; /app/muhasebe/borclar:development/blocked/generated_from_existing_page, /app/muhasebe/dashboard:development/blocked/generated_from_existing_page, /app/muhasebe/hesaplar:development/blocked/generated_from_existing_page, /app/muhasebe/islemler:development/blocked/generated_from_existing_page, /app/muhasebe/projeler:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | needs_manual_review | lib/services/accountingService.ts#accountingService.invalidateList | manual_review | missing API contract coverage |
 | P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.dashboard | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
 | P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.workspaceSettings | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
 | P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.updateWorkspaceSettings | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
@@ -328,21 +328,21 @@ Total: 534
 | P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRuns.get | retain_used_service_or_helper | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/automation/automationService.ts#requestJson | retain_used_service_or_helper | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/automation/automationService.ts#toQueryString | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.list | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.detail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.detailSection | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.create | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.update | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.delete | retain_used_service_or_helper | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.list | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.detail | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.detailSection | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.create | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.update | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.delete | manual_review | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.capitalIncreasePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeCapitalIncrease | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.capitalDecreasePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
-| P1 | needs_contractization | lib/services/companyService.ts#companyService.requestCapitalDecrease | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyService.ts#companyService.requestCapitalDecrease | retain_blocked_capital_decrease_request_until_operation_backend_exists | legacy adapter evidence: company.capital_decrease_blocked_lifecycle_adapter; no direct protected consumer route references; 1 API call(s); API path not covered by contracts/api |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.officialChangePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeOfficialChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchesList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchDetail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateBranch | retain_used_service_or_helper | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.branchDetail | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.updateBranch | manual_review | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateBranchDocuments | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchOpeningPrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeBranchOpening | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
@@ -354,39 +354,39 @@ Total: 534
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeActivitySubjectChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partners | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnersList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnerDetail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnerDetailSection | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.createPartner | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updatePartner | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.deletePartner | retain_used_service_or_helper | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.partnerDetail | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.partnerDetailSection | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.createPartner | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.updatePartner | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.deletePartner | manual_review | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representatives | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representativesList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representativeDetail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.createRepresentative | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateRepresentative | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.deleteRepresentativeDraft | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.startRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.renewRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.changeRepresentativeAuthorityScope | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.changeRepresentativeLimit | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.suspendRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.resumeRepresentativeAuthority | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.terminateRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.correctRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.reverseRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.createRepresentative | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.updateRepresentative | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.deleteRepresentativeDraft | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.startRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.renewRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.changeRepresentativeAuthorityScope | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.changeRepresentativeLimit | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.suspendRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.resumeRepresentativeAuthority | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.terminateRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.correctRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.reverseRepresentativeAuthority | manual_review | serviceFunction appears in contracts/api |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.stakeholdersList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.stakeholderDetail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
 | P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.currentOwnership | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.documents | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.logos | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.invalidateList | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.invalidateRelations | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.references | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyVehicleService.ts#companyVehicleService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.documents | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.logos | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.invalidateList | manual_review | serviceFunction appears in contracts/api |
+| P2 | needs_manual_review | lib/services/companyService.ts#companyService.invalidateRelations | manual_review | serviceFunction appears in contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyVehicleService.ts#companyVehicleService.list | retain_company_vehicle_adapter_until_vehicle_domain_contractization | legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyVehicleService.ts#companyVehicleService.references | retain_company_vehicle_adapter_until_vehicle_domain_contractization | legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyVehicleService.ts#companyVehicleService.create | retain_company_vehicle_adapter_until_vehicle_domain_contractization | legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyVehicleService.ts#companyVehicleService.update | retain_company_vehicle_adapter_until_vehicle_domain_contractization | legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | keep_compatibility_adapter | lib/services/companyVehicleService.ts#companyVehicleService.delete | retain_company_vehicle_adapter_until_vehicle_domain_contractization | legacy adapter evidence: company.vehicle_blocked_development_adapter; /app/sirket/araclar:development/blocked/generated_from_existing_page; 1 API call(s); API path not covered by contracts/api |
+| P2 | needs_manual_review | lib/services/companyVehicleService.ts#companyVehicleService.invalidateList | manual_review | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.list | retain_used_service_or_helper | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.get | retain_used_service_or_helper | missing API contract coverage |
 | P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.create | retain_used_service_or_helper | missing API contract coverage |

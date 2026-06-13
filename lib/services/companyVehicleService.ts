@@ -3,6 +3,12 @@
 import { apiClient, type ApiClientOptions } from '@/lib/api/apiClient'
 import type { ListMeta, ListQuery } from '@/lib/api/listEndpoint'
 
+// CODE_LEGACY_ADAPTER: company.vehicle_blocked_development_adapter
+// CODE_LEGACY_DECISION: retain_company_vehicle_adapter_until_vehicle_domain_contractization
+// CODE_LEGACY_ALLOWED_FUNCTIONS: companyVehicleService.list, companyVehicleService.references, companyVehicleService.create, companyVehicleService.update, companyVehicleService.delete
+// CODE_LEGACY_CONSUMER_ROUTES: /app/sirket/araclar
+// CODE_LEGACY_CONSUMER_SYMBOLS: companyVehicleService
+
 export interface CompanyVehiclePayload {
   vehicles: any[]
   employees: any[]

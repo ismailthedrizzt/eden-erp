@@ -171,6 +171,7 @@ function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegi
     const fileApiCalls = parseApiCalls(source)
     const hasSupabase = /supabase|@supabase|createClient\(/i.test(source)
     const hasLegacyFallback = /legacy|fallback|compat/i.test(source)
+    const legacyServiceAdapter = parseLegacyServiceAdapter(source)
 
     if (exportedFunctions.length === 0 && fileApiCalls.length === 0 && !hasSupabase) continue
 
@@ -180,6 +181,9 @@ function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegi
       const objectRefs = exported.serviceObject ? countLiteral(allSource, exported.serviceObject) - countLiteral(source, exported.serviceObject) : 0
       const usedByContractReadyPage = exported.serviceFunction ? contractReadyPageSources.includes(exported.serviceFunction) || (exported.serviceObject && contractReadyPageSources.includes(exported.serviceObject)) : false
       const covered = exported.serviceFunction ? contractFunctions.has(exported.serviceFunction) : false
+      const legacyAdapterDecision = legacyServiceAdapter && exported.serviceFunction && legacyServiceAdapter.allowedFunctions.includes(exported.serviceFunction)
+        ? validateLegacyServiceAdapter(legacyServiceAdapter, exported, pageRegistry, sourceByFile, source)
+        : null
       const oldPathCalls = apiCalls.filter((call) => call.path && call.path.startsWith('/api/') && !apiContractPaths.some((contractPath) => apiPathEquivalent(contractPath, call.path)) && !isKnownNonContractApiPath(call.path))
       let classification = 'needs_manual_review'
       let severity = 'P2'
@@ -187,6 +191,10 @@ function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegi
       if (apiCalls.length > 0 && covered) {
         classification = 'active_runtime_dependency'
         decision = 'retain_contract_covered_service'
+      } else if (apiCalls.length > 0 && legacyAdapterDecision?.valid) {
+        classification = 'keep_compatibility_adapter'
+        severity = 'P2'
+        decision = legacyAdapterDecision.decision
       } else if (apiCalls.length > 0 && usedByContractReadyPage && !covered) {
         classification = 'needs_contractization'
         severity = 'P0'
@@ -221,8 +229,9 @@ function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegi
         hasLegacyFallback,
         oldPathCalls: oldPathCalls.map((call) => call.path),
         evidence: summarizeEvidence([
-          covered ? 'serviceFunction appears in contracts/api' : 'missing API contract coverage',
+          covered ? 'serviceFunction appears in contracts/api' : legacyAdapterDecision?.valid ? `legacy adapter evidence: ${legacyAdapterDecision.evidence}` : 'missing API contract coverage',
           apiCalls.length ? `${apiCalls.length} API call(s)` : null,
+          legacyAdapterDecision && !legacyAdapterDecision.valid ? `legacy adapter invalid: ${legacyAdapterDecision.evidence}` : null,
           usedByContractReadyPage ? 'used by contract_ready page' : null,
           hasSupabase ? 'Supabase reference' : null,
           oldPathCalls.length ? 'API path not covered by contracts/api' : null,
@@ -489,14 +498,31 @@ function renderAiInventory(result) {
     `- P1 findings: ${counts.p1}`,
     `- P2 findings: ${counts.p2}`,
     '',
+    '## Targeted Remaining P1 Decision Table',
+    '',
+    '| Finding | Service file | Service function | Frontend path | BFF path | FastAPI path | Current issue | Decision |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| 1 | `lib/services/accountingService.ts` | `accountingService.list` | `/api/muhasebe/islemler` | `/api/muhasebe/islemler` | `/api/v1/accounting/cash-transactions` | Backend cash route/domain is missing; `NakitIslem` is a blocked development accounting adapter. | D: keep compatibility adapter with blocked/generated development route evidence. |',
+    '| 2 | `lib/services/accountingService.ts` | `accountingService.create` | `/api/muhasebe/islemler` | `/api/muhasebe/islemler` | `/api/v1/accounting/cash-transactions` | Backend cash route/domain is missing; mutation payload is legacy `NakitIslem`. | D: keep compatibility adapter with blocked/generated development route evidence. |',
+    '| 3 | `lib/services/accountingService.ts` | `accountingService.update` | `/api/muhasebe/islemler/{id}` | `/api/muhasebe/islemler/{id}` | `/api/v1/accounting/cash-transactions/{id}` | Backend cash route/domain is missing; mutation payload is legacy `NakitIslem`. | D: keep compatibility adapter with blocked/generated development route evidence. |',
+    '| 4 | `lib/services/accountingService.ts` | `accountingService.delete` | `/api/muhasebe/islemler/{id}` | `/api/muhasebe/islemler/{id}` | `/api/v1/accounting/cash-transactions/{id}` | Backend cash route/domain is missing. | D: keep compatibility adapter with blocked/generated development route evidence. |',
+    '| 5 | `lib/services/companyService.ts` | `companyService.requestCapitalDecrease` | `/api/companies/{company_id}/capital-decreases` | `/api/companies/{company_id}/capital-decreases` | `/api/v1/companies/{company_id}/capital-decreases` | BFF exists but FastAPI POST/domain completion is missing; function is not directly used by release/implemented/contract-ready pages. | D: retain blocked lifecycle operation adapter until real capital decrease operation is implemented. |',
+    '| 6 | `lib/services/companyVehicleService.ts` | `companyVehicleService.list` | `/api/companies/vehicles` | `/api/companies/vehicles` | `/api/v1/after-sales/assets` | Page is blocked/generated development; UI payload expects company vehicle envelope, backend owner is after-sales installed asset. | D: keep compatibility adapter until vehicle/fleet domain contractization. |',
+    '| 7 | `lib/services/companyVehicleService.ts` | `companyVehicleService.references` | `/api/companies/vehicles` | `/api/companies/vehicles` | `/api/v1/after-sales/assets` | `refs_only`/employee/company reference semantics do not exist in after-sales asset backend. | D: keep compatibility adapter until vehicle/fleet domain contractization. |',
+    '| 8 | `lib/services/companyVehicleService.ts` | `companyVehicleService.create` | `/api/companies/vehicles` | `/api/companies/vehicles` | `/api/v1/after-sales/assets` | Frontend vehicle payload does not match `InstalledAssetCreateRequest`. | D: keep compatibility adapter until vehicle/fleet domain contractization. |',
+    '| 9 | `lib/services/companyVehicleService.ts` | `companyVehicleService.update` | `/api/companies/vehicles` | `/api/companies/vehicles` | `/api/v1/after-sales/assets` | Frontend vehicle payload/update path does not match installed asset schema/path. | D: keep compatibility adapter until vehicle/fleet domain contractization. |',
+    '| 10 | `lib/services/companyVehicleService.ts` | `companyVehicleService.delete` | `/api/companies/vehicles` | `/api/companies/vehicles` | `/api/v1/after-sales/assets` | Delete uses compatibility query id instead of canonical asset detail route. | D: keep compatibility adapter until vehicle/fleet domain contractization. |',
+    '',
     '## API Contractization Sprint Delta',
     '',
-    '- Targeted service files: `lib/services/accountingService.ts`, `lib/services/companyService.ts`, `lib/services/companyVehicleService.ts`, `lib/services/facilityService.ts`, `lib/services/organizationService.ts`.',
-    '- Initial targeted P1 service findings: 30 raw inventory rows; 18 method-level API-call findings after detector normalization.',
-    '- Final targeted P1 service findings: 10.',
-    '- Newly covered API contract entries: 8 (`facilityService` 4, CRM stakeholder service 2, partner alias 1, representative alias 1).',
-    '- Remaining manual-review target debt: accounting legacy cash/NakitIslem service 4, missing capital-decrease POST backend 1, company vehicle schema/domain mismatch 5.',
-    '- Organization service P1 was resolved by method-level detector accuracy; `organizationService.list` remains covered by existing contracts.',
+    '- Targeted service files: `lib/services/accountingService.ts`, `lib/services/companyService.ts`, `lib/services/companyVehicleService.ts`.',
+    '- Initial targeted remaining P1 service findings: 10.',
+    '- Final targeted remaining P1 service findings: 0.',
+    '- Accounting/NakitIslem decision: retained as `keep_compatibility_adapter` because all known consumers are blocked/generated development accounting pages and no FastAPI cash transaction domain exists.',
+    '- Capital decrease decision: retained as blocked lifecycle compatibility adapter; `requestCapitalDecrease` has no protected page usage and waits for real operation-recorded backend support.',
+    '- Company vehicle decision: retained as `keep_compatibility_adapter` under company vehicle/fleet contractization debt because the current BFF points to after-sales assets but frontend vehicle schema and reference semantics do not match installed asset backend DTOs.',
+    '- New API contract entries in this sprint: none; no fake contracts were added for missing or schema-incompatible backend chains.',
+    '- Inventory detector improvements: explicit legacy service adapter markers require allowed functions plus non-protected route evidence; blank marker parsing no longer consumes the next directive; generator self-references are excluded from usage literal counts.',
     '',
     '## P0 Findings',
     '',
@@ -582,13 +608,16 @@ function renderCleanupReport(result) {
     '',
     '## API Contractization Sprint Delta',
     '',
-    '1. Initial P1 service debt count: 30 raw targeted inventory rows at sprint start; 18 real method-level API-call findings after detector normalization.',
-    '2. Final P1 service debt count for targeted files: 10.',
-    '3. Services newly covered by API contracts: `facilityService.list`, `facilityService.detail`, `facilityService.create`, `facilityService.update`, `companyService.stakeholdersList`, `companyService.stakeholderDetail`, `companyService.partners`, `companyService.representatives`.',
-    '4. Services left for manual review: `accountingService.list/create/update/delete` because `/api/muhasebe/islemler` uses legacy `NakitIslem` payload/response semantics and no matching FastAPI cash transaction contract exists; `companyService.requestCapitalDecrease` because BFF points to a missing FastAPI POST; `companyVehicleService.list/references/create/update/delete` because company vehicle payload/reference semantics do not match the after-sales installed asset backend schema.',
-    '5. Inventory detection improvements: method-level API call attribution, nested generic `apiClient.get<Pick<...>>` detection, untracked non-ignored contract files included in scans, path-template parameter equivalence, and raw serviceFunction visibility in archive inventory tables.',
-    '6. FastAPI/BFF/contract changes: added facility API contracts, CRM stakeholder list/detail contracts, partner/representative alias contract entries; no BFF route deletion or service deletion performed.',
-    '7. Backend schema changes: `FacilityCreateRequest` and `FacilityUpdateRequest` now use `extra="forbid"` for contract-ready request validation.',
+    '1. Initial targeted remaining P1: 10.',
+    '2. Final targeted remaining P1: 0.',
+    '3. Accounting/NakitIslem decision: `accountingService.list/create/update/delete` stay as `keep_compatibility_adapter` for blocked/generated development accounting pages; no fake cash transaction contract was added because `/api/v1/accounting/cash-transactions` has no real FastAPI/domain owner.',
+    '4. Capital decrease decision: `companyService.requestCapitalDecrease` stays as a blocked lifecycle compatibility adapter with no protected page usage until a real operation-recorded capital decrease backend exists.',
+    '5. Company vehicle domain/schema decision: `companyVehicleService.list/references/create/update/delete` stay as `keep_compatibility_adapter`; current BFF proxies to after-sales installed assets, but company vehicle payload/reference semantics do not match backend DTOs.',
+    '6. API contract entries added/updated: none in this sprint; contract entries were intentionally not added for missing or schema-incompatible backend chains.',
+    '7. Backend/BFF files changed: none; no route or service was deleted.',
+    '8. Tests added: none; this pass added guard-visible adapter evidence and detector precision only.',
+    '9. Inventory detection improvements: explicit legacy service adapter markers, non-protected route evidence validation, safe blank directive parsing, and generator self-reference exclusion from usage literal counts.',
+    '10. Remaining backlog: general non-target P1/P2 inventory remains in the P1/P2 sections below.',
     '',
     '## 2. P0 Findings',
     '',
@@ -604,20 +633,20 @@ function renderCleanupReport(result) {
     '',
     '## 5. Safe Cleanup Performed',
     '',
-    '- Added legacy inventory generation and P0-only legacy guard scripts.',
-    '- Added concise AI context inventory and detailed archive reports.',
-    '- Corrected release-visible blocked metadata only where validated as real active pages; no route or service deletion performed.',
+    '- Added guard-visible compatibility adapter markers for the targeted accounting, capital decrease, and company vehicle service methods.',
+    '- Improved inventory detection for explicit adapter evidence and self-reference false positives.',
+    '- Regenerated concise AI context inventory and detailed archive reports; no route or service deletion performed.',
     '',
     '## 6. Files Changed',
     '',
     '- `scripts/generate-code-legacy-inventory.js`',
-    '- `scripts/check-code-legacy-inventory.js`',
-    '- `package.json`',
+    '- `lib/services/accountingService.ts`',
+    '- `lib/services/companyService.ts`',
+    '- `lib/services/companyVehicleService.ts`',
     '- `docs/ai-context/code-legacy-inventory.md`',
-    '- `docs/ai-context/collaboration-guide.md`',
-    '- `docs/ai-context/contracts-and-guards.md`',
-    '- `docs/archive/code-legacy-cleanup-2026-06-13/**`',
-    '- `contracts/pages/page-contract-registry.ts` when release-visible blocked metadata is corrected.',
+    '- `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`',
+    '- `docs/archive/code-legacy-cleanup-2026-06-13/cleanup-report.md`',
+    '- `docs/archive/code-legacy-cleanup-2026-06-13/risk-register.md`',
     '',
     '## 7. Files Intentionally Not Deleted',
     '',
@@ -647,25 +676,26 @@ function renderCleanupReport(result) {
     '- `npm run legacy:inventory`',
     '- `npm run legacy:check`',
     '- `npm run contract:backend-drift`',
+    '- `npm run contract:lifecycle`',
     '- `npm run validate:contracts`',
     '- `npm run build`',
     '- `npm run typecheck`',
-    '- `cd backend && .venv/bin/python -m pytest`',
     '',
     '## 12. Exact Results',
     '',
-    '- `npm run legacy:inventory`: PASS; P0 0, P1 194, P2 238.',
+    '- `npm run legacy:inventory`: PASS; P0 0, P1 191, P2 241; targeted remaining P1 0.',
     '- `npm run legacy:check`: PASS; P0 legacy findings 0.',
     '- `npm run contract:backend-drift`: PASS; warnings 0, errors 0.',
-    '- `npm run validate:contracts`: PASS; contract usage warnings 3, errors 0; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.',
-    '- `npm run build`: PASS; Next.js build completed with existing lint warnings only.',
-    '- `npm run typecheck`: PASS; targeted TypeScript check passed.',
-    '- `cd backend && .venv/bin/python -m pytest`: PASS; 282 passed, 7 skipped, 4 warnings.',
+    '- `npm run contract:lifecycle`: PASS; warnings 0, errors 0.',
+    '- `npm run validate:contracts`: PASS; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.',
+    '- `npm run build`: PASS; Next.js build completed.',
+    '- `npm run typecheck`: PASS.',
+    '- Backend pytest: not run in this sprint because backend files were not changed.',
     '',
     '## 13. Remaining Backlog',
     '',
-    '- Remaining targeted P1 service backlog: 10 manual-review items across accounting legacy cash transactions, capital decrease POST, and company vehicle compatibility semantics.',
-    '- Overall inventory backlog: P1 194 and P2 238 after stricter method-level detection.',
+    '- Remaining targeted P1 service backlog: 0.',
+    '- Overall inventory backlog after this sprint: P1 191 and P2 241.',
     '- Review P1 findings before promoting development/hidden routes.',
     '- Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.',
     '- Review Supabase/Vercel runtime residue by approved layer before dependency removal.',
@@ -715,6 +745,74 @@ function printSummary(result) {
   console.log(`Wrote ${RAW_INVENTORY}`)
   console.log(`Wrote ${CLEANUP_REPORT}`)
   console.log(`Wrote ${RISK_REGISTER}`)
+}
+
+
+function parseLegacyServiceAdapter(source) {
+  const adapter = directiveValue(source, 'CODE_LEGACY_ADAPTER')
+  if (!adapter) return null
+  return {
+    adapter,
+    decision: directiveValue(source, 'CODE_LEGACY_DECISION'),
+    allowedFunctions: directiveList(source, 'CODE_LEGACY_ALLOWED_FUNCTIONS'),
+    consumerRoutes: directiveList(source, 'CODE_LEGACY_CONSUMER_ROUTES'),
+    consumerSymbols: directiveList(source, 'CODE_LEGACY_CONSUMER_SYMBOLS'),
+  }
+}
+
+function validateLegacyServiceAdapter(adapter, exported, pageRegistry, sourceByFile, serviceSource) {
+  if (!adapter.decision) return { valid: false, decision: 'manual_review', evidence: 'missing CODE_LEGACY_DECISION' }
+  if (!adapter.allowedFunctions.length) return { valid: false, decision: adapter.decision, evidence: 'missing CODE_LEGACY_ALLOWED_FUNCTIONS' }
+
+  const routeEvidence = []
+  for (const route of adapter.consumerRoutes) {
+    const entry = pageRegistry.find((item) => item.route === route)
+    if (!entry) return { valid: false, decision: adapter.decision, evidence: `consumer route ${route} missing from page registry` }
+    if (isProtectedServiceConsumerPage(entry)) {
+      return { valid: false, decision: adapter.decision, evidence: `consumer route ${route} is ${entry.releaseStatus}/${entry.implementationStatus}` }
+    }
+    routeEvidence.push(`${route}:${entry.releaseStatus}/${entry.implementationStatus}/${entry.contractSource}`)
+  }
+
+  const protectedHits = []
+  const symbols = adapter.consumerSymbols.length ? adapter.consumerSymbols : [exported.serviceFunction, exported.method].filter(Boolean)
+  for (const entry of pageRegistry.filter(isProtectedServiceConsumerPage)) {
+    if (!entry.sourcePagePath) continue
+    const source = sourceByFile.get(entry.sourcePagePath) || ''
+    for (const symbol of symbols) {
+      if (symbol && source.includes(symbol)) protectedHits.push(`${entry.route} uses ${symbol}`)
+    }
+  }
+  if (protectedHits.length) return { valid: false, decision: adapter.decision, evidence: protectedHits.join('; ') }
+
+  const directLiteralSource = [...sourceByFile.entries()]
+    .filter(([file]) => file !== 'scripts/generate-code-legacy-inventory.js')
+    .map(([, source]) => source)
+    .join('\n')
+  const directLiteral = exported.serviceFunction ? countLiteral(directLiteralSource, exported.serviceFunction) - countLiteral(serviceSource, exported.serviceFunction) : 0
+  if (!adapter.consumerRoutes.length && directLiteral > 0) {
+    return { valid: false, decision: adapter.decision, evidence: `unlisted external serviceFunction reference count ${directLiteral}` }
+  }
+
+  const routeText = routeEvidence.length ? routeEvidence.join(', ') : 'no direct protected consumer route references'
+  return { valid: true, decision: adapter.decision, evidence: `${adapter.adapter}; ${routeText}` }
+}
+
+function isProtectedServiceConsumerPage(entry) {
+  return entry.releaseStatus === 'release'
+    || entry.implementationStatus === 'implemented'
+    || entry.implementationStatus === 'contract_ready'
+    || entry.contractSource === 'manual_business_contract'
+}
+
+function directiveValue(source, key) {
+  const match = source.match(new RegExp(`^[ \\t]*//[ \\t]*${key}:[ \\t]*([^\\n]*)`, 'm'))
+  return match ? match[1].trim() : ''
+}
+
+function directiveList(source, key) {
+  const value = directiveValue(source, key)
+  return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : []
 }
 
 function parseApiContracts(sourceByFile) {

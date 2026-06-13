@@ -1,6 +1,12 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
 import type { NakitIslem } from '@/types'
 
+// CODE_LEGACY_ADAPTER: accounting.cash_legacy_adapter
+// CODE_LEGACY_DECISION: retain_legacy_cash_adapter_until_accounting_domain_consolidation
+// CODE_LEGACY_ALLOWED_FUNCTIONS: accountingService.list, accountingService.create, accountingService.update, accountingService.delete
+// CODE_LEGACY_CONSUMER_ROUTES: /app/muhasebe/borclar, /app/muhasebe/dashboard, /app/muhasebe/hesaplar, /app/muhasebe/islemler, /app/muhasebe/projeler
+// CODE_LEGACY_CONSUMER_SYMBOLS: useNakitIslemler, accountingService
+
 export type CashTransactionFilters = {
   islemTarafi?: string
   proje?: string

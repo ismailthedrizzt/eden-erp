@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T16:51:30.654Z
+Generated: 2026-06-13T17:34:08.137Z
 
 ## Related Contracts
 
@@ -23,10 +23,7 @@ Generated: 2026-06-13T16:51:30.654Z
 | P1 | contractize_before_promotion | lib/services/accounting/cariTransactions.service.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/accounting/eDocuments.service.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/accounting/reconciliation.service.ts | needs_contractization | contractize_before_promotion |
-| P1 | contractize_before_promotion | lib/services/accountingService.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/admin/adminService.ts | needs_contractization | contractize_before_promotion |
-| P1 | contractize_before_promotion | lib/services/companyService.ts | needs_contractization | contractize_before_promotion |
-| P1 | contractize_before_promotion | lib/services/companyVehicleService.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/dataQuality/dataQualityService.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/documents/documentRequirements.service.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/documents/documentService.ts | needs_contractization | contractize_before_promotion |
@@ -116,3 +113,6 @@ Generated: 2026-06-13T16:51:30.654Z
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/[licenseId]/usage-snapshot/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/[licenseId]/usage/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/route.ts | needs_contractization | add_migration_header_or_contractize |
+| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/archive/route.ts | needs_contractization | add_migration_header_or_contractize |
+| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/dismiss/route.ts | needs_contractization | add_migration_header_or_contractize |
+| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/read/route.ts | needs_contractization | add_migration_header_or_contractize |
