@@ -1,5 +1,7 @@
 # Process / Action Center Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1
 
 - Complex approval matrix and delegation rules need staging data validation.

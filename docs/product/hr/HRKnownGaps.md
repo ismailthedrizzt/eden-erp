@@ -1,5 +1,7 @@
 # HR Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Bordro yok.
 - Izin/tatil yok.
 - Puantaj yok.

@@ -1,5 +1,7 @@
 # Advanced Reporting Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Saved View
 
 1. Cari Hareketler raporunda `document_status=document_needed` filtresi uygulanir.

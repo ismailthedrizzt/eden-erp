@@ -1,5 +1,7 @@
 # Project / Task Management Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Proje ve Gorevler modulu, Eden ERP icinde ekiplerin proje, issue, atama, oncelik, yorum, ek ve Kanban takiplerini sirket/ERP kayitlariyla baglantili yonetmesini saglar. Tam Jira klonu degildir; ilk urun hedefi proje karti, proje gorevi, temel status workflow, yorum, ek, related record ve Action Center gorunurlugudur.

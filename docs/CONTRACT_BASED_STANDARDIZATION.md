@@ -1,5 +1,7 @@
 # Contract-Based Standardization
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP standards are enforced as executable contracts, not only Markdown guidance.
 
 ## Contract Locations

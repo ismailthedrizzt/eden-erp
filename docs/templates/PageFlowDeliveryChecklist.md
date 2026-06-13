@@ -1,5 +1,7 @@
 # Page / Flow Delivery Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu checklist her yeni Eden ERP page, form, wizard, lifecycle flow veya operation
 request akisi icin doldurulur.
 

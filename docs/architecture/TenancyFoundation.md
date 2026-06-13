@@ -1,5 +1,7 @@
 # Tenant / Calisma Alani Foundation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP'de her musteri veya bagimsiz sirket grubu bir tenant / calisma alani olarak ele alinacak. Bu foundation katmani bugun icin pasiftir; mevcut ekranlar ayni `public` schema uzerinde calismaya devam eder.
 
 ## Hedef Model

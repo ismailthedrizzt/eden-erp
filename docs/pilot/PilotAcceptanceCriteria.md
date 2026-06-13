@@ -1,5 +1,7 @@
 # Pilot Acceptance Criteria
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## 1. Fonksiyonel Kabul
 
 - Aktif sirket resmi alanlari normal edit ile degistirilemez.

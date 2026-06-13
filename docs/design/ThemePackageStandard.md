@@ -1,5 +1,7 @@
 # Theme Package Standard
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP theme packages are JSON-only design token packages. Designers can work in Figma or Tokens Studio without editing application code.
 
 ## Package Layout

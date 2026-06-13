@@ -1,5 +1,7 @@
 # Module Config Contract
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ERP ekranlari varsayilan olarak bir ana entity etrafinda calisan standart liste ve standart form sablonlarini kullanir. Bu bire bir "her sayfa tek tablo" kurali degildir; ana tablo, iliskili tablolar, detay sekmeleri, uploader slotlari, aksiyonlar ve lifecycle kararlarini tek bir module config sozlesmesinde toplar.
 
 ## Ana Ilke

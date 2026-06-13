@@ -1,5 +1,7 @@
 # Eden Theme JSON Schema
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Canonical file: `eden-theme.json`
 
 Required root fields:

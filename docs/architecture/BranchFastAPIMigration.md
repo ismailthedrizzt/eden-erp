@@ -1,5 +1,7 @@
 # Branch FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Python/FastAPI core backend gecisinin ilk gercek domain tasimasini kaydeder: Sube Acilisi ve Sube Kapanisi.
 
 ## Migrated Endpoints

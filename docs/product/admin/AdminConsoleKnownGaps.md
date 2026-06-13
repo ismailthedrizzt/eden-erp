@@ -1,5 +1,7 @@
 # Admin Console Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full billing/subscription management
 - Advanced integration credential vault
 - Multi-region deployment console

@@ -1,5 +1,7 @@
 # Icon Language
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Design Lab ikon dili ham lucide ikonlarini tek basina kullanmak yerine tasarlanmis container ve modul rengiyle sunar.
 
 ## Ilkeler

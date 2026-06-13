@@ -1,5 +1,7 @@
 # Caching Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Caching must not weaken tenant, permission or operation correctness.
 
 ## Safe Cache Candidates

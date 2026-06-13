@@ -1,5 +1,7 @@
 # Theme Release UX Rules
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Release
 
 - Theme selector is visible as a normal preference inside the profile dropdown.

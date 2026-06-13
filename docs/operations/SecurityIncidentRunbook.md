@@ -1,5 +1,7 @@
 # Security Incident Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Auth bypass, tenant data exposure, secret leak, unsafe portal access, unsigned webhook acceptance or AI data exposure icin security response.

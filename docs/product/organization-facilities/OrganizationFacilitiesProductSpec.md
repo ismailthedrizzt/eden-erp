@@ -1,5 +1,7 @@
 # Teşkilat/Kadro + Tesisler/Lokasyonlar Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Teşkilat/Kadro, şirket içi hiyerarşi, organizasyon birimi ve kadro/pozisyon yapısını yönetir. Tesisler/Lokasyonlar ise fiziksel yerleri yönetir. İki modül de Şubelerimiz ile ilişkilendirilebilir, ancak şube değildir.

@@ -1,5 +1,7 @@
 # Final Manual Smoke Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-05-29
 
 Use this checklist before every pilot/demo release. Mark each item `pass`, `fail` or `blocked`; attach notes and screenshots when useful.

@@ -1,5 +1,7 @@
 # Disaster Recovery Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Deprecated note, updated 2026-06-06: Older provider wording has been replaced with the current remote server + local PostgreSQL/local DB + local document storage model. Use `BackupRestoreRunbook.md`, `MigrationRollbackRunbook.md` and `IncidentResponseRunbook.md` for active operations.
 
 ## Amac

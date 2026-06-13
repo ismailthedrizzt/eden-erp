@@ -1,5 +1,7 @@
 # Local Database Operations Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-06
 
 ## Purpose

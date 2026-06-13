@@ -1,5 +1,7 @@
 # Eden ERP Frontend Standard Contract
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This contract turns the Eden ERP UI standards into code-level delivery rules.
 It applies to live, development, preview, and internal pages. Development pages
 are not exempt. `Temalarimiz` is not exempt.

@@ -1,5 +1,7 @@
 # Audit Coverage Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 | module | event | audit exists? | old/new values? | masked? | user/tenant? | operation/process link? | UI visible? | priority |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Company | draft create | partial | partial | yes | yes | optional | yes | P1 DB fixture verification |

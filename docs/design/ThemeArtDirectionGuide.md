@@ -1,5 +1,7 @@
 # Theme Art Direction Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-08
 
 ## Classic

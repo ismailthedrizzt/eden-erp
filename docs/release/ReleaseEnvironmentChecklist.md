@@ -1,5 +1,7 @@
 # Virtual Server Release Environment Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Virtual Server + release local PostgreSQL ortamının temiz, onayli ve korumali oldugunu dogrular.

@@ -1,5 +1,7 @@
 # Hikmet Theme Package
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Hikmet is the Eden ERP system theme package for calm, structured and medrese geometry inspired surfaces.
 
 ## Files

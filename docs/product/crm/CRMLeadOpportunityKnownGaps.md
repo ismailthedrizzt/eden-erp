@@ -1,5 +1,7 @@
 # CRM Lead Opportunity Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - E-posta/WhatsApp ingestion yok.
 - Call recording veya transcription yok.
 - Production AI lead scoring yok.

@@ -1,5 +1,7 @@
 # Workflow Automation / Rule Engine Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 Eden ERP icinde adminlerin olay, zaman ve guvenli veri kosullarina bagli bildirim, gorev, reminder, rapor ve uyari aksiyonlari tanimlayabilmesini saglar. Sistem low-code hissi verir ama keyfi kod, serbest SQL ve dogrudan kritik domain mutation calistirmaz.
 

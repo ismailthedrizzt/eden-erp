@@ -1,5 +1,7 @@
 # SmartDataTable Component API
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Current as of May 2024**
 
 ## Props Reference

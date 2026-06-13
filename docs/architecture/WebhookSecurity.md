@@ -1,5 +1,7 @@
 # Webhook Security
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Signing
 Outbound webhook delivery uses HMAC SHA256. The signed string is:
 

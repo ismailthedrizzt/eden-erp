@@ -1,5 +1,7 @@
 # Integration Hub E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright config mevcut degilse bu dosya manuel/regression checklist olarak kullanilir.
 
 ## Seed Data

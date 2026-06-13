@@ -1,5 +1,7 @@
 # Next 30-Day Roadmap
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Deprecated historical roadmap, updated 2026-06-06: Items that mention Supabase/Vercel should be interpreted as local PostgreSQL/local DB and remote server operations unless explicitly marked legacy.
 
 Date: 2026-05-29

@@ -1,5 +1,7 @@
 # Master Data Governance
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Principle
 
 Master data governance in Eden ERP prevents silent data drift. Duplicate candidates are detected, reviewed and audited before any merge action. Official or transaction-producing records are protected from automatic merge.

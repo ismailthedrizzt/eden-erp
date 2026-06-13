@@ -1,5 +1,7 @@
 # Customer Onboarding E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Coverage
 - First login welcome modal
 - Workspace checklist rendering

@@ -1,5 +1,7 @@
 # Critical Permission Enforcement Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Bu matris kritik mutation, admin, audit, export ve document endpointlerinde permission/policy enforcement icin production gate'tir. UI buton gizleme yeterli kabul edilmez; karar FastAPI policy layer'da verilmelidir.

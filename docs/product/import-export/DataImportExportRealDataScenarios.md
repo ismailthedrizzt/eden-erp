@@ -1,5 +1,7 @@
 # Data Import / Export Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Cari Kart Import
 
 1. Kullanici Cari Kart sablonunu indirir.

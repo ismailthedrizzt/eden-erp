@@ -1,5 +1,7 @@
 # Permission Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Canonical permission listesi `backend/app/policies/permissions.py` ve `packages/shared/src/permissions.ts` uzerinden yonetilir. Security UI bu registry'den gelen permissionlari modul bazinda gruplar.
 
 ## Modul Gruplari

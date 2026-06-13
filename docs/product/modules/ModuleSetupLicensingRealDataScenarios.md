@@ -1,5 +1,7 @@
 # Module Setup / Licensing Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Hazır çalışma alanı
 
 1. Şirketlerimiz, Ortaklarımız ve Temsilcilerimiz aktif.

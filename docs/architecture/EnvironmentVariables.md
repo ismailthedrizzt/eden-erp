@@ -1,5 +1,7 @@
 # Environment Variables
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Real values must never be committed. Examples live in `.env.local.example` and `backend/.env.example`.
 
 ## Next.js

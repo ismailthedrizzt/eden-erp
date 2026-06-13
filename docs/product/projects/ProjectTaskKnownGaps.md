@@ -1,5 +1,7 @@
 # Project / Task Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Sprint management yok.
 - Advanced Jira workflow builder yok.
 - Custom fields yok.

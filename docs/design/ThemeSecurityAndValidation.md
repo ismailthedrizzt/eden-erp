@@ -1,5 +1,7 @@
 # Theme Security And Validation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Theme import is JSON-only and token-schema-only. It does not accept executable or renderable payloads.
 
 ## P0 Forbidden Content

@@ -1,5 +1,7 @@
 # Multi-Tenant Isolation Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Bu checklist Eden ERP'nin her production isteginde tenant izolasyonunu kanitlamak icin kullanilir. Canonical guvenlik karari FastAPI tarafindadir; Next.js BFF yalnizca token, cookie ve proxy baglamini tasir.

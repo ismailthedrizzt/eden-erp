@@ -1,5 +1,7 @@
 # Theme Decorative Motif Guidelines
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-07
 
 ## Scope

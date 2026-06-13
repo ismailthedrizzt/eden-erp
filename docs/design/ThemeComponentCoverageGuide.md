@@ -1,5 +1,7 @@
 # Theme Component Coverage Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-08
 
 When building or editing a shared component, bind these surfaces to tokens:

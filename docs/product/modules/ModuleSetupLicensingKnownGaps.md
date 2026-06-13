@@ -1,5 +1,7 @@
 # Module Setup / Licensing Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1
 
 - DB-backed tenant module settings and feature flag storage.

@@ -1,5 +1,7 @@
 # İK - Kadro Yönetimi Sayfası
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Module**: İK (ik)  
 **Submodule**: Kadrolar (kadrolar)  
 **Path**: `app/app/ik/kadrolar/page.tsx`  

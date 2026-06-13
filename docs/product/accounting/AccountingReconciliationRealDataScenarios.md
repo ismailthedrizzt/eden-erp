@@ -1,5 +1,7 @@
 # Accounting Reconciliation Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Banka hareketi import
 
 1. Admin veya muhasebe kullanicisi banka hesabi tanimlar.

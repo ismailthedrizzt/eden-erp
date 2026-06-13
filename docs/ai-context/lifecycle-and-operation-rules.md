@@ -25,3 +25,13 @@ operation request or operation id
 - `backend/app/domains/**`
 - `docs/architecture/record-lifecycle.md`
 - `scripts/check-lifecycle-operation-guard.js`
+
+## Related Contracts
+
+- `contracts/lifecycle/**`
+- `contracts/core/lifecycle.contract.ts`
+
+## Related Guards
+
+- `scripts/check-lifecycle-operation-guard.js`
+- `npm run contract:lifecycle`

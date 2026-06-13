@@ -1,5 +1,7 @@
 # Reporting Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full BI designer yok.
 - Custom report builder yok.
 - Scheduled reports yok.

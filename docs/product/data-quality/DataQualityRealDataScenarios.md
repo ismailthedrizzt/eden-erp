@@ -1,5 +1,7 @@
 # Data Quality Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Duplicate kurum
 
 1. Ayni VKN ile iki master organization vardir.

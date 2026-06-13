@@ -1,5 +1,7 @@
 # AI Assistance Deepening Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 AI Assistance deepening, Eden ERP icindeki Action Guide ve yardim deneyimini baglamsal AI Copilot seviyesine tasir. Copilot kullanicinin bulundugu sayfayi, secili kaydi, yetkilerini, feature/readiness durumunu, pending action'lari ve belge/denetim ozetlerini dikkate alarak aciklama, kayit ozeti, form onerisi, belge zekasi ve guvenli action yonlendirmesi sunar.

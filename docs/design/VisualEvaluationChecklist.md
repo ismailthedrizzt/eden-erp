@@ -1,5 +1,7 @@
 # Visual Evaluation Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Design Lab konseptleri secilirken asagidaki kriterler birlikte degerlendirilir:
 
 - Kurumsal guven veriyor mu?

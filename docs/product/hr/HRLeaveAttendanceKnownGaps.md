@@ -1,5 +1,7 @@
 # HR Leave Attendance Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Tam bordro hesaplama yoktur.
 - SGK bildirge entegrasyonu yoktur.
 - e-Bordro veya bordro PDF uretimi yoktur.

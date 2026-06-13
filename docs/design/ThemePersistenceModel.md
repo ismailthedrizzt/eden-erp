@@ -1,5 +1,7 @@
 # Theme Persistence Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Preference Priority
 
 1. Authenticated user preference in DB.

@@ -1,5 +1,7 @@
 # Action Guide + Tour Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1 / Pilot Hardening
 
 - Full staging E2E is still needed with real tenant permissions, module readiness and ownership fixtures.

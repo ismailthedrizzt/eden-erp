@@ -1,5 +1,7 @@
 # Cross-Domain Consistency Checks
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Cross-domain consistency, Eden ERP'de sirket, sube, ortak, temsilci, organizasyon ve tesis/lokasyon verilerinin birbirini bozmadan calismasini saglayan kontrol ailesidir.
 
 ## Kontrol Alanlari

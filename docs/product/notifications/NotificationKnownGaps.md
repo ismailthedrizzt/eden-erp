@@ -1,5 +1,7 @@
 # Notification Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Push notifications.
 - SMS / WhatsApp kanallari.
 - Advanced digest customization.

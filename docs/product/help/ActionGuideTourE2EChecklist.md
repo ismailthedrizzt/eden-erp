@@ -1,5 +1,7 @@
 # Action Guide + Tour E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright bu repoda kurulu degilse bu dosya manuel/regression checklist olarak kullanilir. Playwright eklendiginde ayni basliklar `tests/e2e/action-guide-tour.spec.ts` icine tasinmalidir.
 
 ## Seed Data

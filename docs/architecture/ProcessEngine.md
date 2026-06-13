@@ -1,5 +1,7 @@
 # Process Engine MVP
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Process Engine, Eden ERP'de resmi islemlerin adimlarini, gorevlerini, onaylarini ve durum gecislerini yoneten katmandir. Kritik veri degisikligi yapmaz; mutation sorumlulugu Operation Orchestrator'da kalir.
 
 ## Sorumluluk Ayrimi

@@ -1,5 +1,7 @@
 # After-Sales Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Stok/yedek parca cikisi yok.
 - Fatura olusturma yok.
 - Musteri portali yok.

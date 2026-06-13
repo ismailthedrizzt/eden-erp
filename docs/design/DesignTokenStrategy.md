@@ -1,5 +1,7 @@
 # Design Token Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Current State
 
 Eden ERP now has a central selectable theme config in `components/design-lab/themeConcepts.ts`. The config exports canonical visual theme ids, labels, compatibility aliases and root CSS variable helpers.

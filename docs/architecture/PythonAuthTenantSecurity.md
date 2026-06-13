@@ -1,5 +1,7 @@
 # Python Auth / Tenant Security
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Step 15 moves the FastAPI backend toward its own security boundary. Next.js remains a useful BFF/proxy, but FastAPI no longer treats proxy headers as the canonical proof of identity in production.
 
 ## Auth Model

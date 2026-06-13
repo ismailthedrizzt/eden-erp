@@ -1,5 +1,7 @@
 # Next Proxy Consolidation Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Summary
 
 Step 11 ile Next.js API route'lari kalici backend rolu yerine FastAPI BFF/proxy

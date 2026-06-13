@@ -1,5 +1,7 @@
 # Release Preservation Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Release preservation is now data/env based, not branch based. The same `main` code runs locally and on the Virtual Server.

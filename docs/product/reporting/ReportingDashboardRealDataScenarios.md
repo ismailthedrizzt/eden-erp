@@ -1,5 +1,7 @@
 # Reporting Dashboard Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Yonetim ana paneli
 
 1. Kullanici dashboard acar.

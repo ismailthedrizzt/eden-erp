@@ -1,5 +1,7 @@
 # Development Plan Behavior
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Development plan tenants can see:
 
 - release modules

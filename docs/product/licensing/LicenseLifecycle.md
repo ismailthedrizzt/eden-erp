@@ -1,5 +1,7 @@
 # License Lifecycle
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Statuses:
 
 - `trial`: plan modules enabled.

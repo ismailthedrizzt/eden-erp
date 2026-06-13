@@ -1,5 +1,7 @@
 # Page Release Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 `lib/release/routeReleaseRegistry.ts` is the source of truth for which pages are visible in Development and Release.

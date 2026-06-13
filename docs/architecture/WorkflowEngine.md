@@ -1,5 +1,7 @@
 # Eden ERP Süreç Motoru Mimarisi
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Genel Bakış
 
 Eden ERP'nin süreç motoru, formlar üzerinden veri girişi/düzenlemesi işlemlerini onay süreçlerinden geçirmek için tasarlanmıştır. Süreçler, teşkilat yapısındaki kişi, kadro veya roller bazlı olarak tanımlanabilir.

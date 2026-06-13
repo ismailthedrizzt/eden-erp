@@ -1,5 +1,7 @@
 # Ownership Transactions FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu fazda ortaklik/ownership transaction islem ailesi icin canonical backend FastAPI tarafina tasinmaya basladi. Next.js route'lari frontend uyumlulugu icin gecici BFF/proxy rolundedir.
 
 ## Migrated Endpoints

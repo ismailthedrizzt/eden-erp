@@ -1,5 +1,7 @@
 # Visual Identity Exploration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP mevcut temiz arayuzunu korur. Bu fazda production/release ekranlarinin renkleri, layoutlari, canonical component siniflari, logo veya global Tailwind theme degistirilmez.
 
 Alternatif gorsel kimlikler yalnizca Development Design Lab yuzeyinde denenir:

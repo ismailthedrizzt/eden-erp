@@ -1,5 +1,7 @@
 # Data Retention Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 High-volume and sensitive operational data icin retention, archival and delete policy.

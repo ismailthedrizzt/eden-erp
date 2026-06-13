@@ -1,5 +1,7 @@
 # Release Candidate Go/No-Go Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Tarih: 2026-06-06
 - Branch: main
 - Baseline commit: 1830fa4 manual_field_test_execution_plan

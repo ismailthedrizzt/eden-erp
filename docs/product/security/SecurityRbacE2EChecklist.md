@@ -1,5 +1,7 @@
 # Security RBAC E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright varsa hedef dosya:
 
 - `tests/e2e/security-rbac.spec.ts`

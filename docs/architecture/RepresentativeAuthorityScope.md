@@ -1,5 +1,7 @@
 # Representative Authority Scope
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu fazda temsilci karti ile temsil yetkisi kapsami teknik olarak ayrilir.
 
 ## Ilke

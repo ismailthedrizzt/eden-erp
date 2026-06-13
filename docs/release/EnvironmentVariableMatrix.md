@@ -1,5 +1,7 @@
 # Environment Variable Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Updated 2026-06-06: Supabase variables in this matrix are legacy compatibility only. Canonical release/development separation is remote server env + local PostgreSQL/local DB target.
 
 ## Purpose

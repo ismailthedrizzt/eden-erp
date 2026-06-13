@@ -1,5 +1,7 @@
 # Next API Route Migration Inventory
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Generated from `app/api/**/route.ts`. The classification is intentionally conservative: any route with database access, mutation, orchestration, policy, audit, process, outbox or setup logic is not considered a permanent Next.js backend route.
 
 | route path | file path | current responsibility | business logic | direct DB mutation | domain orchestration | process/outbox/audit/policy | target status | target FastAPI endpoint | priority | cleanup action |

@@ -1,5 +1,7 @@
 # Eden ERP - UI/UX Design Rules
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Purpose**: Living document for UI/UX standards established throughout development. Updated via user directives or `/add_ux_rule` command.
 
 **Last Updated**: 2026-05-16

@@ -1,5 +1,7 @@
 # Database Migration Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Current Decision
 
 Supabase migrations remain the primary schema migration path during the transition. Python Alembic exists for backend-owned evolution but must not silently conflict with Supabase migrations.

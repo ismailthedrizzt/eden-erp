@@ -1,5 +1,7 @@
 # SmartDataTable Kullanım Kılavuzu
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Temel Kullanım
 
 ```tsx

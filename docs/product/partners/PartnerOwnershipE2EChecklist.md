@@ -1,5 +1,7 @@
 # Partner Ownership E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright is not wired as a required productization script yet. This checklist is the current E2E/regression gate for `Ortaklarimiz`; it can be converted to `tests/e2e/partners-ownership.spec.ts` when the authenticated staging fixture is ready.
 
 ## Required Seed Data

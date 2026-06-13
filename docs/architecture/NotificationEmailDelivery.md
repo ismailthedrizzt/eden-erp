@@ -1,5 +1,7 @@
 # Notification Email Delivery
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Ilke
 
 E-posta teslimi kullanici requestini bloke etmez. Domain operasyonu basarili olduktan sonra notification ve email queue kayitlari olusur; worker teslimati ayrica dener. Email failure ana operationi geri almaz.

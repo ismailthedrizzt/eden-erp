@@ -1,5 +1,7 @@
 # After-Sales Field Service Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Periyodik bakim plani
 
 1. PlaneGuard urunu veya kurulu urunu icin 90 gunluk bakim plani olusturulur.

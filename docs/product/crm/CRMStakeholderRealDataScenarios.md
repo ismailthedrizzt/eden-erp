@@ -1,5 +1,7 @@
 # CRM Stakeholder Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Yeni musteri kurum
 
 1. Tuzel kisi secilir.

@@ -1,5 +1,7 @@
 # Event Versioning Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Outbox, webhook ve downstream subscriber kontratlarini geriye uyumlu yonetmek.

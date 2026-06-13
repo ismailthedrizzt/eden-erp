@@ -1,5 +1,7 @@
 # Release Surface Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Develop ortaminda her sey denenebilir. Development ortaminda test edilebilir isler gorunur. Release ortaminda yalnizca onaylanmis, calisir ve kullaniciya anlatilabilir isler gorunur.
 
 ## Release Surface

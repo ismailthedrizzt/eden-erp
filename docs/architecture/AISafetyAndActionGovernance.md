@@ -1,5 +1,7 @@
 # AI Safety and Action Governance
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Core Rule
 
 AI Copilot, Eden ERP policy, permission, readiness, field-control, integrity ve operation guard kurallarini bypass edemez. AI yaniti sadece oneridir; resmi mutation kullanici onayi ve canonical backend validation olmadan gerceklesmez.

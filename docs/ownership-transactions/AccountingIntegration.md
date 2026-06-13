@@ -1,5 +1,7 @@
 # Accounting Integration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Cari Hareketler para hareketlerini yönetir. Ortaklık İşlemleri içinde sermaye ödemesi girilmez.
 
 ```text

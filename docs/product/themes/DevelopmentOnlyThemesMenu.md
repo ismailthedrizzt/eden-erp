@@ -1,5 +1,7 @@
 # Development Only Themes Menu
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Menu
 
 - Group: Development

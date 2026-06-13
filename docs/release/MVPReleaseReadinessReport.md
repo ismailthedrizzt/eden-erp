@@ -1,5 +1,7 @@
 # MVP Release Readiness Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Deprecated historical report, updated 2026-06-06: Some entries refer to old Supabase/Vercel assumptions. Current field-test readiness uses `docs/operations/FieldTestServerReadinessChecklist.md`.
 
 Date: 2026-05-29

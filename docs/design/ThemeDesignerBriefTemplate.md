@@ -1,5 +1,7 @@
 # Theme Designer Brief Template
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Eden ERP Context
 
 Eden ERP is an operational business application. Users scan dense tables, forms, documents, workflow steps, action queues and audit history throughout the day.

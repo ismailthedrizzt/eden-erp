@@ -1,5 +1,7 @@
 # Backend Consolidation Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Decision
 
 FastAPI is the only canonical backend for Eden ERP data operations.

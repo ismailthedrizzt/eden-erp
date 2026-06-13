@@ -1,5 +1,7 @@
 # Accounting Reconciliation E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Seed
 
 - Active company

@@ -1,5 +1,7 @@
 # Data Quality Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Advanced fuzzy matching
 - ML duplicate scoring
 - Advanced merge rollback

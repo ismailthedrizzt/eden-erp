@@ -1,5 +1,7 @@
 # Event Contract Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Event Contract Registry, Eden ERP'de domain event tiplerinin merkezi sozlesmesini tutar. Operation Orchestrator ve Process Engine event urettiginde event tipi, versiyon, modul, aggregate, projection etkisi, bildirim tipi, audit ve AI context ilgisi bu registry'den okunur.
 
 ## Sorumluluk

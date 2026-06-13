@@ -1,5 +1,7 @@
 # Event Subscription Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Event Registry
 Publishable integration events are whitelist based. Each event defines:
 - `event_type`

@@ -1,5 +1,7 @@
 # Remote Server + Local DB Architecture
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-06
 Branch: `main`
 Commit baseline: `09e90b5588a43af147d75b2926d5368a6f4635b9`

@@ -1,5 +1,7 @@
 # Admin Console Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Calisma alani ayari
 
 1. Admin `/app/sistem/genel` sayfasini acar.

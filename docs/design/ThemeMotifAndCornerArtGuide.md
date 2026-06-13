@@ -1,5 +1,7 @@
 # Theme Motif And Corner Art Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-08
 
 Motifs are decorative identity helpers, not content. They should appear on page banners, featured cards, empty states and large summary panels. They should not sit in dense table rows or form inputs.

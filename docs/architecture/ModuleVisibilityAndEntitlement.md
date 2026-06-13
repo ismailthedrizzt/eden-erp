@@ -1,5 +1,7 @@
 # Module Visibility And Entitlement
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Module visibility is decided in this order:
 
 1. Route release status

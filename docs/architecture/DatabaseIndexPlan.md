@@ -1,5 +1,7 @@
 # Database Index Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This plan documents the first performance index set for high-volume Eden ERP tables.
 
 ## Rollout Rules

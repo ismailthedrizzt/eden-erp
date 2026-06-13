@@ -1,5 +1,7 @@
 # Data Import / Export Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Advanced merge UI.
 - Scheduled imports.
 - API-based imports.

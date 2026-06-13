@@ -1,5 +1,7 @@
 # Reporting Dashboard E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Playwright Spec
 
 Onerilen dosya: `tests/e2e/reporting-dashboard.spec.ts`

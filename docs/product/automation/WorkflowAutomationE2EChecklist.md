@@ -1,5 +1,7 @@
 # Workflow Automation E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Rule listesi acilir.
 - Template secilir ve rule create formuna uygulanir.
 - Trigger secimi calisir.

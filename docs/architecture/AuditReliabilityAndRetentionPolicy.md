@@ -1,5 +1,7 @@
 # Audit Reliability And Retention Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Critical mutation, security event, export/download ve admin operasyonlarinda denetim izinin kaybolmamasini ve hassas veri sizdirmamasini saglamak.

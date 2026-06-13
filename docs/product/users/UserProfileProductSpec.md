@@ -1,5 +1,7 @@
 # User Profile Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 The user profile surface separates global login identity from tenant-scoped person identity.

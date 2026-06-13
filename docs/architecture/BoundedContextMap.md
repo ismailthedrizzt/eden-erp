@@ -1,5 +1,7 @@
 # Bounded Context Map
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip oldugu veri dogrudan guncellenmez; domain service, operation orchestrator veya event/projection yoluyla etkilesim kurulur.
 
 ## Harita

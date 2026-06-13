@@ -1,5 +1,7 @@
 # Theme Accessibility Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Run this checklist for every visual theme and appearance combination.
 
 ## Matrix

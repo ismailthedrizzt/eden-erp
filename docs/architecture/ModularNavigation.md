@@ -1,5 +1,7 @@
 # Modular Navigation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Modular Navigation, Eden ERP menulerinin Module Registry ve runtime visibility kararlarina baglanmasi icin hazirlanan merkezi sozlesmedir.
 
 ## Navigation Registry

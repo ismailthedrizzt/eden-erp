@@ -22,3 +22,15 @@ Eden ERP is a modular ERP platform moving toward a Next.js frontend/BFF plus Fas
 - `docs/architecture/DomainBoundaries.md`
 - `docs/architecture/TransactionBoundary.md`
 - `docs/architecture/OpenAPIContractStrategy.md`
+
+## Related Contracts
+
+- `contracts/core/*.contract.ts`
+- `contracts/api/**/*.contract.ts`
+- `contracts/lifecycle/**/*.contract.ts`
+
+## Related Guards
+
+- `scripts/check-backend-contract-drift.js`
+- `scripts/check-lifecycle-operation-guard.js`
+- `scripts/audit-next-backend-boundary.js`

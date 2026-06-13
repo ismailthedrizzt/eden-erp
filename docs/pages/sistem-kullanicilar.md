@@ -1,5 +1,7 @@
 # Sistem - Kullanıcı Yönetimi Sayfası
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Module**: Sistem (sistem)  
 **Submodule**: Kullanıcılar (kullanicilar)  
 **Path**: `app/app/sistem/kullanicilar/page.tsx`  

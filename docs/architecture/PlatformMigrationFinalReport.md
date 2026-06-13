@@ -1,5 +1,7 @@
 # Platform Migration Final Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## 1. Yapilan Mimari Katmanlar
 
 Yedinci fazdan yirminci final faza kadar Eden ERP icin merkezi Event Contract Registry, Outbox Dispatcher, Action Guide, Guided Tour, Audit Log, Transaction Boundary, Representative Scope, Module Readiness, Action Center, Runtime Visibility, Data Integrity Guards, Domain Boundaries ve Domain Service Layer temelleri kuruldu. Final pass bu katmanlarin registry, response, visibility ve dokumantasyon uyumunu toparladi.

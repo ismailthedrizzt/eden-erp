@@ -1,5 +1,7 @@
 # HR Leave Attendance E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Leave type list opens and tenant defaults are seeded
 - Leave type create/update
 - Leave balance recalculate for active employee

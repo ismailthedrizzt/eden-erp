@@ -1,5 +1,7 @@
 # Company / Partner / Representative Card CRUD FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Status: Step 13 implemented as a migration bridge.
 
 ## Migrated Endpoints

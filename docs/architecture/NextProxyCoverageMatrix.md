@@ -1,5 +1,7 @@
 # Next Proxy Coverage Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values are normalized for the productization gate: existing `proxy_to_fastapi_with_legacy_fallback` route headers are shown as `proxy_to_fastapi_with_temporary_fallback` because the fallback is not a permanent architecture role.
 
 ## Summary

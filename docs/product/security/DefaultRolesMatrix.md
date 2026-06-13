@@ -1,5 +1,7 @@
 # Default Roles Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 | Rol | Amac | Default scope | Risk | Ana permissionlar |
 | --- | --- | --- | --- | --- |
 | Sistem Yoneticisi | Tum moduller, ayarlar, audit ve kullanici/rol yonetimi | `all_companies` | critical | `system.admin` |

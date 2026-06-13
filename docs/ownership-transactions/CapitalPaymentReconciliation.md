@@ -1,5 +1,7 @@
 # Capital Payment Reconciliation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Sermaye içeren Ortaklık İşlemleri hak veya taahhüt üretir; ödeme kaydı oluşturmaz.
 
 ```text

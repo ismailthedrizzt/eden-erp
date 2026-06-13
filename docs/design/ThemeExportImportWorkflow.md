@@ -1,5 +1,7 @@
 # Theme Export Import Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Export
 
 System themes can be exported from:

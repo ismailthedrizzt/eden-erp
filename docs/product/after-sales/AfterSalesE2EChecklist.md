@@ -1,5 +1,7 @@
 # After-Sales E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Product create
 - Product `after_sales_enabled`
 - Installed asset create

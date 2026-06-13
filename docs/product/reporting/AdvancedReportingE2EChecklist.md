@@ -1,5 +1,7 @@
 # Advanced Reporting E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright config mevcut degilse bu dosya regression hazirligi olarak tutulur.
 
 ## Seed Data

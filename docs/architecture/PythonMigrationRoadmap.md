@@ -1,5 +1,7 @@
 # Python Migration Roadmap
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 ## P0

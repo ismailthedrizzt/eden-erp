@@ -1,5 +1,7 @@
 # Pilot Scenario Pack
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu paket Eden ERP demo/pilot ortaminda uctan uca anlatilacak ve kabul testinde
 dogrulanacak ana akislarin ortak referansidir. Demo verileri gercek kisi veya
 ticari sir icermez; tum kayitlar `metadata_json.demo_data = true` veya

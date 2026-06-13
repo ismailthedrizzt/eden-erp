@@ -1,5 +1,7 @@
 # Document Slot UX
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Document slots are contextual. A user uploads a file from the card or wizard where the document is needed.
 
 ## Slot Props

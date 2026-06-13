@@ -1,5 +1,7 @@
 # Field Control Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Field Control Registry, Eden ERP'de bir alanin normal kart formundan mi, taslak editinden mi, resmi operasyon/wizard akisi ile mi, yoksa sistem/projection tarafindan mi yonetilecegini tanimlayan merkezi sozlesmedir.
 
 ## Control Types

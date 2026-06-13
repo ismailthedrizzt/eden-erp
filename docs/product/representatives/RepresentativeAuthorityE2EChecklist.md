@@ -1,5 +1,7 @@
 # Representative Authority E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Use this checklist for manual or Playwright-backed verification after staging data is available.
 
 ## Test Data

@@ -1,5 +1,7 @@
 # Performance Migration Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Step 17 prepares Eden ERP for measurable performance work without pretending the first pass is final tuning.
 
 ## Completed Preparation

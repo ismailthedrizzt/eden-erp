@@ -1,5 +1,7 @@
 # Eden ERP - Page Documentation Index
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This directory contains detailed specifications for all application pages.
 
 ## Implemented Pages

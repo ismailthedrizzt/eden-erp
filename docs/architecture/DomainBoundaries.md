@@ -1,5 +1,7 @@
 # Domain Boundaries
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP'de domain sinirlari, hangi verinin hangi bounded context tarafindan sahiplenildigini ve domainlerin birbirine hangi yollarla temas edecegini tanimlar. Buyuk refactor yapmadan once bu sozlesme, route, orchestrator, process, projection, audit, action guide ve integrity katmanlarinin ayni dili konusmasini saglar.
 
 Ana ilke:

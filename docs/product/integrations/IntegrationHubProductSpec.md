@@ -1,5 +1,7 @@
 # Integration Hub Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 Eden ERP icinde dis sistemlerle guvenli, izlenebilir ve retry edilebilir veri alisverisi saglamak. Integration Hub; integration app, credential, outbound webhook, inbound webhook, delivery log, dead-letter ve event registry katmanlarini tek yonetim yuzeyi altinda toplar.
 

@@ -1,5 +1,7 @@
 # Document Management / File Storage Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP belge altyapisi; dosya URL'lerini daginik JSON alanlarinda tutmak yerine belge metadata, storage referansi, iliski, durum, versiyon, requirement, signed URL ve audit bilgilerini merkezi Document domain altinda yonetir.

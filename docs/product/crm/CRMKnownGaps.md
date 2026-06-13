@@ -1,5 +1,7 @@
 # CRM Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 > Lead/opportunity deepening sonrasi guncel bosluklar icin [CRMLeadOpportunityKnownGaps.md](./CRMLeadOpportunityKnownGaps.md) dosyasi esas alinmalidir.
 
 - WhatsApp/web lead ingestion yok.

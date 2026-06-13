@@ -1,5 +1,7 @@
 # Field Test Server Readiness Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-06
 
 ## Purpose

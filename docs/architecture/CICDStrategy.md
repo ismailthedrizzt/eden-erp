@@ -1,5 +1,7 @@
 # CI/CD Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 GitHub Actions entrypoint:
 
 ```txt

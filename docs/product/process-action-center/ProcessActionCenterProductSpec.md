@@ -1,5 +1,7 @@
 # Process Center + Action Center Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Process Center and Action Center are Eden ERP's daily work hub. They answer:

@@ -1,5 +1,7 @@
 # Legacy / Obsolete Code Audit
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP yeni tasarlanan bir sistemdir. Bu nedenle eski, duplicate, kullanilmayan veya yeni mimariye aykiri kodlar kalici backward compatibility gerekcesiyle korunmaz. Bu audit silme/merge/deprecation kararlarini Python gecisi oncesi gorunur yapar.
 
 ## Priority Legend

@@ -1,5 +1,7 @@
 # Domain Service Layer
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Domain Service Layer, Operation Orchestrator ile database arasinda domain is kurallarini ve veri erisimini standartlastirir. Baska domain'e ait veriye dogrudan yazmak yerine ilgili domain service cagrilir.
 
 ## Sorumluluk Ayrimi

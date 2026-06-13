@@ -1,5 +1,7 @@
 # CRM Lead Opportunity E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright config mevcut degilse bu belge regression hazirligi olarak kullanilir.
 
 - Lead create

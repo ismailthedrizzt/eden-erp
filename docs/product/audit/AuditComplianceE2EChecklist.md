@@ -1,5 +1,7 @@
 # Audit Compliance E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Audit list opens for authorized audit viewer.
 - Normal user without `audit.view` cannot access audit admin data.
 - Default date range limits the initial result set.

@@ -1,5 +1,7 @@
 # Outbox Dispatcher
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Outbox Dispatcher, `outbox_events` tablosundaki pending eventleri guvenli sekilde isler. Event uretimi `OutboxEventService`, event isleme `OutboxDispatcher`, yan etkiler ise handler katmani tarafindan yapilir.
 
 ## Sorumluluk Ayrimi

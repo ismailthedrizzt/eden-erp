@@ -1,5 +1,7 @@
 # Database Pooling Production Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 FastAPI, worker processleri ve reporting/export joblari icin connection explosion riskini azaltmak ve Supabase/PostgreSQL kaynaklarini kontrollu kullanmak.

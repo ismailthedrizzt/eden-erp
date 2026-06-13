@@ -1,5 +1,7 @@
 # Demo Data Reset Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Demo seed altyapisi pilot verisini deterministic ID'lerle olusturur. Reset islemi
 yalnizca seed manifestindeki demo ID'leri temizler; gercek pilot kullanici verisi
 metadata filtresiyle topluca silinmez.

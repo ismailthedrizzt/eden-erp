@@ -1,5 +1,7 @@
 # Theme Preview And Approval Flow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Current Phase
 
 Imported themes are validated and returned as `preview` records. The admin page stores the last valid preview in browser local storage so Design Lab can inspect it without changing the user's real theme preference.

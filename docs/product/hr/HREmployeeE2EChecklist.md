@@ -1,5 +1,7 @@
 # HR Employee E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Seed Data
 
 - Aktif sirket

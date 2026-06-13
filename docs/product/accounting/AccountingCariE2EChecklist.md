@@ -1,5 +1,7 @@
 # Accounting Cari E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Seed Data
 
 - Active company

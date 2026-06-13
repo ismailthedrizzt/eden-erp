@@ -1,5 +1,7 @@
 # HR Leave Attendance Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 IK modulunu calisan karti ve istihdam lifecycle MVP seviyesinden izin yonetimi, devam-devamsizlik, calisma plani, puantaj ve bordro hazirlik verisine tasir.

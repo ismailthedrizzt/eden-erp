@@ -1,5 +1,7 @@
 # Ownership Transactions Page
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 `Ortaklık İşlemleri` artık yalnızca ownership/capital engine olarak çalışır.
 
 ```text

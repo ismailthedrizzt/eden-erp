@@ -1,5 +1,7 @@
 # Integration Hub Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - OAuth provider flows.
 - Integration marketplace.
 - Advanced transformation mapping.

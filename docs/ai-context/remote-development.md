@@ -27,3 +27,14 @@ git status --short
 - DB release target must be checked with `npm run db:target:check` before DB release work.
 - Commit and push from the remote canonical repo when persistence is needed.
 - Do not mark work complete until required guards pass.
+
+## Related Contracts
+
+- `contracts/core/release.contract.ts`
+- `contracts/page-flow-contracts.json`
+
+## Related Guards
+
+- `scripts/check-database-target.js`
+- `npm run validate:contracts`
+- `npm run build`

@@ -1,5 +1,7 @@
 # Pilot Performance Smoke
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu smoke testi large-data load testi degildir. Amac demo verisiyle pilot
 anlatiminin akici oldugunu dogrulamaktir.
 

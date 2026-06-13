@@ -1,5 +1,7 @@
 # Theme Concepts
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Classic Current
 
 Mevcut Eden UI temizligini baseline olarak gosterir. Sade, notr ve referans gorunumdur. "Su anki temizligi kaybetmeyelim" karsilastirmasi icin korunur.

@@ -1,5 +1,7 @@
 # Environment Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP canonical deployment model is remote server + local PostgreSQL/local DB.
 Vercel and Supabase are no longer canonical runtime assumptions.
 

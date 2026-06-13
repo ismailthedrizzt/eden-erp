@@ -1,5 +1,7 @@
 # Representative Authority Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 These scenarios define the product-level regression set for `Temsilcilerimiz`.
 
 ## Scenario 1 - Representative card and representation start

@@ -1,5 +1,7 @@
 # Process / Action Center Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Branch Closing Task
 
 1. Start Branch Closing for an active branch.

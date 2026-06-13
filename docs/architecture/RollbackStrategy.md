@@ -1,5 +1,7 @@
 # Rollback Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Application Rollback
 
 - Roll back Next.js deployment independently when only frontend/BFF behavior regresses.

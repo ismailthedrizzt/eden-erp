@@ -1,5 +1,7 @@
 # Codebase Inventory
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu envanter Python/FastAPI core backend gecisi oncesi repo katmanlarini siniflandirir. Sayilar 2026-05-27 tarihli repo taramasindan alinmistir ve yaklasik yonlendirme amaclidir.
 
 ## Summary

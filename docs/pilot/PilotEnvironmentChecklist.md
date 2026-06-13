@@ -1,5 +1,7 @@
 # Pilot Environment Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Ortam
 
 - [ ] Ortam staging/demo olarak isaretli.

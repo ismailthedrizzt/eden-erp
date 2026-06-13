@@ -1,5 +1,7 @@
 # Generated OpenAPI Client Adoption
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Summary
 
 Step 12 ile FastAPI OpenAPI contract'i TypeScript frontend icin somut source of

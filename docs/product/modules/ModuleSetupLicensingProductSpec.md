@@ -1,5 +1,7 @@
 # Module Setup / Licensing Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Kurulum Merkezi, modül lisansları, feature flags ve runtime visibility kararlarını kullanıcıya iş diliyle gösterir. Kullanıcı bir modülün neden görünmediğini, neden kapalı olduğunu veya hangi kurulum adımını beklediğini teknik tablo/RPC dili görmeden anlayabilmelidir.

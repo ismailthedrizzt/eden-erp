@@ -24,3 +24,13 @@ This folder is the concise starting point for AI-assisted work on Eden ERP. It d
 - Documentation source guard: `scripts/check-doc-source-of-truth.js`
 
 Historical audits, cleanup reports, stale root notes, and legacy migration notes are archived under `docs/archive/markdown-source-of-truth-2026-06-13/`.
+
+## Related Contracts
+
+- `contracts/**`
+- `contracts/page-flow-contracts.json`
+
+## Related Guards
+
+- `scripts/check-doc-source-of-truth.js`
+- `npm run validate:contracts`

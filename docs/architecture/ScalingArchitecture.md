@@ -1,5 +1,7 @@
 # Scaling Architecture
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Eden ERP'nin ciddi olcek hedefi icin hedef runtime mimarisini tanimlar.
 
 ## Target Runtime

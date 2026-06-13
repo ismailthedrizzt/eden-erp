@@ -1,5 +1,7 @@
 # Pilot Known Risks
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1 Riskler
 
 - Final gate sonucu `READY_WITH_P1_DEBT`; pilot kontrollu kapsamla yapilmali.

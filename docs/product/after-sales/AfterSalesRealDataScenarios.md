@@ -1,5 +1,7 @@
 # After-Sales Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Servis verilebilir urun tanimi
 
 1. Urun katalogunda PlaneGuard olusturulur.

@@ -1,5 +1,7 @@
 # External User Access Security
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Principle
 
 External portal users are not internal ERP users. They receive a separate access context and can only call portal APIs that enforce stakeholder/customer scope.

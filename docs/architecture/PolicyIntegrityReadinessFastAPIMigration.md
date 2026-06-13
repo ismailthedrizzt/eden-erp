@@ -1,5 +1,7 @@
 # Policy / Integrity / Readiness FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Python/FastAPI core backend gecisinin 9. adiminda eklenen canonical
 guard katmanlarini tanimlar.
 

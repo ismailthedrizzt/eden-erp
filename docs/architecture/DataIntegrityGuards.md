@@ -1,5 +1,7 @@
 # Data Integrity Guards
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Data Integrity Guard, Eden ERP'de bir islemin veri tutarliligi acisindan guvenli olup olmadigini kontrol eden katmandir.
 
 ## Ayrim

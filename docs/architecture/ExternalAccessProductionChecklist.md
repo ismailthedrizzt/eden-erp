@@ -1,5 +1,7 @@
 # External Access Production Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Customer portal and external users must never gain internal ERP visibility.

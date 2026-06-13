@@ -1,5 +1,7 @@
 # Query Plan Review Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Production oncesi kritik query'lerin PostgreSQL planlarini standart bir sekilde incelemek icin kullanilir.

@@ -1,5 +1,7 @@
 # Guided Tour and Contextual Help
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Guided Tour and Contextual Help, Eden ERP kullanicisinin dogru islem yolunu bulmasi icin tasarlanir. Kullaniciya teknik katmanlar anlatilmaz; ekranin o anki is baglaminda ne yapabilecegi gosterilir.
 
 ## Temel Ilke

@@ -1,5 +1,7 @@
 # Search / Global Command Palette Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP icinde kullanicinin kayit, islem, gorev, belge, rapor, ayar ve yardim basliklarina menu gezmeden ulasmasini saglamak. Global Search metin aramasi, Command Palette ise arama + hizli islem deneyimidir.

@@ -1,5 +1,7 @@
 # Integration Hub Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Outbound webhook
 1. Admin Integration Hub'da webhook app olusturur.
 2. Sistem webhook secret'i bir kez gosterir.

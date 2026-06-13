@@ -1,5 +1,7 @@
 # Temalarimiz Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scope
 
 Temalarimiz is the development-only Eden ERP theme management page. It turns the former visual theme/design lab workflow into a standard ERP management surface with PageBanner, list, detail tabs, draft lifecycle, import/export, token editing, validation and activation.

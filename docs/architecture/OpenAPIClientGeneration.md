@@ -1,5 +1,7 @@
 # OpenAPI Client Generation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 FastAPI OpenAPI contract frontend/backend API sozlesmesinin source of truth'udur.
 
 ## Tooling

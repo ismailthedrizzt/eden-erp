@@ -1,5 +1,7 @@
 # CRM Deepening - Lead / Opportunity / Follow-up Automation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 CRM modulu paydas karti seviyesinden lead, firsat, pipeline, takip ve etkilesim yonetimi omurgasina genisler. Finansal cari hareket, fatura, tam teklif PDF veya marketing otomasyonu bu fazin kapsami degildir.

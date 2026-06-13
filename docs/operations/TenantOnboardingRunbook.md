@@ -1,5 +1,7 @@
 # Tenant Onboarding Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Yeni tenant'i production'a guvenli sekilde almak.

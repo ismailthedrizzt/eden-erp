@@ -1,5 +1,7 @@
 # Frontend Service Refactor Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Frontend services are API client adapters. They may normalize frontend form shape, unwrap backend response envelopes and provide toast-friendly errors, but they must not contain ERP domain decisions.
 
 ## Current State

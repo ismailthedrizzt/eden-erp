@@ -1,5 +1,7 @@
 # Branch Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1
 
 - Temporary Next BFF fallbacks for branch opening/closing and branch CRUD should be removed after staging E2E with production-like data.

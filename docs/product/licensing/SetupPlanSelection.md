@@ -1,5 +1,7 @@
 # Setup Plan Selection
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 The setup wizard now presents package cards:
 
 - Mikro Isletme

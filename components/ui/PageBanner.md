@@ -1,5 +1,7 @@
 # PageBanner Component
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **ERP Page Header Component** - Standardized page header with title, icon, and primary action button.
 
 ## Purpose

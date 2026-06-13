@@ -1,5 +1,7 @@
 # OpenAPI Contract Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 FastAPI OpenAPI dokumani Eden ERP backend API sozlesmesinin source of truth'u olacaktir.
 
 ## Principles

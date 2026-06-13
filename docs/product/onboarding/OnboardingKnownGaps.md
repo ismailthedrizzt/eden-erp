@@ -1,5 +1,7 @@
 # Onboarding Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full invitation email flow
 - Industry-specific onboarding packs
 - Onboarding analytics

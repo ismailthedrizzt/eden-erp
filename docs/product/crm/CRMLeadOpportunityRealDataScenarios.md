@@ -1,5 +1,7 @@
 # CRM Lead Opportunity Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Fuar lead'i
 
 1. Kaynak `exhibition` ile SAHA EXPO lead'i olusturulur.

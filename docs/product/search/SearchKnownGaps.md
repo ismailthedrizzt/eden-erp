@@ -1,5 +1,7 @@
 # Search Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Postgres full text search indexes are not yet productized.
 - Typo tolerance/fuzzy search is not implemented.
 - Semantic search and AI command parsing are future scope.

@@ -1,5 +1,7 @@
 # CRM Stakeholder E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Playwright Spec
 
 Onerilen dosya: `tests/e2e/crm-stakeholders.spec.ts`

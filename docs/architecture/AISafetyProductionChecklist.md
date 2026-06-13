@@ -1,5 +1,7 @@
 # AI Safety Production Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 AI features must help users without bypassing Eden ERP policy, scope, audit, document or critical-operation controls.

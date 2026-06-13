@@ -1,5 +1,7 @@
 # Product Versioning
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP'de eski `Geliştirilmekte / Yakında` rozetleri, ürün takibi için fazla statikti. Yeni yapı ürün, modül ve sayfa olgunluğunu tek merkezden yönetir ve menüde görünen bilgiyi ürün manifestine bağlar.
 
 Merkezi dosya:

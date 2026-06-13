@@ -1,5 +1,7 @@
 # Monitoring And Alerting Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Production API, DB, workers, outbox, integrations, email, audit and AI provider sagligini izlemek.

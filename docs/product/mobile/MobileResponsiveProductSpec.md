@@ -1,5 +1,7 @@
 # Mobile / Responsive / PWA Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP mobil deneyimi masaustu ekranin kucultulmus hali degildir. Mobil kullanici en sik su isleri hizli yapabilmelidir:

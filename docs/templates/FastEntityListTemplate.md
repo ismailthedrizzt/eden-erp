@@ -1,5 +1,7 @@
 # Fast Entity List Template
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu sablon, ana ERP liste ekranlarinda liste acilisini ve satir tiklama deneyimini hizli tutmak icin kullanilir. Hedef: liste 0.2 sn civarinda gorunur, satir tiklaninca form 0.5 sn icinde acilir.
 
 Ana kural: liste endpointi sadece SmartDataTable'da gorunen satir alanlarini ve sadece istenen backend sayfasini dondurur. Form, referans ve agir JSON/media/history alanlari liste payload'ina girmez.

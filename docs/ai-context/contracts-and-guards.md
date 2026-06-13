@@ -33,3 +33,15 @@ Do not weaken guards, convert errors to warnings, or add broad exceptions to pas
 - Pipeline adlandirma ve sozluk kontrati: frontend labels may be Turkish, but service/data keys stay canonical and typed.
 - Pipeline naming contract: frontend service, BFF proxy, FastAPI endpoint, Pydantic schema, service command, and repository input must preserve canonical field names.
 - Veritabani adlandirma kontrati: database-facing names follow backend schema contracts; UI aliases do not become persistence aliases.
+
+## Related Contracts
+
+- `contracts/**`
+- `contracts/api/**/*.contract.ts`
+- `contracts/page-flow-contracts.json`
+
+## Related Guards
+
+- `scripts/check-contract-standardization.js`
+- `scripts/check-backend-contract-drift.js`
+- `scripts/check-doc-source-of-truth.js`

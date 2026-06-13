@@ -1,5 +1,7 @@
 # ERP Page Template
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Standardized ERP Data Management Page Pattern**
 
 This document defines the canonical structure for all entity management pages in the Eden ERP system.

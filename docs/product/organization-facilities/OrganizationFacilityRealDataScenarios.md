@@ -1,5 +1,7 @@
 # Organization / Facility Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Şube Açılışıyla Organization Unit
 
 1. Aktif şirket seçilir.

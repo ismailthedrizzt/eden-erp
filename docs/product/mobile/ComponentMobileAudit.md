@@ -1,5 +1,7 @@
 # Component Mobile Audit
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 | Component | Durum | Not |
 | --- | --- | --- |
 | App layout | Sertlestirildi | Mobile drawer + bottom nav + offline banner |

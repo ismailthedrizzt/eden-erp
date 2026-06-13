@@ -1,5 +1,7 @@
 # Release Registry vs License Entitlement
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Status: canonical visibility rule as of 2026-06-07.
 
 Release registry answers:

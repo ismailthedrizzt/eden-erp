@@ -1,5 +1,7 @@
 # Action Guide Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 AI Islem Rehberi, kullanicinin dogal dilde yazdigi isi Eden ERP icindeki tanimli action sozlesmelerine esler. MVP deterministik calisir; yeni islem uydurmaz ve veri degistirmez.
 
 ## Ilkeler

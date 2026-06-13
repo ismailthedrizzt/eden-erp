@@ -1,5 +1,7 @@
 # Eden ERP Platform Architecture
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP, Next.js frontend/BFF ve FastAPI/Python core backend ayrimina ilerleyen moduler ERP platformudur. Supabase/PostgreSQL veri, auth ve storage platformu olarak kalabilir; kalici business logic Next.js API route'larinda tutulmaz.
 
 ## Ana Referans

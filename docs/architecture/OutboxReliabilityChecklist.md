@@ -1,5 +1,7 @@
 # Outbox Reliability Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Envelope Standard
 
 Every event must carry:

@@ -1,5 +1,7 @@
 # Theme Lifecycle
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## States
 
 - `draft`: Created by `Ekle`; not visible to normal users.

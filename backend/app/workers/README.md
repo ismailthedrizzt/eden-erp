@@ -1,5 +1,7 @@
 # Eden ERP Python Workers
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This folder contains the first Python worker MVP for background platform jobs.
 
 ## Outbox worker

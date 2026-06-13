@@ -1,5 +1,7 @@
 # Branch E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Preconditions
 
 Seed or prepare:

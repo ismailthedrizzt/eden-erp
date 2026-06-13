@@ -1,5 +1,7 @@
 # Eden Teknoloji ERP
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP, moduler ERP platformu olarak tasarlanan yeni nesil bir is uygulamasidir. Guncel deployment modeli uzak sunucu, Next.js UI/BFF, FastAPI canonical backend ve sunucu uzerindeki yerel PostgreSQL/local DB yapisidir.
 
 ## Mimari Durum

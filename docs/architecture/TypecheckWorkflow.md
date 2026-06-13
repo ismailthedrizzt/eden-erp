@@ -1,5 +1,7 @@
 # Typecheck Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP Next.js yuzeyi buyudukce tek parca TypeScript kontrolu lokal gelistirme icin agir hale geldi. Bu yuzden kontroller iki hiz sinifina ayrildi.
 
 ## Gunluk Lokal Kontrol

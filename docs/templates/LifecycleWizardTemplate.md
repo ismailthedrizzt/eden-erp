@@ -1,5 +1,7 @@
 # System Lifecycle Wizard Template
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu şablon sistem genelindeki yaşam döngüsü süreçleri için temel sözleşmedir. Şirket açılışı, tasfiye ve terkin yalnızca ilk süreç tanımlarıdır; çalışan, ortaklık, araç, sözleşme veya başka modüller aynı şablonu kullanmalıdır.
 
 ## Standart Akış

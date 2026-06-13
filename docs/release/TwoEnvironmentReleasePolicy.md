@@ -1,5 +1,7 @@
 # Single Main Environment Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 This policy protects live data while keeping development simple. Eden ERP uses one product branch and isolated local PostgreSQL DB targets.

@@ -1,5 +1,7 @@
 # Process / Action Center E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Action Center
 
 - Action Center bell renders in the app header.

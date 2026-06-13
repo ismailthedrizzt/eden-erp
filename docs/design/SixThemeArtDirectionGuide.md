@@ -1,5 +1,7 @@
 # Six Theme Art Direction Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Hikmet: medrese geometry, emerald, muted gold, calm ivory/night green.
 - Bozkır: steppe horizon, sun, stone, steel navy and copper.
 - Eşitlik: solidarity rings, plum/fuchsia/coral, inclusive modern confidence.

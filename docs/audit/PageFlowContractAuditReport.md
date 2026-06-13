@@ -1,5 +1,7 @@
 # Page / Flow Contract Audit Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-09  
 Scope: Eden ERP priority page, wizard, lifecycle and operation request flows  
 Related standard: `docs/architecture/PageFlowDeliveryContract.md`  

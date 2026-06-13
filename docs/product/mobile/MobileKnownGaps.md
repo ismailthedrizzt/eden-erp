@@ -1,5 +1,7 @@
 # Mobile Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Native mobil uygulama yok.
 - Offline write queue yok.
 - Offline photo upload queue yok.

@@ -1,5 +1,7 @@
 # Core Domain Principles
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-06
 
 ## Canonical Principles

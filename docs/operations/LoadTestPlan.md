@@ -1,5 +1,7 @@
 # Load Test Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Pilot-to-production gecisinde Eden ERP'nin API, DB, worker and BFF davranisini yuk altinda olcmek.

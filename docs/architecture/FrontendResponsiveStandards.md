@@ -1,5 +1,7 @@
 # Frontend Responsive Standards
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Breakpoints
 
 - mobile: `< 640px`

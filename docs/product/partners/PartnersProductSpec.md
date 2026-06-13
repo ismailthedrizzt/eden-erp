@@ -1,5 +1,7 @@
 # Partners / Ownership Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 `Ortaklarimiz` is the ownership command center for Eden ERP. It is not only a person/company list. It is the product surface where partner cards, current ownership, share/vote/profit/capital rights, privileges, control rights, documents and ownership transaction history meet.

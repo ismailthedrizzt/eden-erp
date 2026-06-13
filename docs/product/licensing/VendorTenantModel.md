@@ -1,5 +1,7 @@
 # Vendor Tenant Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 EDEN Teknoloji has two separate concepts:
 
 1. Normal company tenant usage

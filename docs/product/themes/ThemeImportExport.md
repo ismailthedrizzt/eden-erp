@@ -1,5 +1,7 @@
 # Theme Import Export
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Export Formats
 
 - Eden native JSON

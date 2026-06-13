@@ -1,5 +1,7 @@
 # Data Import / Export / Bulk Operations Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP'de ana verilerin toplu alinmasi, disa aktarilmasi ve kontrollu bulk operation ile yonetilmesi icin urun seviyesi altyapi saglanir. Toplu veri islemleri tekil domain kurallarini bypass etmez; import ve bulk action dogrudan tabloya keyfi yazmaz, ilgili domain servislerini cagirir.

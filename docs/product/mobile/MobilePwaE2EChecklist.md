@@ -1,5 +1,7 @@
 # Mobile / PWA E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright kuruldugunda `tests/e2e/mobile-pwa.spec.ts` altinda bu basliklar otomasyona alinacak.
 
 ## Basliklar

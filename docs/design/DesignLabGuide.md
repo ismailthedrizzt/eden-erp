@@ -1,5 +1,7 @@
 # Design Lab Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Design Lab, Eden ERP icin development-only gorsel kimlik karsilastirma alanidir.
 
 ## Nasil acilir

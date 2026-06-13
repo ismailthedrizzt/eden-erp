@@ -1,5 +1,7 @@
 # Project / Task E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## E2E Basliklari
 
 - project create

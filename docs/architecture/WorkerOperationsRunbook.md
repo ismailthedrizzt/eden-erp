@@ -1,5 +1,7 @@
 # Worker Operations Architecture Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Worker tiplerinin production davranis kontratini tanimlar. Operasyon adimlari icin `docs/operations/WorkerOperationsRunbook.md` kullanilir.

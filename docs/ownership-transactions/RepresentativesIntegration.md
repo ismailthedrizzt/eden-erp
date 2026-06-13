@@ -1,5 +1,7 @@
 # Representatives Integration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Temsil yetkileri Ortaklık İşlemleri içinde saklanmaz.
 
 ```text

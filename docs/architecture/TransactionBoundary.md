@@ -1,5 +1,7 @@
 # Transaction Boundary and RPC Preparation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Transaction Boundary, Operation Orchestrator altinda calisan mutation guvenlik katmanidir. Orchestrator is kurali, precheck ve idempotency akisini yonetir; Transaction Boundary ise mutation zincirinin RPC ile atomic yapilmasini veya RPC yoksa application fallback'in standart calismasini saglar.
 
 ## Sorumluluk Ayrimi

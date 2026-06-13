@@ -1,5 +1,7 @@
 # CRM / Stakeholders / Customer-Supplier Master Data Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 > Deepening update: lead, opportunity, pipeline and follow-up automation scope is documented in [CRMLeadOpportunityProductSpec.md](./CRMLeadOpportunityProductSpec.md).
 
 ## Amac

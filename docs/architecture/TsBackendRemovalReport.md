@@ -1,5 +1,7 @@
 # TS Backend Removal Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Step 19 consolidates the Python/FastAPI migration boundary. FastAPI is the canonical ERP backend; TypeScript backend code is now either a BFF/proxy, a temporary migration fallback, a frontend/shared contract, generated OpenAPI output, or a documented migrate-later debt item.
 
 ## Current Control Points

@@ -1,5 +1,7 @@
 # Productization Readiness Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## 1. Executive Summary
 
 Gate result: **READY_WITH_P1_DEBT**

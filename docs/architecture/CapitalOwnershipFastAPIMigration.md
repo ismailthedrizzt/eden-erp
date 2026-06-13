@@ -1,5 +1,7 @@
 # Capital Increase + Ownership FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Status: Step 5 implemented as the next core-backend migration slice.
 
 ## Migrated Endpoints

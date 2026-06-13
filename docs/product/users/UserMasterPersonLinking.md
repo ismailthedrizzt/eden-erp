@@ -1,5 +1,7 @@
 # User Master Person Linking
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Target Model
 
 `tenant_memberships` should carry:

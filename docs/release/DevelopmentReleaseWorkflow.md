@@ -1,5 +1,7 @@
 # Main / Remote Server Release Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Development and live release use the same `main` code. They are separated by environment values and local PostgreSQL DB targets, not Supabase projects.

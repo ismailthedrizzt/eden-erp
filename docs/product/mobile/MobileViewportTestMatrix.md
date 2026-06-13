@@ -1,5 +1,7 @@
 # Mobile Viewport Test Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 | Viewport | Boyut | Ana kontrol |
 | --- | ---: | --- |
 | iPhone SE | 320x667 | bottom nav, tek kolon form, kart listesi |

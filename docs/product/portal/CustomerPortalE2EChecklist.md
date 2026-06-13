@@ -1,5 +1,7 @@
 # Customer Portal E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright spec is not added until the repo has an active Playwright setup. Use this as the regression script.
 
 - Portal login/session resolves `/api/portal/me`.

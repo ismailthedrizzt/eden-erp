@@ -1,5 +1,7 @@
 # Customer Portal / External User Access MVP
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Customer Portal lets external customer users access only their own Eden ERP records: installed assets, service requests, shared service records, portal-visible documents, and limited notifications. It is not an internal ERP shell and must never grant broad company, audit, security, accounting, or admin access.

@@ -1,5 +1,7 @@
 # Search / Command Palette Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Sirket arama
 
 1. Kullanici Ctrl+K basar.

@@ -1,5 +1,7 @@
 # Partner / Ownership Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1 Before First Customer
 
 | gap | current state | target state | removal condition |

@@ -1,5 +1,7 @@
 # Advanced Reporting Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Advanced Reporting fazi, mevcut dashboard/rapor temelini kullanicilarin kendi

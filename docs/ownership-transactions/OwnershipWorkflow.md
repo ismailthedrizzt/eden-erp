@@ -1,5 +1,7 @@
 # Ownership Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Ortaklık işlemleri workflow-ready durum alanlarıyla tutulur.
 
 İşlem durumları:

@@ -1,5 +1,7 @@
 # Tenant Suspend, Archive and Delete Policy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Tenant deletion is dangerous.
 
 ## Suspend

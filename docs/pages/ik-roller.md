@@ -1,5 +1,7 @@
 # İK - Rol Yönetimi Sayfası
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Module**: İK (ik) / Sistem (sistem)  
 **Submodule**: Roller (roles)  
 **Path**: `app/app/sistem/roller/page.tsx` (or `/ik/roller`)  

@@ -1,5 +1,7 @@
 # Job Idempotency Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Worker retry, manual retry ve crash recovery sirasinda duplicate side effect olusmasini engellemek.

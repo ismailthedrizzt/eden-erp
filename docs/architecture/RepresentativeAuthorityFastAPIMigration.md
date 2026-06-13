@@ -1,5 +1,7 @@
 # Representative Authority FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu faz temsilci yetki islemlerini FastAPI core backend'e tasimaya baslar. Next.js route artik canonical backend degildir; `FASTAPI_BASE_URL` tanimliysa authority transaction istekleri Python endpointine proxy edilir.
 
 ## Migrated Endpoints

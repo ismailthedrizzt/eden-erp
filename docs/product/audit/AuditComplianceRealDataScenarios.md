@@ -1,5 +1,7 @@
 # Audit Compliance Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Company Address Change Audit
 
 1. Active company address change is completed.

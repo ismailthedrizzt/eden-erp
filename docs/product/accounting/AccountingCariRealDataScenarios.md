@@ -1,5 +1,7 @@
 # Accounting Cari Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Muhtelif Tedarikciler Karti
 
 1. Kullanici `Muhasebe > Cari Kartlar` ekranini acar.

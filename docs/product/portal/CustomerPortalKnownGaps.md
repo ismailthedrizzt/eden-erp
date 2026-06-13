@@ -1,5 +1,7 @@
 # Customer Portal Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full customer-admin user management is future.
 - Invitation acceptance and Supabase password setup UX is future.
 - Customer comments/chat is limited to request metadata.

@@ -1,5 +1,7 @@
 # Project / Task Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Proje olusturma
 
 1. Aktif sirket secilir.

@@ -1,5 +1,7 @@
 # Workflow Automation Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Belge suresi uyarisi
 1. 30 gun icinde suresi dolan belge var.
 2. Gunluk kural calisir.

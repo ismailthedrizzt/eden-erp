@@ -1,5 +1,7 @@
 # Integration Security Production Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Integration app, credential, inbound webhook and outbound webhook surfaces must be tenant scoped, signed, replay-resistant and SSRF-safe.

@@ -1,5 +1,7 @@
 # Document Management Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full OCR yok.
 - E-signature entegrasyonu yok.
 - Belge workflow approval motoru yok.

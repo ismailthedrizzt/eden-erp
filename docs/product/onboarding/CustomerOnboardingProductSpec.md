@@ -1,5 +1,7 @@
 # Customer Onboarding / Workspace Setup Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 Yeni musteri ilk giriste bos ve teknik bir ERP ile karsilasmaz. Eden ERP, calisma alanini hazirlama, ilk sirket taslagi, sirket acilisi, modul hazirligi, sistem turu, Action Guide ve Action Center adimlarini sade bir baslangic deneyimine donusturur.
 

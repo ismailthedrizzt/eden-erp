@@ -1,5 +1,7 @@
 # Tenant Based Development / Release Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 There is one application and many tenants.
 
 ## Deprecation Decision

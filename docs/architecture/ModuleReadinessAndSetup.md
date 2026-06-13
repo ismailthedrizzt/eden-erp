@@ -1,5 +1,7 @@
 # Module Readiness and Setup
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Module Readiness, bir modulun acik olmasindan daha ileri bir kontrol yapar. Modul lisansli ve aktif olabilir; ancak gerekli kayit alanlari, read model gorunumleri, ayarlar veya bagli moduller hazir degilse kullanici teknik hata gormeden kurulum ekranina yonlendirilir.
 
 ## Kavramlar

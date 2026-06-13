@@ -1,5 +1,7 @@
 # Audit Compliance Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Denetim Izi ekrani teknik log okuyucusu degildir. Yetkili kullanicinin "kim, ne zaman, hangi kayit uzerinde, hangi islem kapsaminda ne yapti?" sorusunu is diliyle cevaplar.

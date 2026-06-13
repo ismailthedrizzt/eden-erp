@@ -1,5 +1,7 @@
 # Accounting Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Accounting domain, Eden ERP'de sirketin parasal hareketlerini ve cari iliskilerini

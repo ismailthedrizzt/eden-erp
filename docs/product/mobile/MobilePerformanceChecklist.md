@@ -1,5 +1,7 @@
 # Mobile Performance Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Dashboard bolumleri lazy load edilebilir olmali.
 - Grafikler agirsa route-level veya component-level lazy render edilmeli.
 - SmartDataTable server-side pagination kullanmali.

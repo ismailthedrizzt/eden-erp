@@ -1,5 +1,7 @@
 # Tenant Scoped Avatar Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Principle
 
 Avatar is not a global user property. Avatar is an active-tenant master person property.

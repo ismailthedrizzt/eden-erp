@@ -1,5 +1,7 @@
 # Runtime Feature Visibility
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Runtime Feature Visibility, Eden ERP'de bir modulun, sayfanin veya islemin kullaniciya nasil gosterilecegini tek yerden kararlastirir.
 
 ## Kanonik Model

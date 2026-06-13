@@ -1,5 +1,7 @@
 # Workflow Automation Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Visual flow builder yok.
 - External webhook execution yok.
 - Custom scripts yok.

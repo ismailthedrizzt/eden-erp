@@ -1,5 +1,7 @@
 # Product / Service / After-Sales Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Urun/Hizmet ve Satis Sonrasi modulleri, satilan veya hizmet verilen urunleri katalog seviyesinde tanimlar; musteride kurulu gercek varliklari, garanti/bakim bilgisini, servis talebini ve servis mudahalesini izler.

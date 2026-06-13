@@ -1,5 +1,7 @@
 # Local Document Storage
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 The canonical storage provider is local filesystem storage on the remote server.
 
 Files are addressed by controlled storage paths under the configured document storage root. Raw local filesystem paths are not exposed to the browser.

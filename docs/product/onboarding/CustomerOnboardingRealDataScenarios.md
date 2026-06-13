@@ -1,5 +1,7 @@
 # Customer Onboarding Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Yeni musteri ilk giris
 1. Kullanici ilk kez giris yapar.
 2. Welcome modal acilir.

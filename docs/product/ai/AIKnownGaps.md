@@ -1,5 +1,7 @@
 # AI Assistance Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Full OCR pipeline yok; belge zekasi text extract/metadata varsa guclu calisir.
 - Vector search, semantic memory ve uzun sureli kurum hafizasi sonraki fazdadir.
 - AI cost/usage dashboard MVP kapsamina dahil degildir.

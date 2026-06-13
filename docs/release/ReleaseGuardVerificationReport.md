@@ -1,5 +1,7 @@
 # Release Guard Verification Report
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Deprecated historical report, updated 2026-06-06: This document records old Supabase-target release guard simulations. The active guard is `db:target:check` against local PostgreSQL/local DB plus `env:safety`.
 
 ## Metadata

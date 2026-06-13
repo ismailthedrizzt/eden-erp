@@ -1,5 +1,7 @@
 # Rule Engine Safety
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP rule engine guvenli varsayilanlarla tasarlanir.
 
 ## Hard Boundaries

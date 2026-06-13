@@ -1,5 +1,7 @@
 # Ownership Calculation Model
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Güncel ortaklık durumu yalnızca onaylı Ortaklık İşlemleri kayıtlarından hesaplanır.
 
 ```text

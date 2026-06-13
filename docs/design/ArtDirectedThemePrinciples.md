@@ -1,5 +1,7 @@
 # Art-Directed Theme Principles
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Product Boundary
 
 Eden ERP themes are visual identities for a dense business application. They may express art direction through color, surfaces, border, shadow, radius, icon containers and density. They must not change workflows, layout structure or information architecture.

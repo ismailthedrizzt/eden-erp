@@ -1,5 +1,7 @@
 # HR Foundation Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 IK modulu calisan kartlari ve istihdam lifecycle uzerinden kuruludur. Calisan

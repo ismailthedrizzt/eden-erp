@@ -1,5 +1,7 @@
 # PWA Cache Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Ilke
 
 Eden ERP hassas is ve finans verisi tasir. Service worker cache stratejisi guvenli varsayimla baslar: API, auth/session ve mutation cevaplari cache'lenmez.

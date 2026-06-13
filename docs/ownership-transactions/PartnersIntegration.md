@@ -1,5 +1,7 @@
 # Partners Integration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Ortaklar sayfası bir kişi veya kurumun şirkete ortak olarak bağlı olduğunu gösterir. Güncel hisse, oy hakkı, kar payı, sermaye ve imtiyaz değerleri manuel düzenlenmez; Ortaklık İşlemleri kayıtlarından hesaplanır.
 
 ```text

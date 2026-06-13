@@ -1,5 +1,7 @@
 # User-Safe Error Messages
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Production'da kullaniciya teknik detay, secret, SQL, stack trace veya storage path gostermemek.

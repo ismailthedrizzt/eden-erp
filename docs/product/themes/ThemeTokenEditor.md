@@ -1,5 +1,7 @@
 # Theme Token Editor
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## General
 
 The editor separates theme identity from appearance mode.

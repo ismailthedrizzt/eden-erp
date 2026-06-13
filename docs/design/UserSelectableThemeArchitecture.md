@@ -1,5 +1,7 @@
 # User Selectable Theme Architecture
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scope
 
 Visual theme is a user preference, not a development-only demo state. It controls the visual identity of the application. Appearance controls light, dark or system mode. These two preferences must stay separate.

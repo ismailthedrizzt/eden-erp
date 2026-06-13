@@ -1,5 +1,7 @@
 # ERP Page Template - UPDATED
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Standardized ERP Data Management Page Pattern (Updated May 2024)**
 
 > ⚠️ **CRITICAL**: Always check component prop types before using. See `/docs/components/` for latest API.

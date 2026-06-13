@@ -1,5 +1,7 @@
 # Main To Virtual Server Release Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Release is no longer promoted from `develop` to `main`. The product branch is already `main`; live deployment is a Virtual Server pull/build/restart from `origin/main`.

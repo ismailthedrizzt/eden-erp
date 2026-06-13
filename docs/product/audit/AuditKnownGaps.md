@@ -1,5 +1,7 @@
 # Audit Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 | gap | priority | target |
 | --- | --- | --- |
 | CSV/Excel export with `audit.export` permission | P1 | Add export endpoint, max row limit, mandatory date range and export audit event. |

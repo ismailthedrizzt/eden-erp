@@ -1,5 +1,7 @@
 # İK - Birimler Yönetimi Sayfası
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Module**: İK (ik)  
 **Submodule**: Birimler (birimler)  
 **Path**: `app/app/ik/birimler/page.tsx`  

@@ -1,5 +1,7 @@
 # Data Quality E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Seeds
 
 - Duplicate master organization

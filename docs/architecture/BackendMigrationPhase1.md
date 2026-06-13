@@ -1,5 +1,7 @@
 # Backend Migration Phase 1
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Current Repo Summary
 
 - Frontend framework: Next.js 15 App Router with TypeScript, React 19, Tailwind CSS.

@@ -1,5 +1,7 @@
 # Partner Ownership Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 These scenarios are the minimum product hardening dataset for `Ortaklarimiz`.
 
 ## Scenario 1 - Initial Partnership Entry

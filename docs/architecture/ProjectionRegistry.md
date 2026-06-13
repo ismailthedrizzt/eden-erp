@@ -1,5 +1,7 @@
 # Projection Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Projection Registry, read-heavy liste ve detay modellerinin canonical contract
 kaynagidir. Python/FastAPI tarafindaki registry:
 

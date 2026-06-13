@@ -1,5 +1,7 @@
 # Temalarımız Tasarımcı Notları
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu belge Eden ERP içindeki Development ortamı **Temalarımız** ekranında yönetilecek sistem temaları için tasarımcı teslim kapsamını tanımlar.
 
 ## Kapsam

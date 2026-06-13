@@ -1,5 +1,7 @@
 # Rollback Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Production release sonrasi guvenli uygulama, worker, feature flag veya migration rollback'i yapmak.

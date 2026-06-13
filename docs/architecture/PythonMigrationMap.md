@@ -1,5 +1,7 @@
 # Python Migration Map
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayrilacagini tanimlar.
 
 ## A. Python'a Tasinacak

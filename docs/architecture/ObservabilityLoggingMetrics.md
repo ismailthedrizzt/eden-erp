@@ -1,5 +1,7 @@
 # Observability / Logging / Metrics
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Step 16 establishes the first production observability foundation for the FastAPI core backend.
 
 ## Structured Logging

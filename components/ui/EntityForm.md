@@ -1,5 +1,7 @@
 # EntityForm Component
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **ERP Entity Form Component** - A reusable, mode-aware form component for managing database records across the ERP system.
 
 ## Purpose

@@ -1,5 +1,7 @@
 # Next.js Cleanup Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinacak alanlari siniflandirir.
 
 ## delete_obsolete

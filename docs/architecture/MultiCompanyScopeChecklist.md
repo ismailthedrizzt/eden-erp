@@ -1,5 +1,7 @@
 # Multi-Company Scope Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Company scope Eden ERP icinde kullanicinin hangi sirket, sube, tesis, personel, cari, proje ve servis kayitlarini gorebilecegini belirler. Tenant izolasyonu daha ust sinirdir; company scope tenant icindeki veri gorunurlugunu daraltir.

@@ -1,5 +1,7 @@
 # FastAPI Endpoint Coverage Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This matrix verifies the productization gate for the FastAPI core backend. It is based on the current `backend/openapi.json`, migration docs, route proxy inventory and test suite.
 
 Legend:

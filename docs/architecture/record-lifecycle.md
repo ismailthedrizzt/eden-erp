@@ -1,5 +1,7 @@
 # Record Lifecycle
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Ana kayitlarda operasyonel durumun tek kaynagi `record_status` alanidir.
 
 ## Status Degerleri

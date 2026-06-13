@@ -1,5 +1,7 @@
 # Document Requirement Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Document requirements describe which contextual document slots should appear for a module, entity and operation.
 
 Core fields:

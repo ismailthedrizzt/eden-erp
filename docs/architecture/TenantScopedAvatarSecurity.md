@@ -1,5 +1,7 @@
 # Tenant Scoped Avatar Security
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Boundary
 
 Avatar access is tenant-scoped. A user, admin, or media URL must not cross tenant boundaries.

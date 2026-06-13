@@ -1,5 +1,7 @@
 # Action Guide + Tour Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Ilk Kullanici Turu
 
 1. Yeni kullanici giris yapar.

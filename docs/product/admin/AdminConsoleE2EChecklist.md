@@ -1,5 +1,7 @@
 # Admin Console E2E / Regression Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## E2E Basliklari
 
 - Admin dashboard opens

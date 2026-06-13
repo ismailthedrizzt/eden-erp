@@ -1,5 +1,7 @@
 # Document Storage Security
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Ilke
 
 Belge dosyasi kullaniciya raw storage path veya kalici public URL olarak verilmez. Uygulama belge metadata'sini merkezi `documents` tablosunda tutar; storage erisimi backend izin ve scope kontrolu sonrasi kisa omurlu signed URL ile yapilir.

@@ -1,5 +1,7 @@
 # Theme Security Validation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Blocked Content
 
 Theme import and activation must reject:

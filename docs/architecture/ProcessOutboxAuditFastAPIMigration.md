@@ -1,5 +1,7 @@
 # Process / Outbox / Audit FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu fazda Process, Outbox ve Audit platform katmanlari Python/FastAPI tarafinda canonical backend olmaya basladi. Next.js route'lari `FASTAPI_BASE_URL` varsa FastAPI'ye proxy eder; yoksa yalnizca migration bridge olarak TS fallback calistirir.
 
 ## Migrated FastAPI Endpoints

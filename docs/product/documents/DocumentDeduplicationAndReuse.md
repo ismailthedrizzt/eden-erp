@@ -1,5 +1,7 @@
 # Document Deduplication And Reuse
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Users upload documents where they need them: a form, card, wizard or service record. They do not choose an existing central document first.
 
 ## Rule

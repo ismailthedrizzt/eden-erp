@@ -1,5 +1,7 @@
 # Company E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Playwright is not added as a hard dependency in this pass. Until the test runner is introduced, this checklist is the regression gate for company product hardening.
 
 ## Smoke Setup

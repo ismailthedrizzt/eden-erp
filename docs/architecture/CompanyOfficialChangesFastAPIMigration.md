@@ -1,5 +1,7 @@
 # Company Official Changes FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu fazda sirket resmi degisiklik ailesinin canonical backend'i FastAPI tarafina tasindi. Next.js route'lari `FASTAPI_BASE_URL` tanimliysa FastAPI'ye proxy eder; tanimli degilse gecici `proxy_to_fastapi_with_legacy_fallback` TS fallback calisir.
 
 ## Migrated Endpoints

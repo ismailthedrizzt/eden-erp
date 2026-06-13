@@ -1,5 +1,7 @@
 # Product Plan License Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP uses tenant-based commercial access instead of separate development/release deployments.
 
 ## Concepts

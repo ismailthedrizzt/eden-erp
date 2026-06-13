@@ -1,5 +1,7 @@
 # Reporting / Dashboards / Management Overview Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Raporlama modulu Eden ERP'deki sirket, ortaklik, temsilci, sube, organizasyon,

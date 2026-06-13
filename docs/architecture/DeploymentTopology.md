@@ -1,5 +1,7 @@
 # Deployment Topology
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 > Visibility note, 2026-06-07: deployment topology does not grant product,
 > module, or feature access. The older environment-based development/release
 > visibility model is deprecated. Tenant license / plan entitlement is the

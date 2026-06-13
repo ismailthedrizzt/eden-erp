@@ -1,5 +1,7 @@
 # Permission / Policy Engine Foundation
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu katman Eden ERP icinde "kullanici bu islemi yapabilir mi?" sorusunu tek bir karar modeline tasir.
 
 ## Sorumluluk Ayrimi

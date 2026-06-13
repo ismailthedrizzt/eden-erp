@@ -1,5 +1,7 @@
 # Representatives / Authority Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 `Temsilcilerimiz` is the authority command center for Eden ERP. It is not only a list of authorized people. It is the product surface where representative cards, current authority, scope, signature rules, limits, documents and authority transaction history meet.

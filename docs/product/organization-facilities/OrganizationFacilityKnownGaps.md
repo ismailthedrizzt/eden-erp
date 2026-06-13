@@ -1,5 +1,7 @@
 # Organization / Facility Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1
 
 - Organization/facility scope integration needs staging fixtures with real representative authority transactions.

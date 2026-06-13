@@ -1,5 +1,7 @@
 # Support Troubleshooting Guide
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Support ekibinin production sorunlarini guvenli sekilde triage etmesi.

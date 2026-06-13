@@ -22,3 +22,14 @@ Work is not complete until the relevant guard passes. For contract/documentation
 npm run validate:contracts
 npm run build
 ```
+
+## Related Contracts
+
+- `contracts/**`
+- `contracts/page-flow-contracts.json`
+
+## Related Guards
+
+- `scripts/check-doc-source-of-truth.js`
+- `npm run validate:contracts`
+- `npm run build`

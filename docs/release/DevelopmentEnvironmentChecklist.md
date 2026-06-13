@@ -1,5 +1,7 @@
 # Local Development Environment Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 Local `main` + development local PostgreSQL ortamının release verisini etkilemeden calistigini dogrular.

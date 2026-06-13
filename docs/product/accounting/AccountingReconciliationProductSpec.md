@@ -1,5 +1,7 @@
 # Accounting Reconciliation Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Muhasebe modulu cari kart/hareket MVP seviyesinden banka hesaplari, banka hareketleri, kredi karti hareketleri, e-Fatura/e-Arsiv kayitlari, belge eslestirme, otomatik mutabakat onerileri ve sermaye odeme mutabakati seviyesine tasinir.

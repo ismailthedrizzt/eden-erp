@@ -1,5 +1,7 @@
 # Release Readiness Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - `npm run typecheck` passed.
 - `npm run build` passed.
 - `npm run migration:status` has P0 missing headers = 0.

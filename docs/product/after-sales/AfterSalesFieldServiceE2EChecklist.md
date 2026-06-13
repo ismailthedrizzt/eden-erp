@@ -1,5 +1,7 @@
 # After-Sales Field Service E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Maintenance plan create
 - Maintenance due item appears
 - Create service request from due item

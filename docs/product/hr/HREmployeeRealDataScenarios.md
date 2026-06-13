@@ -1,5 +1,7 @@
 # HR Employee Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Calisan karti taslagi
 
 1. Kullanici Calisanlar sayfasinda `Calisan Ekle` aksiyonunu acacaktir.

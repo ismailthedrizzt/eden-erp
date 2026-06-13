@@ -1,5 +1,7 @@
 # Branches Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 `Subelerimiz` is the branch operations command surface for Eden ERP. It is not a free branch creation screen. It lists and manages branch records created by the official Branch Opening operation, and it shows the organization, facility/location and representative authority links around each branch.

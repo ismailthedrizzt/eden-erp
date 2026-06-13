@@ -1,5 +1,7 @@
 # Smoke Test Strategy
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Smoke tests prove that deployed components can talk to each other before deeper QA.
 
 ## Script

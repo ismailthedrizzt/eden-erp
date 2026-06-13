@@ -1,5 +1,7 @@
 # Eden ERP FastAPI Backend
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 This folder is the Python/FastAPI core backend scaffold for Eden ERP.
 
 ## Role

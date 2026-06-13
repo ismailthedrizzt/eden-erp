@@ -1,5 +1,7 @@
 # Module Setup / Licensing E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Kurulum Merkezi açılır.
 - Modül kartları available, disabled, unlicensed, setup_required ve dependency_missing durumlarını gösterir.
 - Kurulum özet sayaçları doğru hesaplanır.

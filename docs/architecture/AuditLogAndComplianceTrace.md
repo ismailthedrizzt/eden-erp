@@ -1,5 +1,7 @@
 # Audit Log and Compliance Trace
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Audit Log, Eden ERP'de kim, ne zaman, hangi kayit uzerinde, hangi yetki veya islem kapsaminda hareket etti sorusunun teknik-denetim cevabidir. Kullaniciya gosterilen is gecmisinin yerine gecmez; onu tamamlar.
 
 ## Ayrim

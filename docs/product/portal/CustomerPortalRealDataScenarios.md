@@ -1,5 +1,7 @@
 # Customer Portal Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Customer Portal Invitation
 
 1. Internal user opens a CRM customer stakeholder.

@@ -1,5 +1,7 @@
 # Python Backend Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Eden ERP'nin Python/FastAPI core backend gecisinin ana giris belgesidir. Eden ERP yeni tasarlanan bir platformdur; eski davranislar kalici uyumluluk gerekcesiyle korunmaz. Yalnizca canli gecis kopruleri `proxy_to_fastapi_with_legacy_fallback`, `deprecated_wrapper` veya ilgili migration status'u ile planli sureyle kalabilir.
 
 ## Hedef Mimari

@@ -1,5 +1,7 @@
 # Security / RBAC / Permission Matrix Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Security/RBAC calismasi Eden ERP'de kullanici, rol, permission, company/branch scope ve policy kararlarini musteri ortaminda yonetilebilir ve denetlenebilir hale getirir.

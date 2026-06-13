@@ -1,5 +1,7 @@
 # P0 / P1 / P2 Field Test Risk Register
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-06
 Environment: Remote server + local PostgreSQL/local DB; FastAPI canonical backend; Next.js UI/BFF/proxy; local document storage; release registry enabled.
 Test user / role: Manual field tester: business user / admin-capable tester unless scenario says otherwise.

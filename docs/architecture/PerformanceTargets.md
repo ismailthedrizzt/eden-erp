@@ -1,5 +1,7 @@
 # Performance Targets
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Step 17 defines the first measurable performance envelope for Eden ERP.
 
 ## API Latency Budgets

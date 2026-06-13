@@ -1,5 +1,7 @@
 # Security Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - SSO/SAML/LDAP entegrasyonu yok.
 - MFA yonetim UI yok.
 - Password policy yonetim UI yok.

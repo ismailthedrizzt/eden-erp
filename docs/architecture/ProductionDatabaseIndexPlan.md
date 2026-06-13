@@ -1,5 +1,7 @@
 # Production Database Index Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amaç
 
 Bu plan Eden ERP'nin tenant/company scoped listeler, audit, outbox, process, document, reporting, integration ve module KPI query'leri icin production index standardini tanimlar.

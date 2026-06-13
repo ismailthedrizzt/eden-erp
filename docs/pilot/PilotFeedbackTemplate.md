@@ -1,5 +1,7 @@
 # Pilot Feedback Template
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Pilot feedbackleri "Eden ERP Pilot Feedback" projesinde task olarak acilir.
 
 ## Baslik

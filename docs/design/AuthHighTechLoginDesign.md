@@ -1,5 +1,7 @@
 # Auth High-Tech Login Design
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Date: 2026-06-09
 
 ## Design Goal

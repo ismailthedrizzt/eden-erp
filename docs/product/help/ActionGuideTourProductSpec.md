@@ -1,5 +1,7 @@
 # Action Guide + Guided Tour Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Bu calisma Action Guide, tek global Guided Tour, Operation Hint ve Locked Field Helper altyapilarini kullanicinin isi dogru sayfa, kayit veya sihirbaza cevirebildigi urun deneyimine tasir. Kullaniciya mimari anlatilmaz; yapmak istedigi is, tanimli action registry ve backend eligibility kararlari icinde yonlendirilir.

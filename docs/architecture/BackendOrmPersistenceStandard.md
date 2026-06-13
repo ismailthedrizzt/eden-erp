@@ -1,5 +1,7 @@
 # Backend ORM Persistence Standard
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Version: 1.0.0  
 Status: active architecture standard  
 Owner: Engineering / Product Architecture  

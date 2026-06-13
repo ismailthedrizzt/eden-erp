@@ -1,5 +1,7 @@
 # Figma Tokens Studio Workflow
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP exports `figma-tokens.json` in a Tokens Studio compatible structure:
 
 - `eden.light`

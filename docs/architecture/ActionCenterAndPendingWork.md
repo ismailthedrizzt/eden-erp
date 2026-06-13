@@ -1,5 +1,7 @@
 # Action Center ve Bekleyen Isler
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Action Center, kullanicinin bekleyen gorevlerini, onaylarini, tamamlanamayan islemlerini ve sistem uyarilarini tek is listesi olarak sunar. Amac teknik kaynaklari kullaniciya gostermek degil, "simdi ne yapmaliyim?" sorusuna cevap vermektir.
 
 ## Kaynaklar

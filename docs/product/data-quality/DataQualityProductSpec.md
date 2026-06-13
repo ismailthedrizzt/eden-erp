@@ -1,5 +1,7 @@
 # Data Quality / Duplicate Merge / Master Data Governance Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP master kisi/kurum, paydas, cari kart, ortak, temsilci, calisan, kurulu urun ve belge verilerinde duplicate, eksik, celiskili ve dusuk kaliteli kayitlari tespit eder; yetkili kullanici onayi olmadan kayitlari sessizce birlestirmez.

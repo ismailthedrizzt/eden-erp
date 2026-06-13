@@ -1,5 +1,7 @@
 # Plan Module Matrix
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Development
 
 All release modules plus development-only surfaces:

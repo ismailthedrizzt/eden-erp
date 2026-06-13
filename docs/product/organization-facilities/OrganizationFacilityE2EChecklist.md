@@ -1,5 +1,7 @@
 # Organization / Facility E2E Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Teşkilat/Kadro
 
 - [ ] Organizasyon ağacı açılır.

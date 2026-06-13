@@ -1,5 +1,7 @@
 # Data Retention And Volume Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Audit, outbox, process and action center data will grow faster than card tables. This document defines the first volume strategy.
 
 ## Outbox Events

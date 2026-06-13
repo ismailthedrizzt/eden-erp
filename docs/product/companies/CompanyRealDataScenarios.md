@@ -1,5 +1,7 @@
 # Company Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 These scenarios are the minimum product hardening dataset for `Sirketlerimiz`.
 
 ## Scenario 1 - New Company Foundation

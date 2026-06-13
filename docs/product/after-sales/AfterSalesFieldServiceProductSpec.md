@@ -1,5 +1,7 @@
 # After-Sales Field Service Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Satis Sonrasi modulunu kurulu urun ve servis talebi MVP seviyesinden saha servis operasyonu, periyodik bakim planlama, teknisyen atama, mobil servis kaydi, checklist, fotograf/belge yukleme ve servis raporu hazirligina tasir.

@@ -1,5 +1,7 @@
 # Runtime Smoke Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Updated 2026-06-06: Current runtime smoke is remote server + local PostgreSQL/local DB. Historical Vercel references are deprecated; use `db:target:check`, `env:safety`, PM2/process health and document storage smoke.
 
 ## Purpose

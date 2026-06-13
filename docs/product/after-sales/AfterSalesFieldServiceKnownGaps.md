@@ -1,5 +1,7 @@
 # After-Sales Field Service Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Native mobil uygulama yok.
 - Offline write queue yok.
 - Canli rota optimizasyonu yok.

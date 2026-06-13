@@ -1,5 +1,7 @@
 # Technical Debt and Migration Plan
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Eden ERP platform mimarisine geciste bilerek korunan wrapper, fallback ve kademeli refactor borclarini gorunur tutar. Amac eski davranisi bozmadan Domain Service, Process, Transaction Boundary, Outbox, Audit, Readiness, Visibility ve Action Center katmanlarina guvenli gecisi surdurmektir.
 
 Her kalem su alanlarla izlenir: `area`, `file/module`, `current_state`, `target_state`, `priority`, `suggested_followup_prompt`.

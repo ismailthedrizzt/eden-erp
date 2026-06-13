@@ -1,5 +1,7 @@
 # Module Registry
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Module Registry, Eden ERP icindeki modullerin statik sozlesmesini tutar. Bir modulun hangi entity, route, menu, permission, action, projection ve event sozlesmelerini getirdigi burada tanimlanir.
 
 Registry runtime karar vermez. Runtime kararlar `ModuleFeatureResolver` tarafindadir.

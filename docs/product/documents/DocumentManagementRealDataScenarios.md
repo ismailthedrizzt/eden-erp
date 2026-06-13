@@ -1,5 +1,7 @@
 # Document Management Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Sirket acilis belgesi
 
 1. Kullanici Sirket Acilisi wizardini acar.

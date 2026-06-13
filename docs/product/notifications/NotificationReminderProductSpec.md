@@ -1,5 +1,7 @@
 # Notification / Reminder / Email System Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP'de kullanici bildirimleri, hatirlatmalar, e-posta kuyrugu, deadline/expiry/overdue uyarilari ve sistem mesajlari urun seviyesinde yonetilir. Teknik outbox eventleri kullaniciya ham sekilde gosterilmez; is dilindeki notification, reminder veya Action Center itemina donusturulur.

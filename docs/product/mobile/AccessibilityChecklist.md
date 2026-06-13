@@ -1,5 +1,7 @@
 # Mobile Accessibility Checklist
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Touch
 
 - Button/link hedefi en az 44px.

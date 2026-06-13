@@ -1,5 +1,7 @@
 # Current Ownership View
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 `v_current_ownership`, onaylı Ortaklık İşlemleri kayıtlarından hesaplanan güncel hakların read model katmanıdır.
 
 Alanlar:

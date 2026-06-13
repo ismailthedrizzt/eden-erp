@@ -1,5 +1,7 @@
 # Representative Authority Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## P1 - Before First Customer
 
 - Run staging E2E with `FASTAPI_BASE_URL` for representative card CRUD and authority transactions.

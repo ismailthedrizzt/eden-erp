@@ -1,5 +1,7 @@
 # Branch Real Data Scenarios
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Scenario 1 - Official Branch Opening
 
 1. Active company exists.

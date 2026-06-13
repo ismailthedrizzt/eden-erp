@@ -1,5 +1,7 @@
 # Reactive Field and Document Slot Contract
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Eden ERP'de otomatik alan doldurma davranisi component icinde gizli bir yan etki olarak yazilmaz.
 Bu davranis sadece ilgili form contract'i `reactiveFields` ile tanimliyorsa calisir.
 

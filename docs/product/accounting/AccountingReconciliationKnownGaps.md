@@ -1,5 +1,7 @@
 # Accounting Reconciliation Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Live bank API / open banking entegrasyonu yok.
 - Live GIB e-Fatura/e-Arsiv entegrasyonu yok.
 - XML parse ve UBL semantik dogrulama MVP disinda.

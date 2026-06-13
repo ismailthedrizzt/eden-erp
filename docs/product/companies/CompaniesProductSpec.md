@@ -1,5 +1,7 @@
 # Companies Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Purpose
 
 `Sirketlerimiz` is the legal entity command center for Eden ERP. It is not only a company list. It is the product surface where company identity, official lifecycle, public registration, capital, branches, NACE/activity, ownership and representative summaries meet.

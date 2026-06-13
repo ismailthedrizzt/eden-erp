@@ -1,5 +1,7 @@
 # Projection / Read Model FastAPI Migration
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu dokuman Python/FastAPI core backend gecisinin 10. adiminda eklenen
 projection/read model katmanini ozetler.
 

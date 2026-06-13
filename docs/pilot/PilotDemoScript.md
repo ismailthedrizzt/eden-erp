@@ -1,5 +1,7 @@
 # Pilot Demo Script
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Hedef sure: 30-45 dakika.
 
 ## 1. Giris ve Sistem Felsefesi

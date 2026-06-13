@@ -1,5 +1,7 @@
 # Admin Console / System Settings Product Spec
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP Admin Console, sistem yoneticisinin calisma alani ayarlarini, modulleri, feature flagleri, kullanici/rol baglantilarini, bildirim/e-posta, storage, import/export, entegrasyon, health, outbox ve teknik durumu tek ve guvenli bir merkezden yonetmesini saglar.

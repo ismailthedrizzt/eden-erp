@@ -1,5 +1,7 @@
 # Production Release Runbook
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 ## Amac
 
 Eden ERP production release'ini kontrollu, geri alinabilir ve izlenebilir sekilde yapmak.

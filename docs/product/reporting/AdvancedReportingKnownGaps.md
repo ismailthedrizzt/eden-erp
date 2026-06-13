@@ -1,5 +1,7 @@
 # Advanced Reporting Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 - Tam drag/drop dashboard designer yok.
 - Pivot table motoru yok.
 - Serbest SQL veya custom query editor yok.

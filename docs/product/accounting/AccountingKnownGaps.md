@@ -1,5 +1,7 @@
 # Accounting Known Gaps
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 Bu faz cari kartlar ve cari hareketler icin urun seviyesinde MVP temelidir.
 Asagidaki konular bilincli olarak sonraki fazlara birakilmistir:
 

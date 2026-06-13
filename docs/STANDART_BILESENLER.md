@@ -1,5 +1,7 @@
 # Standart Bileşenler Kuralı
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Proje Genelinde Tek Kullanılacak Bileşenler**
 
 > ⚠️ **KRİTİK**: Aksi bir karar verilmediği sürece projenin tamamında SADECE bu üç bileşen kullanılacaktır:

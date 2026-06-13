@@ -1,5 +1,7 @@
 # Sistem - Genel Ayarlar Sayfası
 
+<!-- source-of-truth-standard: contract overrides markdown -->
+
 **Module**: Sistem (sistem)  
 **Submodule**: Ayarlar (ayarlar)  
 **Path**: `app/app/sistem/ayarlar/page.tsx`  
