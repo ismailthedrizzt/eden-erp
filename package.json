@@ -31,7 +31,7 @@
     "contract:backend-drift": "node scripts/check-backend-contract-drift.js",
     "contract:lifecycle": "node scripts/check-lifecycle-operation-guard.js",
     "test:contracts": "npm run contracts:check",
-    "validate:contracts": "npm run contracts:check && npm run page-flow:contract:check && npm run frontend:standard:check && npm run release:check && npm run contract:usage && npm run contract:backend-drift && npm run contract:lifecycle && npm run docs:source-check",
+    "validate:contracts": "npm run contracts:check && npm run page-flow:contract:check && npm run frontend:standard:check && npm run release:check && npm run contract:usage && npm run contract:backend-drift && npm run contract:lifecycle && npm run docs:source-check && npm run legacy:check",
     "eden:quality-gate": "node scripts/eden-quality-gate.js",
     "demo:seed": "node scripts/check-database-target.js demo:seed && cd backend && .venv/bin/python scripts/seed_demo.py",
     "demo:seed:dry": "node scripts/check-database-target.js demo:seed:dry && cd backend && .venv/bin/python scripts/seed_demo.py --dry-run",
@@ -78,7 +78,9 @@
     "reference:locations": "node scripts/update-turkey-locations.js",
     "reference:tax-offices": "node scripts/update-tax-offices.js",
     "reference:nace-codes": "node --use-system-ca scripts/update-nace-codes.js",
-    "docs:source-check": "node scripts/check-doc-source-of-truth.js"
+    "docs:source-check": "node scripts/check-doc-source-of-truth.js",
+    "legacy:inventory": "node scripts/generate-code-legacy-inventory.js",
+    "legacy:check": "node scripts/check-code-legacy-inventory.js"
   },
   "engines": {
     "node": ">=22 <25",

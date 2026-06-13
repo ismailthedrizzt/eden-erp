@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Home, Settings, SlidersHorizontal } from 'lucide-react'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import { ActionCenterSummaryCards } from '@/components/action-center/ActionCenterSummaryCards'
+import { appPageContract } from '@/contracts/pages/generated/app.page.contract'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -19,6 +20,8 @@ import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/emplo
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import type { Personel } from '@/types'
 import { getCachedTablePreference, syncUiPreferencesPatch } from '@/lib/user-state/client'
+
+const PAGE_CONTRACT_ROUTE = appPageContract.route
 
 const WIDGET_STORAGE_KEY = 'user_widgets'
 const WIDGET_STORAGE_SCOPE = 'home'
@@ -233,6 +236,7 @@ export default function AnaSayfa() {
 
   return (
     <>
+      <span hidden data-contract-route={PAGE_CONTRACT_ROUTE} />
       <WidgetModal
         open={widgetModalOpen}
         selectedWidgetIds={selectedWidgetIds}

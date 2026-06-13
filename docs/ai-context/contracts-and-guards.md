@@ -23,10 +23,22 @@ API contract entries live under `contracts/api/**/*.contract.ts`. Page, form, li
 - `npm run contract:backend-drift`
 - `npm run contract:lifecycle`
 - `npm run docs:source-check`
+- `npm run legacy:inventory`
+- `npm run legacy:check`
 - `npm run validate:contracts`
 - `npm run build`
 
 Do not weaken guards, convert errors to warnings, or add broad exceptions to pass a check.
+
+## Legacy Cleanup Enforcement
+
+- Contract overrides Markdown; documentation can describe decisions but cannot redefine source of truth.
+- Legacy cleanup starts with inventory, not deletion. Keep generated contracts, BFF routes, services, adapters, and compatibility routes unless usage analysis proves safe removal.
+- Hidden aliases and redirect wrappers are compatibility surfaces. Classify them as retained unless they are proven unused and non-release.
+- `generated_from_existing_page` is contractization debt and must not be promoted to `contract_ready` without manual business contract review.
+- BFF code must not own business logic, direct DB writes, or lifecycle/status mutation unless an explicit contract allowlist says so.
+- Frontend services that call APIs must map through `serviceFunction -> frontendPath -> bffPath -> fastApiPath`.
+- Lifecycle mutation must insert an operation/process/lifecycle transaction record before updating current state.
 
 ## Naming and Data Access Contracts
 
@@ -44,4 +56,7 @@ Do not weaken guards, convert errors to warnings, or add broad exceptions to pas
 
 - `scripts/check-contract-standardization.js`
 - `scripts/check-backend-contract-drift.js`
+- `scripts/check-lifecycle-operation-guard.js`
 - `scripts/check-doc-source-of-truth.js`
+- `scripts/generate-code-legacy-inventory.js`
+- `scripts/check-code-legacy-inventory.js`

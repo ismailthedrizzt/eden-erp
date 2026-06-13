@@ -1,0 +1,1177 @@
+# Raw Code Legacy Inventory
+
+<!-- source-of-truth-standard: contract overrides markdown -->
+
+Generated: 2026-06-13T15:10:41.320Z
+
+## Related Contracts
+
+- `contracts/**`
+- `contracts/page-flow-contracts.json`
+
+## Related Guards
+
+- `scripts/generate-code-legacy-inventory.js`
+- `scripts/check-code-legacy-inventory.js`
+
+## Counts
+
+```json
+{
+  "scannedFiles": 2118,
+  "routes": 152,
+  "services": 534,
+  "bffRoutes": 552,
+  "residueHits": 192,
+  "generatedContractItems": 146,
+  "orphanCandidates": 0,
+  "p0": 0,
+  "p1": 171,
+  "p2": 247,
+  "safeDeleteCandidates": 11,
+  "needsManualReview": 321,
+  "activeRuntimeDependency": 1041
+}
+```
+
+## Legacy Route Inventory
+
+Total: 152
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| P2 | keep_redirect | app/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals |
+| P2 | active_runtime_dependency | app/app/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/aboneligim/page.tsx | retain | release=release; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/ayarlar/bildirimler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/belgeler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/crm/firsatlar/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/crm/leadler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/crm/paydaslar/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/crm/pipeline/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/crm/pipeline-ayarlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/crm/takipler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/dashboard/page.tsx | retain | release=development; implementation=blocked; redirect-only page; no real UI signals |
+| P2 | active_runtime_dependency | app/app/demo/document-slot-uploader/page.tsx | retain | release=development_demo; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/demo/image-slot-uploader/page.tsx | retain | release=development_demo; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/demo/user-avatar/page.tsx | retain | release=development_demo; implementation=planned; no real UI signals |
+| P2 | keep_redirect | app/app/design-lab/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/development/temalarimiz/page.tsx | retain | release=development_internal; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/backlog/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/gorevler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/is-akislari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/kanban-board/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/projeler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/raporlar/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/sprintler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/takvim/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/gorev-ve-proje-yonetimi/zaman-takibi/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/calisanlar/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/ik/calisma-planlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/devam-devamsizlik/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | needs_manual_review | app/app/ik/employees/page.tsx | manual_review | release=development; implementation=blocked; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/ik/izin-bakiyeleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/izin-turleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/izinler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | needs_manual_review | app/app/ik/personel/page.tsx | manual_review | release=development; implementation=blocked; real UI signals present; legacy/deprecated signal |
+| P2 | needs_manual_review | app/app/ik/personel-ekle/page.tsx | keep_development_placeholder | release=coming_soon; implementation=planned; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | needs_manual_review | app/app/ik/personel/[id]/page.tsx | keep_development_placeholder | release=coming_soon; implementation=planned; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/ik/puantaj/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/teskilat/page.tsx | retain | release=development; implementation=blocked; no real UI signals |
+| P2 | active_runtime_dependency | app/app/muhasebe/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/banka-hareketleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/muhasebe/banka-hesaplari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/banka-kart-hareketleri/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/borclar/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/cari-hareketler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/cari-kartlar/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/dashboard/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/e-fatura-e-arsiv/page.tsx | retain | release=development; implementation=blocked; no real UI signals |
+| P2 | active_runtime_dependency | app/app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/hesaplar/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/islemler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/mutabakat/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/muhasebe/on-muhasebe-hareketleri/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/projeler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/muhasebe/sermaye-mutabakati/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/onboarding/page.tsx | retain | release=development; implementation=blocked; redirect-only page; no real UI signals |
+| P2 | active_runtime_dependency | app/app/profil/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/raporlama/ozel-raporlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/raporlama/zamanlanmis-raporlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/bakim-planlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/bakim-sozlesme-takip/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/bakimi-gelenler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/checklistler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/garanti-takip/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/kurulu-urunler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/lisans-takip/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/mobil-servis/[assignment_id]/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/musterideki-urunler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/saha-gorevleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/servis-destek-kayitlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/servis-kayitlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/servis-talepleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | keep_compatibility_adapter | app/app/satis/sozlesmeler/page.tsx | keep_hidden_wrapper | release=hidden; implementation=hidden; real UI signals present; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/sirket/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/araclar/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/companies/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/companies/branches/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/companies/partners/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/companies/representatives/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/companies/stakeholders/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/demirbas/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | keep_compatibility_adapter | app/app/sirket/paydaslar/page.tsx | keep_hidden_wrapper | release=hidden; implementation=hidden; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/sirket/surecler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/tesisler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/teskilat/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/page.tsx | retain | release=development_internal; implementation=blocked; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/ai-copilot/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/audit/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/e-postalar/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/entegrasyon-ayarlari/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/entegrasyonlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/export/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/genel/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/import/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/kullanici-talepleri/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/kullanicilar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/kurulum/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/lisanslar/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/login-sayfasi/page.tsx | keep_development_placeholder | release=coming_soon; implementation=planned; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/sistem/module-licenses/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/moduller/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/otomasyonlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/outbox/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/ozellikler/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/roller/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/saglik/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sistem/system-parameters/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/teknik/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | keep_compatibility_adapter | app/app/sistem/temalar/page.tsx | keep_hidden_wrapper | release=hidden; implementation=hidden; real UI signals present; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/app/sistem/veri-kalitesi/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sistem/yetkiler/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/[id]/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/fesihler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/turler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/yeni/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/yenilemeler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/surecler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/surecler/[id]/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/bakim-paketleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/garanti-sablonlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/hizmet-kartlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/katalog/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/lisans-abonelik-urunleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/seri-numarali-urunler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/urun-kartlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/yardim/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | keep_redirect | app/ayarlar/entegrasyon-ayarlari/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/ik/personel/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/login/page.tsx | retain | release=release; implementation=planned; no real UI signals |
+| P2 | keep_redirect | app/muhasebe/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/banka-kart-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/cari-hareketler/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/cari-kartlar/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | keep_redirect | app/muhasebe/on-muhasebe-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
+| P2 | active_runtime_dependency | app/offline/page.tsx | retain | release=release; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/page.tsx | retain | release=development_internal; implementation=blocked; redirect-only page; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/dashboard/page.tsx | retain | release=development_internal; implementation=blocked; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/documents/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/products/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/products/[id]/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/profile/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/service-records/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/service-requests/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/portal/service-requests/[id]/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
+| P2 | needs_manual_review | app/release-not-available/page.tsx | keep_development_placeholder | release=hidden; implementation=hidden; no real UI signals |
+| P2 | active_runtime_dependency | app/test/page.tsx | retain | release=development_demo; implementation=planned; real UI signals present |
+
+
+## Legacy Service Inventory
+
+Total: 534
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/services/accounting/accountingService.ts | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/services/after-sales/afterSales.service.ts | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentRequirements.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentRequirements.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/hrService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/hrService.ts | retain_used_service_or_helper | missing API contract coverage |
+
+_Only first 300 rows shown._
+
+## Legacy BFF/API Route Inventory
+
+Total: 552
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| P1 | needs_contractization | app/api/accounting/bank-accounts-cards/[id]/history/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts-cards/{id}/passivate |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts-cards/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts-cards/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts-cards/{id}/set-default |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts-cards/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts-cards |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts/[accountId]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts/{accountId}/passivate |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts/[accountId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts/{accountId} |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts/[accountId]/sync/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts/{accountId}/sync |
+| P2 | active_runtime_dependency | app/api/accounting/bank-accounts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-accounts |
+| P2 | active_runtime_dependency | app/api/accounting/bank-card-transactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-card-transactions |
+| P2 | active_runtime_dependency | app/api/accounting/bank-cards/[cardId]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-cards/{cardId}/passivate |
+| P2 | active_runtime_dependency | app/api/accounting/bank-cards/[cardId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-cards/{cardId} |
+| P2 | active_runtime_dependency | app/api/accounting/bank-cards/[cardId]/sync/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-cards/{cardId}/sync |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/accounts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id}/accounts |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/cards/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id}/cards |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id}/passivate |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/sync/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id}/sync |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/[id]/test/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/{id}/test |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/automation-preview/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections/automation-preview |
+| P2 | active_runtime_dependency | app/api/accounting/bank-connections/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-connections |
+| P2 | active_runtime_dependency | app/api/accounting/bank-transactions/[id]/ignore/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-transactions/{id}/ignore |
+| P2 | active_runtime_dependency | app/api/accounting/bank-transactions/[id]/match/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-transactions/{id}/match |
+| P2 | active_runtime_dependency | app/api/accounting/bank-transactions/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-transactions/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/bank-transactions/import/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-transactions/import |
+| P2 | active_runtime_dependency | app/api/accounting/bank-transactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/bank-transactions |
+| P2 | active_runtime_dependency | app/api/accounting/capital-reconciliation/[id]/match-payment/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/capital-reconciliation/{id}/match-payment |
+| P2 | active_runtime_dependency | app/api/accounting/capital-reconciliation/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/capital-reconciliation/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/capital-reconciliation/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/capital-reconciliation |
+| P2 | active_runtime_dependency | app/api/accounting/card-transactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/card-transactions |
+| P2 | active_runtime_dependency | app/api/accounting/cari-accounts/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/cari-accounts/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/cari-accounts/[id]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/cari-accounts/{id}/summary |
+| P2 | active_runtime_dependency | app/api/accounting/cari-accounts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/cari-accounts |
+| P2 | active_runtime_dependency | app/api/accounting/cari-transactions/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/cari-transactions/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/cari-transactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/cari-transactions |
+| P2 | active_runtime_dependency | app/api/accounting/company/[companyId]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/company/{companyId}/summary |
+| P2 | active_runtime_dependency | app/api/accounting/e-documents/[id]/match/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/e-documents/{id}/match |
+| P2 | active_runtime_dependency | app/api/accounting/e-documents/[id]/reject/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/e-documents/{id}/reject |
+| P2 | active_runtime_dependency | app/api/accounting/e-documents/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/e-documents/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/e-documents/import/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/e-documents/import |
+| P2 | active_runtime_dependency | app/api/accounting/e-documents/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/e-documents |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/create-pre-accounting/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/create-pre-accounting |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/history/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/history |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/match/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/match |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/passivate |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/review/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/review |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id} |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/[id]/unmatch/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/{id}/unmatch |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/manual/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements/manual |
+| P2 | active_runtime_dependency | app/api/accounting/financial-institution-movements/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/financial-institution-movements |
+| P2 | active_runtime_dependency | app/api/accounting/reconciliation/match/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/reconciliation/match |
+| P2 | active_runtime_dependency | app/api/accounting/reconciliation/suggestions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/reconciliation/suggestions |
+| P2 | active_runtime_dependency | app/api/accounting/reconciliation/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/reconciliation/summary |
+| P2 | active_runtime_dependency | app/api/accounting/reconciliation/unmatch/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/reconciliation/unmatch |
+| P2 | active_runtime_dependency | app/api/accounting/reconciliation/unmatched/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/reconciliation/unmatched |
+| P2 | active_runtime_dependency | app/api/action-center/by-record/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/action-center/by-record |
+| P2 | active_runtime_dependency | app/api/action-center/counts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/action-center/counts |
+| P2 | active_runtime_dependency | app/api/action-center/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/action-center |
+| P2 | active_runtime_dependency | app/api/action-center/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/action-center/summary |
+| P2 | active_runtime_dependency | app/api/admin/features/[feature_key]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/features/{feature_key} |
+| P2 | active_runtime_dependency | app/api/admin/features/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/features |
+| P2 | active_runtime_dependency | app/api/admin/health/deep/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/health/deep |
+| P2 | active_runtime_dependency | app/api/admin/health/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/health |
+| P2 | active_runtime_dependency | app/api/admin/integrations/[integration_key]/test/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/integrations/{integration_key}/test |
+| P2 | active_runtime_dependency | app/api/admin/integrations/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/integrations |
+| P2 | active_runtime_dependency | app/api/admin/modules/[module_key]/activation/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/modules/{module_key}/activation |
+| P2 | active_runtime_dependency | app/api/admin/modules/[module_key]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/modules/{module_key} |
+| P2 | active_runtime_dependency | app/api/admin/modules/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/modules |
+| P2 | active_runtime_dependency | app/api/admin/outbox/[event_id]/retry/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/outbox/{event_id}/retry |
+| P2 | active_runtime_dependency | app/api/admin/outbox/dispatch-once/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/outbox/dispatch-once |
+| P2 | active_runtime_dependency | app/api/admin/outbox/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/outbox |
+| P2 | active_runtime_dependency | app/api/admin/portal/invitations/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/portal/invitations |
+| P2 | active_runtime_dependency | app/api/admin/portal/users/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/portal/users/{portal_user_id} |
+| P2 | active_runtime_dependency | app/api/admin/portal/users/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/portal/users |
+| P2 | active_runtime_dependency | app/api/admin/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin |
+| P2 | active_runtime_dependency | app/api/admin/settings/[settings_key]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/settings/{settings_key} |
+| P2 | active_runtime_dependency | app/api/admin/settings/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/settings |
+| P2 | active_runtime_dependency | app/api/admin/workspace-settings/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/admin/workspace-settings |
+| P2 | active_runtime_dependency | app/api/after-sales/assets/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/assets/{asset_id} |
+| P2 | active_runtime_dependency | app/api/after-sales/assets/[id]/service-history/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/assets/{asset_id}/service-history |
+| P2 | active_runtime_dependency | app/api/after-sales/assets/[id]/warranty-check/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/assets/{id}/warranty-check |
+| P2 | active_runtime_dependency | app/api/after-sales/assets/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/assets |
+| P2 | active_runtime_dependency | app/api/after-sales/checklist-templates/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/checklist-templates |
+| P2 | active_runtime_dependency | app/api/after-sales/company/[companyId]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/company/{company_id}/summary |
+| P2 | active_runtime_dependency | app/api/after-sales/field-assignments/[id]/accept/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/field-assignments/{id}/accept |
+| P2 | active_runtime_dependency | app/api/after-sales/field-assignments/[id]/reject/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/field-assignments/{id}/reject |
+| P2 | active_runtime_dependency | app/api/after-sales/field-assignments/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/field-assignments/{id} |
+| P2 | active_runtime_dependency | app/api/after-sales/field-assignments/[id]/status/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/field-assignments/{id}/status |
+| P2 | active_runtime_dependency | app/api/after-sales/field-assignments/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/field-assignments |
+| P2 | active_runtime_dependency | app/api/after-sales/maintenance-due/[id]/create-service-request/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/maintenance-due/{id}/create-service-request |
+| P2 | active_runtime_dependency | app/api/after-sales/maintenance-due/[id]/skip/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/maintenance-due/{id}/skip |
+| P2 | active_runtime_dependency | app/api/after-sales/maintenance-due/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/maintenance-due |
+| P2 | active_runtime_dependency | app/api/after-sales/maintenance-plans/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/maintenance-plans/{plan_id} |
+| P2 | active_runtime_dependency | app/api/after-sales/maintenance-plans/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/maintenance-plans |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/checklist/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{id}/checklist |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{service_id}/complete |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/photos/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{id}/photos |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/report/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{id}/report |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{service_id} |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/[id]/start/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records/{id}/start |
+| P2 | active_runtime_dependency | app/api/after-sales/service-records/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-records |
+| P2 | active_runtime_dependency | app/api/after-sales/service-requests/[id]/assign-technician/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-requests/{id}/assign-technician |
+| P2 | active_runtime_dependency | app/api/after-sales/service-requests/[id]/assign/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-requests/{request_id}/assign |
+| P2 | active_runtime_dependency | app/api/after-sales/service-requests/[id]/close/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-requests/{request_id}/close |
+| P2 | active_runtime_dependency | app/api/after-sales/service-requests/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-requests/{request_id} |
+| P2 | active_runtime_dependency | app/api/after-sales/service-requests/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/service-requests |
+| P2 | active_runtime_dependency | app/api/ai/action-guide/actions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/action-guide/actions |
+| P2 | active_runtime_dependency | app/api/ai/action-guide/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/action-guide |
+| P2 | active_runtime_dependency | app/api/ai/copilot/action-preview/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/action-preview |
+| P2 | active_runtime_dependency | app/api/ai/copilot/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/context |
+| P2 | active_runtime_dependency | app/api/ai/copilot/document-extract/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/document-extract |
+| P2 | active_runtime_dependency | app/api/ai/copilot/document-summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/document-summary |
+| P2 | active_runtime_dependency | app/api/ai/copilot/feedback/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/feedback |
+| P2 | active_runtime_dependency | app/api/ai/copilot/form-assist/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/form-assist |
+| P2 | active_runtime_dependency | app/api/ai/copilot/history/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/history |
+| P2 | active_runtime_dependency | app/api/ai/copilot/query/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/query |
+| P2 | active_runtime_dependency | app/api/ai/copilot/suggestions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ai/copilot/suggestions |
+| P2 | needs_manual_review | app/api/ai/cv-extract/route.ts | manual_review | migration=guarded_proxy_to_fastapi; target=/api/v1/ai/cv-extract |
+| P2 | active_runtime_dependency | app/api/approvals/[id]/approve/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/approvals/{id}/approve |
+| P2 | active_runtime_dependency | app/api/approvals/[id]/reject/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/approvals/{id}/reject |
+| P2 | active_runtime_dependency | app/api/approvals/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/approvals |
+| P2 | active_runtime_dependency | app/api/audit/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/audit/{id} |
+| P2 | active_runtime_dependency | app/api/audit/by-operation/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/audit/by-operation |
+| P2 | active_runtime_dependency | app/api/audit/by-process/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/audit/by-process |
+| P2 | active_runtime_dependency | app/api/audit/by-record/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/audit/by-record |
+| P2 | active_runtime_dependency | app/api/audit/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/audit |
+| P2 | active_runtime_dependency | app/api/auth/company-join/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/onboarding/company-join |
+| P1 | needs_contractization | app/api/auth/logout/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/auth/me/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/auth/otp/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/auth/otp/send/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/auth/tenant-access/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/auth/tenant-status/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/auth/tenant-status |
+| P2 | active_runtime_dependency | app/api/automation/actions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/actions |
+| P2 | active_runtime_dependency | app/api/automation/conditions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/conditions |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/activate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id}/activate |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/disable/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id}/disable |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/pause/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id}/pause |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id} |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/run-now/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id}/run-now |
+| P2 | active_runtime_dependency | app/api/automation/rules/[id]/simulate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules/{rule_id}/simulate |
+| P2 | active_runtime_dependency | app/api/automation/rules/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/rules |
+| P2 | active_runtime_dependency | app/api/automation/runs/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/runs/{run_id} |
+| P2 | active_runtime_dependency | app/api/automation/runs/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/runs |
+| P2 | active_runtime_dependency | app/api/automation/templates/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/templates |
+| P2 | active_runtime_dependency | app/api/automation/triggers/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/automation/triggers |
+| P1 | needs_contractization | app/api/bulk/actions/[id]/confirm/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/bulk/actions/[id]/report/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/bulk/actions/[id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/bulk/actions/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/capital-decreases/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/capital-decreases/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/capital-decreases/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/capital-decreases |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/capital-increases/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/capital-increases/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/capital-increases/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/capital-increases |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/current-ownership/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/current-ownership |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/deregistration-wizard/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/deregistration-wizard/complete |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/deregistration-wizard/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/deregistration-wizard/context |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/lifecycle-events/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/lifecycle-events |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/lifecycle/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/lifecycle |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/liquidation-wizard/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/liquidation-wizard/complete |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/liquidation-wizard/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/liquidation-wizard/context |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/nace-codes/[id]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/nace-codes/{id}/passivate |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/nace-codes/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/nace-codes/{id} |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/nace-codes/[id]/set-primary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/nace-codes/{id}/set-primary |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/nace-codes/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/nace-codes |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/[change_type]/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/{change_type}/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/[change_type]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/{change_type} |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/activity-subject-change/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/activity-subject-change/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/activity-subject-change/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/activity-subject-change |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/address-change/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/address-change/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/address-change/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/address-change |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/branch-closing/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/branch-closings/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/branch-closing/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/branch-closings |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/branch-opening/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/branch-openings/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/branch-opening/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/branch-openings |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/nace-change/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/nace-change/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/nace-change/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/nace-change |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/public-registration-update/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/public-registration-update/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/public-registration-update/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/public-registration-update |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/title-change/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/title-change/precheck |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/official-changes/title-change/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/official-changes/title-change |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/opening-wizard/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/opening-wizard/complete |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/opening-wizard/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id}/opening-wizard/context |
+| P2 | active_runtime_dependency | app/api/companies/[company_id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies/{company_id} |
+| P2 | active_runtime_dependency | app/api/companies/branches/[id]/documents/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/branches/{id}/documents |
+| P2 | active_runtime_dependency | app/api/companies/branches/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/branches/{id} |
+| P2 | active_runtime_dependency | app/api/companies/branches/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/branches |
+| P2 | active_runtime_dependency | app/api/companies/current-ownership/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/ownership/current |
+| P2 | active_runtime_dependency | app/api/companies/partners/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/partners/{id} |
+| P2 | active_runtime_dependency | app/api/companies/partners/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/partners |
+| P2 | active_runtime_dependency | app/api/companies/representatives/[id]/authority-transactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/representatives/{id}/authority-transactions |
+| P2 | active_runtime_dependency | app/api/companies/representatives/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/representatives/{id} |
+| P2 | active_runtime_dependency | app/api/companies/representatives/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/representatives |
+| P2 | active_runtime_dependency | app/api/companies/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/companies |
+| P2 | active_runtime_dependency | app/api/companies/stakeholders/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{id} |
+| P2 | active_runtime_dependency | app/api/companies/stakeholders/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders |
+| P2 | active_runtime_dependency | app/api/companies/vehicles/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/after-sales/assets |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/activate/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/activate/precheck |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/activate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/activate |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/amend/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/amend/precheck |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/amend/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/amend |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/archive/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/archive |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/documents/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/documents |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/documents/upload/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/documents/upload |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/events/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/events |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/obligations/[obligationId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/obligations/{obligationId} |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/obligations/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/obligations |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/relations/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/relations |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/renew/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/renew/precheck |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/renew/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/renew |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id} |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/suspend/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/suspend/precheck |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/suspend/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/suspend |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/terminate/precheck/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/terminate/precheck |
+| P2 | active_runtime_dependency | app/api/contracts/[id]/terminate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts/{id}/terminate |
+| P2 | active_runtime_dependency | app/api/contracts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/contracts |
+| P2 | active_runtime_dependency | app/api/crm/[...path]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/{path} |
+| P2 | active_runtime_dependency | app/api/crm/master/organizations/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/master/organizations |
+| P2 | active_runtime_dependency | app/api/crm/master/organizations/search/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/master/organizations/search |
+| P2 | active_runtime_dependency | app/api/crm/master/persons/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/master/persons |
+| P2 | active_runtime_dependency | app/api/crm/master/persons/search/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/master/persons/search |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/create-cari-account/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id}/create-cari-account |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/create-followup-task/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id}/create-followup-task |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/interactions/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id}/interactions |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/related-records/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id}/related-records |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id} |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/[id]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders/{stakeholder_id}/summary |
+| P2 | active_runtime_dependency | app/api/crm/stakeholders/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/crm/stakeholders |
+| P1 | needs_contractization | app/api/cron/document-thumbnails/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/cron/outbox-dispatch/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/system/outbox/dispatch |
+| P2 | active_runtime_dependency | app/api/cron/update-reference-data/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/system/reference-data/update |
+| P2 | active_runtime_dependency | app/api/dashboard/[module]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/reporting/dashboard/module/{module}/summary |
+| P2 | active_runtime_dependency | app/api/dashboard/[module]/widgets/[widgetId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/reporting/dashboard/module/{module}/widgets/{widgetId} |
+| P2 | active_runtime_dependency | app/api/dashboard/geographic-trade-reach/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/reporting/dashboard/geographic-trade-reach |
+| P1 | needs_contractization | app/api/data-quality/by-entity/[entity_type]/[entity_id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/check/[entity_type]/[entity_id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/check/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/duplicates/[group_id]/dismiss/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/duplicates/[group_id]/false-positive/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/duplicates/[group_id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/duplicates/detect/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/duplicates/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/merge/[merge_id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/merge/confirm/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/merge/preview/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/rules/[rule_key]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/rules/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/data-quality/summary/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/access-logs/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/download-url/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/documents/[id]/media-access-url/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/documents/{document_id}/media-access-url |
+| P1 | needs_contractization | app/api/documents/[id]/new-version/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/preview-url/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/reject/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/[id]/verify/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/by-entity/[entity_type]/[entity_id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/by-entity/[entity_type]/[entity_id]/upload/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/expired/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/expiring/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/requirements/[module_key]/[operation_key]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/requirements/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/documents/upload/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/entry-wizard/complete-with-manual-sgk/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/entry-wizard/complete-with-manual-sgk |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/entry-wizard/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/entry-wizard/complete |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/entry-wizard/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/entry-wizard/context |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/exit-wizard/complete-with-manual-sgk/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/exit-wizard/complete-with-manual-sgk |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/exit-wizard/complete/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/exit-wizard/complete |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/exit-wizard/context/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/exit-wizard/context |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId} |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/sgk-entry/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/sgk-entry |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/sgk-exit/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/sgk-exit |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/work-lifecycle-events/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/work-lifecycle-events |
+| P2 | active_runtime_dependency | app/api/employees/[employeeId]/work-relation/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{employeeId}/work-relation |
+| P2 | active_runtime_dependency | app/api/employees/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees |
+| P2 | active_runtime_dependency | app/api/entities/[entityKind]/[entityId]/bank-accounts/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entities/{entityKind}/{entityId}/bank-accounts |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/[id]/history/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/{id}/history |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/[id]/passivate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/{id}/passivate |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/{id} |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/[id]/set-default/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/{id}/set-default |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/form-priority-mode/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/form-priority-mode |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/parse-iban/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/parse-iban |
+| P2 | active_runtime_dependency | app/api/entity-bank-accounts/validate-swift/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/accounting/entity-bank-accounts/validate-swift |
+| P1 | needs_contractization | app/api/export/jobs/[id]/download/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/export/jobs/[id]/route.ts | add_migration_header_or_contractize | missing migration header |
+| P1 | needs_contractization | app/api/export/jobs/route.ts | add_migration_header_or_contractize | missing migration header |
+| P2 | active_runtime_dependency | app/api/facilities/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/facilities/{facility_id} |
+| P2 | active_runtime_dependency | app/api/facilities/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/facilities |
+| P2 | active_runtime_dependency | app/api/features/[feature_key]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/features/{feature_key} |
+| P2 | active_runtime_dependency | app/api/features/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/features |
+| P2 | active_runtime_dependency | app/api/hr/attendance/[id]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/attendance/{id} |
+| P2 | active_runtime_dependency | app/api/hr/attendance/import/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/attendance/import |
+| P2 | active_runtime_dependency | app/api/hr/attendance/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/attendance |
+| P2 | active_runtime_dependency | app/api/hr/company/[companyId]/summary/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/company/{companyId}/summary |
+| P2 | active_runtime_dependency | app/api/hr/employees/[id]/documents/[documentId]/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{id}/documents/{documentId} |
+| P2 | active_runtime_dependency | app/api/hr/employees/[id]/documents/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{id}/documents |
+| P2 | active_runtime_dependency | app/api/hr/employees/[id]/employment/assignment-change/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{id}/employment/assignment-change |
+| P2 | active_runtime_dependency | app/api/hr/employees/[id]/employment/start/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{id}/employment/start |
+| P2 | active_runtime_dependency | app/api/hr/employees/[id]/employment/terminate/route.ts | retain_fastapi_proxy | migration=proxy_to_fastapi; target=/api/v1/hr/employees/{id}/employment/terminate |
+
+_Only first 300 rows shown._
+
+## Supabase/Vercel/Old Runtime Residue Inventory
+
+Total: 192
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| P2 | needs_manual_review | app/api/accounting/_banking.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in app/api/accounting/_banking.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts-cards/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts-cards/[id]/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts-cards/_shared.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in app/api/accounting/bank-accounts-cards/_shared.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts-cards/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts-cards/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts/[accountId]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts/[accountId]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-accounts/[accountId]/sync/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-accounts/[accountId]/sync/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-card-transactions/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-card-transactions/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-cards/[cardId]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-cards/[cardId]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-cards/[cardId]/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-cards/[cardId]/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-cards/[cardId]/sync/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-cards/[cardId]/sync/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/accounts/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/accounts/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/cards/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/cards/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/sync/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/sync/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/[id]/test/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/[id]/test/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/automation-preview/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/automation-preview/route.ts |
+| P2 | needs_manual_review | app/api/accounting/bank-connections/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/bank-connections/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/create-pre-accounting/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/create-pre-accounting/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/history/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/history/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/match/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/match/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/review/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/review/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/[id]/unmatch/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/[id]/unmatch/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/manual/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/manual/route.ts |
+| P2 | needs_manual_review | app/api/accounting/financial-institution-movements/route.ts | manual_review_runtime_residue | Supabase in app/api/accounting/financial-institution-movements/route.ts |
+| P2 | needs_manual_review | app/api/ai/cv-extract/route.ts | manual_review_runtime_residue | Supabase in app/api/ai/cv-extract/route.ts |
+| P2 | needs_manual_review | app/api/approvals/[id]/approve/route.ts | manual_review_runtime_residue | Supabase in app/api/approvals/[id]/approve/route.ts |
+| P2 | needs_manual_review | app/api/approvals/[id]/reject/route.ts | manual_review_runtime_residue | Supabase in app/api/approvals/[id]/reject/route.ts |
+| P2 | needs_manual_review | app/api/approvals/route.ts | manual_review_runtime_residue | Supabase in app/api/approvals/route.ts |
+| P2 | needs_manual_review | app/api/audit/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/audit/[id]/route.ts |
+| P2 | needs_manual_review | app/api/audit/by-operation/route.ts | manual_review_runtime_residue | Supabase in app/api/audit/by-operation/route.ts |
+| P2 | needs_manual_review | app/api/audit/by-process/route.ts | manual_review_runtime_residue | Supabase in app/api/audit/by-process/route.ts |
+| P2 | needs_manual_review | app/api/audit/by-record/route.ts | manual_review_runtime_residue | Supabase in app/api/audit/by-record/route.ts |
+| P2 | needs_manual_review | app/api/audit/route.ts | manual_review_runtime_residue | Supabase in app/api/audit/route.ts |
+| P2 | needs_manual_review | app/api/auth/company-join/route.ts | manual_review_runtime_residue | Supabase in app/api/auth/company-join/route.ts |
+| P2 | needs_manual_review | app/api/auth/otp/send/route.ts | manual_review_runtime_residue | Vercel in app/api/auth/otp/send/route.ts |
+| P2 | needs_manual_review | app/api/auth/tenant-status/route.ts | manual_review_runtime_residue | Supabase in app/api/auth/tenant-status/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/capital-decreases/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/capital-decreases/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/capital-decreases/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/capital-decreases/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/capital-increases/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/capital-increases/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/capital-increases/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/capital-increases/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/current-ownership/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/current-ownership/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/nace-codes/[id]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/nace-codes/[id]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/nace-codes/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/nace-codes/[id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/nace-codes/[id]/set-primary/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/nace-codes/[id]/set-primary/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/nace-codes/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/nace-codes/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/activity-subject-change/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/activity-subject-change/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/activity-subject-change/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/activity-subject-change/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/address-change/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/address-change/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/address-change/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/address-change/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/branch-closing/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/branch-closing/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/branch-closing/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/branch-closing/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/branch-opening/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/branch-opening/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/branch-opening/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/branch-opening/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/nace-change/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/nace-change/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/nace-change/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/nace-change/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/public-registration-update/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/public-registration-update/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/public-registration-update/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/public-registration-update/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/title-change/precheck/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/title-change/precheck/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/official-changes/title-change/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/official-changes/title-change/route.ts |
+| P2 | needs_manual_review | app/api/companies/[company_id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/[company_id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/branches/[id]/documents/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/branches/[id]/documents/route.ts |
+| P2 | needs_manual_review | app/api/companies/branches/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/branches/[id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/branches/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/branches/route.ts |
+| P2 | needs_manual_review | app/api/companies/current-ownership/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/current-ownership/route.ts |
+| P2 | needs_manual_review | app/api/companies/partners/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/partners/[id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/partners/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/partners/route.ts |
+| P2 | needs_manual_review | app/api/companies/representatives/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/representatives/[id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/representatives/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/representatives/route.ts |
+| P2 | needs_manual_review | app/api/companies/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/route.ts |
+| P2 | needs_manual_review | app/api/companies/stakeholders/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/stakeholders/[id]/route.ts |
+| P2 | needs_manual_review | app/api/companies/stakeholders/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/stakeholders/route.ts |
+| P2 | needs_manual_review | app/api/companies/vehicles/route.ts | manual_review_runtime_residue | Supabase in app/api/companies/vehicles/route.ts |
+| P2 | needs_manual_review | app/api/cron/outbox-dispatch/route.ts | manual_review_runtime_residue | Supabase in app/api/cron/outbox-dispatch/route.ts |
+| P2 | needs_manual_review | app/api/cron/update-reference-data/route.ts | manual_review_runtime_residue | Supabase in app/api/cron/update-reference-data/route.ts |
+| P2 | needs_manual_review | app/api/employees/[employeeId]/route.ts | manual_review_runtime_residue | Supabase in app/api/employees/[employeeId]/route.ts |
+| P2 | needs_manual_review | app/api/employees/[employeeId]/work-lifecycle-events/route.ts | manual_review_runtime_residue | Supabase in app/api/employees/[employeeId]/work-lifecycle-events/route.ts |
+| P2 | needs_manual_review | app/api/employees/[employeeId]/work-relation/route.ts | manual_review_runtime_residue | Supabase in app/api/employees/[employeeId]/work-relation/route.ts |
+| P2 | needs_manual_review | app/api/employees/route.ts | manual_review_runtime_residue | Supabase in app/api/employees/route.ts |
+| P2 | needs_manual_review | app/api/entities/[entityKind]/[entityId]/bank-accounts/route.ts | manual_review_runtime_residue | Supabase in app/api/entities/[entityKind]/[entityId]/bank-accounts/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/[id]/history/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/[id]/history/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/[id]/passivate/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/[id]/passivate/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/[id]/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/[id]/set-default/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/[id]/set-default/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/form-priority-mode/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/form-priority-mode/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/parse-iban/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/parse-iban/route.ts |
+| P2 | needs_manual_review | app/api/entity-bank-accounts/validate-swift/route.ts | manual_review_runtime_residue | Supabase in app/api/entity-bank-accounts/validate-swift/route.ts |
+| P2 | needs_manual_review | app/api/identity/resolve/route.ts | manual_review_runtime_residue | Supabase in app/api/identity/resolve/route.ts |
+| P2 | needs_manual_review | app/api/import/jobs/[id]/upload/route.ts | manual_review_runtime_residue | Supabase in app/api/import/jobs/[id]/upload/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/cari-kartlar/resolve/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/cari-kartlar/resolve/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/cari-kartlar/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/cari-kartlar/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/islemler/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/islemler/[id]/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/islemler/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/islemler/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/on-muhasebe-hareketleri/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/on-muhasebe-hareketleri/[id]/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/on-muhasebe-hareketleri/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/on-muhasebe-hareketleri/route.ts |
+| P2 | needs_manual_review | app/api/muhasebe/reference-search/route.ts | manual_review_runtime_residue | Supabase in app/api/muhasebe/reference-search/route.ts |
+| P2 | needs_manual_review | app/api/onboarding/system-tour/_shared.ts | manual_review_runtime_residue | lib/supabase in app/api/onboarding/system-tour/_shared.ts |
+| P2 | needs_manual_review | app/api/organization/route.ts | manual_review_runtime_residue | Supabase in app/api/organization/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/approve/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/approve/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/cancel/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/cancel/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/history/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/history/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/impact/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/impact/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/reject/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/reject/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/reverse/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/reverse/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/[id]/send-approval/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/[id]/send-approval/route.ts |
+| P2 | needs_manual_review | app/api/ownership-transactions/route.ts | manual_review_runtime_residue | Supabase in app/api/ownership-transactions/route.ts |
+| P2 | needs_manual_review | app/api/processes/[id]/cancel/route.ts | manual_review_runtime_residue | Supabase in app/api/processes/[id]/cancel/route.ts |
+| P2 | needs_manual_review | app/api/processes/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/processes/[id]/route.ts |
+| P2 | needs_manual_review | app/api/processes/[id]/start/route.ts | manual_review_runtime_residue | Supabase in app/api/processes/[id]/start/route.ts |
+| P2 | needs_manual_review | app/api/processes/[id]/steps/[step_id]/complete/route.ts | manual_review_runtime_residue | Supabase in app/api/processes/[id]/steps/[step_id]/complete/route.ts |
+| P2 | needs_manual_review | app/api/processes/route.ts | manual_review_runtime_residue | Supabase in app/api/processes/route.ts |
+| P2 | needs_manual_review | app/api/reference/nace-codes/import/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/nace-codes/import/route.ts |
+| P2 | needs_manual_review | app/api/reference/nace-codes/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/nace-codes/route.ts |
+| P2 | needs_manual_review | app/api/reference/nace-codes/update-from-source/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/nace-codes/update-from-source/route.ts |
+| P2 | needs_manual_review | app/api/reference/nace-codes/update-logs/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/nace-codes/update-logs/route.ts |
+| P2 | needs_manual_review | app/api/reference/sgk-codes/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/sgk-codes/route.ts |
+| P2 | needs_manual_review | app/api/reference/tax-offices/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/tax-offices/route.ts |
+| P2 | needs_manual_review | app/api/reference/trade-registry-offices/route.ts | manual_review_runtime_residue | Supabase in app/api/reference/trade-registry-offices/route.ts |
+| P2 | needs_manual_review | app/api/session/bootstrap/route.ts | manual_review_runtime_residue | Supabase in app/api/session/bootstrap/route.ts |
+| P2 | needs_manual_review | app/api/settings/integration-parameters/[id]/credential/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/integration-parameters/[id]/credential/route.ts |
+| P2 | needs_manual_review | app/api/settings/integration-parameters/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/integration-parameters/[id]/route.ts |
+| P2 | needs_manual_review | app/api/settings/integration-parameters/[id]/test/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/integration-parameters/[id]/test/route.ts |
+| P2 | needs_manual_review | app/api/settings/integration-parameters/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/integration-parameters/route.ts |
+| P2 | needs_manual_review | app/api/settings/module-licenses/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/module-licenses/route.ts |
+| P2 | needs_manual_review | app/api/settings/setup-wizard/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/setup-wizard/route.ts |
+| P2 | needs_manual_review | app/api/settings/system-parameters/route.ts | manual_review_runtime_residue | Supabase in app/api/settings/system-parameters/route.ts |
+| P2 | needs_manual_review | app/api/setup/actions/[action_key]/run/route.ts | manual_review_runtime_residue | Supabase in app/api/setup/actions/[action_key]/run/route.ts |
+| P2 | needs_manual_review | app/api/setup/actions/route.ts | manual_review_runtime_residue | Supabase in app/api/setup/actions/route.ts |
+| P2 | needs_manual_review | app/api/setup/readiness/[module_key]/route.ts | manual_review_runtime_residue | Supabase in app/api/setup/readiness/[module_key]/route.ts |
+| P2 | needs_manual_review | app/api/setup/readiness/route.ts | manual_review_runtime_residue | Supabase in app/api/setup/readiness/route.ts |
+| P2 | needs_manual_review | app/api/tasks/[id]/assign/route.ts | manual_review_runtime_residue | Supabase in app/api/tasks/[id]/assign/route.ts |
+| P2 | needs_manual_review | app/api/tasks/[id]/comment/route.ts | manual_review_runtime_residue | Supabase in app/api/tasks/[id]/comment/route.ts |
+| P2 | needs_manual_review | app/api/tasks/[id]/complete/route.ts | manual_review_runtime_residue | Supabase in app/api/tasks/[id]/complete/route.ts |
+| P2 | needs_manual_review | app/api/tasks/[id]/route.ts | manual_review_runtime_residue | Supabase in app/api/tasks/[id]/route.ts |
+| P2 | needs_manual_review | app/api/tasks/route.ts | manual_review_runtime_residue | Supabase in app/api/tasks/route.ts |
+| P2 | needs_manual_review | app/api/tenants/current/route.ts | manual_review_runtime_residue | Supabase in app/api/tenants/current/route.ts |
+| P2 | needs_manual_review | app/api/tenants/default/route.ts | manual_review_runtime_residue | Supabase in app/api/tenants/default/route.ts |
+| P2 | needs_manual_review | app/api/tenants/options/route.ts | manual_review_runtime_residue | Supabase in app/api/tenants/options/route.ts |
+| P2 | needs_manual_review | app/api/uploads/image-variants/route.ts | manual_review_runtime_residue | Supabase in app/api/uploads/image-variants/route.ts |
+| P2 | needs_manual_review | app/api/user-registration-requests/[id]/approve/route.ts | manual_review_runtime_residue | Supabase in app/api/user-registration-requests/[id]/approve/route.ts |
+| P2 | needs_manual_review | app/api/user-registration-requests/route.ts | manual_review_runtime_residue | Supabase in app/api/user-registration-requests/route.ts |
+| P2 | needs_manual_review | app/api/user/preferences/route.ts | manual_review_runtime_residue | Supabase in app/api/user/preferences/route.ts |
+| P2 | active_runtime_dependency | backend/app/core/config.py | approved_backend_security_or_auth_layer | NEXT_PUBLIC_SUPABASE, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET in backend/app/core/config.py |
+| P2 | active_runtime_dependency | backend/app/core/security.py | approved_backend_security_or_auth_layer | Supabase in backend/app/core/security.py |
+| P2 | needs_manual_review | backend/app/domains/admin/integrations.py | manual_review_runtime_residue | Supabase in backend/app/domains/admin/integrations.py |
+| P2 | needs_manual_review | backend/app/domains/security/service.py | manual_review_runtime_residue | Supabase in backend/app/domains/security/service.py |
+| P2 | needs_manual_review | backend/app/tests/test_auth_jwt.py | manual_review_runtime_residue | SUPABASE_JWT_SECRET in backend/app/tests/test_auth_jwt.py |
+| P2 | needs_manual_review | lib/action-center/actionCenter.types.ts | manual_review_runtime_residue | Supabase in lib/action-center/actionCenter.types.ts |
+| P2 | needs_manual_review | lib/audit/audit.types.ts | manual_review_runtime_residue | Supabase in lib/audit/audit.types.ts |
+| P2 | needs_manual_review | lib/audit/auditLogService.ts | manual_review_runtime_residue | Supabase in lib/audit/auditLogService.ts |
+| P2 | active_runtime_dependency | lib/auth/userRegistrationRequests.ts | approved_backend_security_or_auth_layer | Supabase, @supabase/supabase-js in lib/auth/userRegistrationRequests.ts |
+| P2 | needs_manual_review | lib/documents/documentThumbnailBackfill.server.ts | manual_review_runtime_residue | Supabase, lib/supabase in lib/documents/documentThumbnailBackfill.server.ts |
+| P2 | needs_manual_review | lib/documents/documentThumbnails.server.ts | manual_review_runtime_residue | Supabase, lib/supabase in lib/documents/documentThumbnails.server.ts |
+| P2 | needs_manual_review | lib/integrity/crossDomainConsistency.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/integrity/crossDomainConsistency.ts |
+| P2 | needs_manual_review | lib/integrity/integrity.types.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/integrity/integrity.types.ts |
+| P2 | needs_manual_review | lib/media/mediaMetadata.server.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/media/mediaMetadata.server.ts |
+| P2 | needs_manual_review | lib/modules/moduleContract.types.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/modules/moduleContract.types.ts |
+| P2 | needs_manual_review | lib/modules/moduleFeatureResolver.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/modules/moduleFeatureResolver.ts |
+| P2 | needs_manual_review | lib/modules/moduleGuards.ts | manual_review_runtime_residue | lib/supabase in lib/modules/moduleGuards.ts |
+| P2 | needs_manual_review | lib/operations/operationRequestService.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/operations/operationRequestService.ts |
+| P2 | needs_manual_review | lib/process/process.types.ts | manual_review_runtime_residue | Supabase in lib/process/process.types.ts |
+| P2 | needs_manual_review | lib/read-models/projection.types.ts | manual_review_runtime_residue | Supabase in lib/read-models/projection.types.ts |
+| P2 | needs_manual_review | lib/read-models/projections/branchList.projection.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/read-models/projections/branchList.projection.ts |
+| P2 | needs_manual_review | lib/read-models/projections/branchSummary.projection.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/read-models/projections/branchSummary.projection.ts |
+| P2 | needs_manual_review | lib/read-models/projections/companyDetail.projection.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/read-models/projections/companyDetail.projection.ts |
+| P2 | needs_manual_review | lib/release/environment.ts | manual_review_runtime_residue | VERCEL_ENV in lib/release/environment.ts |
+| P2 | active_runtime_dependency | lib/security/accessContext.ts | approved_backend_security_or_auth_layer | Supabase, @supabase/supabase-js in lib/security/accessContext.ts |
+| P2 | active_runtime_dependency | lib/security/permissionProxy.ts | approved_backend_security_or_auth_layer | lib/supabase in lib/security/permissionProxy.ts |
+| P2 | active_runtime_dependency | lib/security/policyEngine.ts | approved_backend_security_or_auth_layer | lib/supabase in lib/security/policyEngine.ts |
+| P2 | active_runtime_dependency | lib/security/serverPermissions.ts | approved_backend_security_or_auth_layer | Supabase, @supabase/supabase-js in lib/security/serverPermissions.ts |
+| P2 | needs_manual_review | lib/services/notifications/processNotification.server.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/services/notifications/processNotification.server.ts |
+| P2 | needs_manual_review | lib/setup/moduleReadinessChecker.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/setup/moduleReadinessChecker.ts |
+| P2 | needs_manual_review | lib/setup/moduleReadinessRegistry.ts | manual_review_runtime_residue | Supabase in lib/setup/moduleReadinessRegistry.ts |
+| P2 | needs_manual_review | lib/setup/tenantReadinessService.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js in lib/setup/tenantReadinessService.ts |
+| P2 | active_runtime_dependency | lib/supabase/client.ts | approved_backend_security_or_auth_layer | Supabase, NEXT_PUBLIC_SUPABASE, @supabase/ssr in lib/supabase/client.ts |
+| P2 | active_runtime_dependency | lib/supabase/server.ts | approved_backend_security_or_auth_layer | Supabase, NEXT_PUBLIC_SUPABASE, SUPABASE_SERVICE_ROLE_KEY, @supabase/ssr in lib/supabase/server.ts |
+| P2 | needs_manual_review | lib/tenancy/companyScopes.ts | manual_review_runtime_residue | Supabase in lib/tenancy/companyScopes.ts |
+| P2 | needs_manual_review | lib/user-preferences/onboardingPreferences.ts | manual_review_runtime_residue | Supabase in lib/user-preferences/onboardingPreferences.ts |
+| P2 | needs_manual_review | lib/user-state/server.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js, lib/supabase in lib/user-state/server.ts |
+| P2 | needs_manual_review | scripts/audit-next-backend-boundary.js | manual_review_runtime_residue | Supabase, lib/supabase in scripts/audit-next-backend-boundary.js |
+| P2 | needs_manual_review | scripts/check-backend-migration-status.js | manual_review_runtime_residue | SUPABASE_SERVICE_ROLE_KEY in scripts/check-backend-migration-status.js |
+| P2 | needs_manual_review | scripts/check-database-target.js | manual_review_runtime_residue | VERCEL_ENV in scripts/check-database-target.js |
+| P2 | needs_manual_review | scripts/check-import-boundaries.js | manual_review_runtime_residue | Supabase, SUPABASE_SERVICE_ROLE_KEY in scripts/check-import-boundaries.js |
+| P2 | needs_manual_review | scripts/check-performance-contracts.js | manual_review_runtime_residue | Supabase in scripts/check-performance-contracts.js |
+| P2 | needs_manual_review | scripts/check-release-env-safety.js | manual_review_runtime_residue | Supabase, NEXT_PUBLIC_SUPABASE, SUPABASE_SERVICE_ROLE_KEY, VERCEL_ENV in scripts/check-release-env-safety.js |
+| P2 | needs_manual_review | scripts/check-security-reference-contracts.js | manual_review_runtime_residue | Supabase, SUPABASE_SERVICE_ROLE_KEY in scripts/check-security-reference-contracts.js |
+| P2 | needs_manual_review | scripts/generate-next-api-burndown-docs.js | manual_review_runtime_residue | Supabase in scripts/generate-next-api-burndown-docs.js |
+
+
+## Generated/Blocked Contract Debt
+
+Total: 146
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| P2 | needs_manual_review | app/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
+| P1 | needs_manual_review | app/app/aboneligim/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=release; real UI signals present |
+| P1 | needs_contractization | app/app/ayarlar/bildirimler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P1 | needs_contractization | app/app/belgeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/crm/firsatlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/crm/leadler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/crm/paydaslar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/crm/pipeline/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/crm/pipeline-ayarlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/crm/takipler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/dashboard/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/demo/document-slot-uploader/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_demo; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/demo/image-slot-uploader/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_demo; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/demo/user-avatar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_demo; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/design-lab/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/backlog/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/gorevler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/is-akislari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/kanban-board/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/projeler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/sprintler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/takvim/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/gorev-ve-proje-yonetimi/zaman-takibi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/calisma-planlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/devam-devamsizlik/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/employees/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/izin-bakiyeleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/izin-turleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/izinler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/ik/personel/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/ik/personel-ekle/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/personel/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/puantaj/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/ik/teskilat/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/muhasebe/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/muhasebe/banka-hareketleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/muhasebe/banka-hesaplari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/banka-kart-hareketleri/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/borclar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/cari-hareketler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/cari-kartlar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/dashboard/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/muhasebe/e-fatura-e-arsiv/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/hesaplar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/islemler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/muhasebe/mutabakat/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/muhasebe/on-muhasebe-hareketleri/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/muhasebe/projeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/muhasebe/sermaye-mutabakati/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/onboarding/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/profil/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
+| P2 | needs_manual_review | app/app/raporlama/ozel-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/raporlama/zamanlanmis-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/bakim-planlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/bakim-sozlesme-takip/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/bakimi-gelenler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/checklistler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/garanti-takip/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/kurulu-urunler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/lisans-takip/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/mobil-servis/[assignment_id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/musterideki-urunler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/saha-gorevleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/servis-destek-kayitlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/servis-kayitlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis-sonrasi/servis-talepleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/satis/sozlesmeler/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; real UI signals present |
+| P1 | needs_contractization | app/app/sirket/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/sirket/araclar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/sirket/companies/stakeholders/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_manual_review | app/app/sirket/demirbas/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/sirket/paydaslar/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sirket/surecler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/sirket/tesisler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/sirket/teskilat/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/ai-copilot/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sistem/audit/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P1 | needs_contractization | app/app/sistem/e-postalar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P1 | needs_contractization | app/app/sistem/entegrasyon-ayarlari/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/entegrasyonlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sistem/export/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/genel/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sistem/import/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P1 | needs_contractization | app/app/sistem/kullanici-talepleri/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/kullanicilar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/kurulum/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
+| P1 | needs_contractization | app/app/sistem/lisanslar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/login-sayfasi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sistem/module-licenses/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/moduller/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/otomasyonlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/outbox/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/ozellikler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/roller/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/saglik/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sistem/system-parameters/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/teknik/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/sistem/temalar/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; real UI signals present |
+| P1 | needs_contractization | app/app/sistem/veri-kalitesi/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/sistem/yetkiler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/sozlesmeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/app/sozlesmeler/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_manual_review | app/app/sozlesmeler/fesihler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_manual_review | app/app/sozlesmeler/turler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_manual_review | app/app/sozlesmeler/yeni/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_manual_review | app/app/sozlesmeler/yenilemeler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P1 | needs_contractization | app/app/surecler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P1 | needs_contractization | app/app/surecler/[id]/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/bakim-paketleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/garanti-sablonlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/hizmet-kartlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/katalog/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/lisans-abonelik-urunleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/seri-numarali-urunler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/app/urun-ve-hizmetler/urun-kartlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
+| P1 | needs_contractization | app/app/yardim/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
+| P2 | needs_manual_review | app/ayarlar/entegrasyon-ayarlari/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/ik/personel/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/login/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=release; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/banka-kart-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/cari-hareketler/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/cari-kartlar/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/muhasebe/on-muhasebe-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/offline/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=release; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/dashboard/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/documents/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/products/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/products/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/profile/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/service-records/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/service-requests/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/portal/service-requests/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
+| P2 | needs_manual_review | app/release-not-available/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
+| P1 | needs_manual_review | app/test/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development_demo; real UI signals present |
+
+
+## Orphan Code Candidates
+
+Total: 0
+
+| Severity | Classification | File/Route | Decision | Evidence |
+| --- | --- | --- | --- | --- |
+| - | - | - | - | - |
+
+

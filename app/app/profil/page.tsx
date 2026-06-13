@@ -4,6 +4,11 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Loader2, Save, Trash2, Upload, UserRound } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { appProfilPageContract } from '@/contracts/pages/generated/app-profil.page.contract'
+import { appProfilFormContract } from '@/contracts/pages/generated/app-profil.form.contract'
+
+const PROFILE_CONTRACT_ROUTE = appProfilPageContract.route
+const PROFILE_FORM_FIELD_ORDER = appProfilFormContract.fieldOrder
 
 type UserProfile = {
   user_id?: string | null
@@ -166,7 +171,7 @@ export default function ProfilePage() {
   const displayName = profile?.displayName || profile?.email || profile?.phone || 'Kullanici'
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
+    <main data-contract-route={PROFILE_CONTRACT_ROUTE} className="min-h-screen bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <div className="mx-auto max-w-5xl space-y-4">
         <header className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
@@ -201,7 +206,7 @@ export default function ProfilePage() {
           </div>
         ) : null}
 
-        <form onSubmit={saveProfile} className="grid gap-4 lg:grid-cols-[1fr_18rem]">
+        <form data-contract-fields={PROFILE_FORM_FIELD_ORDER.join(',')} onSubmit={saveProfile} className="grid gap-4 lg:grid-cols-[1fr_18rem]">
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Tenant ici kisi profili</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">

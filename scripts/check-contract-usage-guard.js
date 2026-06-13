@@ -176,7 +176,9 @@ function hasFormSignal(source) {
 }
 
 function hasLifecycleSignal(source) {
-  return /Wizard|wizard|currentStep|activeStep|lifecycle|Aktifle|Pasife Al|Onayla|İşe Giriş|İşten Çıkış|SGK|Yetki Ver|Yetki Kaldır|Sermaye Artırımı|Pay Devri/i.test(source)
+  const lifecycleUiSignal = /Wizard|wizard|currentStep|activeStep|lifecycle|Aktifle|Pasife Al|Onayla|İşe Giriş|İşten Çıkış|Yetki Ver|Yetki Kaldır|Sermaye Artırımı|Pay Devri/i.test(source)
+  const sgkDisplaySignal = /\bSGK\b/.test(source)
+  return lifecycleUiSignal || sgkDisplaySignal
 }
 
 function isIdOnlyListContract(source) {

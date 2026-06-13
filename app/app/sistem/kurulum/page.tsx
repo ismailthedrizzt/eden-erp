@@ -22,9 +22,14 @@ import Modal from '@/components/ui/Modal'
 import { Toast, type ToastType } from '@/components/ui/Toast'
 import { formControlClass, type FormControlState } from '@/components/ui/formControlStyles'
 import { TenantReadinessPanel } from '@/components/setup/TenantReadinessPanel'
+import { appSistemKurulumPageContract } from '@/contracts/pages/generated/app-sistem-kurulum.page.contract'
+import { appSistemKurulumLifecycleContract } from '@/contracts/pages/generated/app-sistem-kurulum.lifecycle.contract'
 import { apiClient } from '@/lib/api/apiClient'
 import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
+
+const SETUP_CONTRACT_ROUTE = appSistemKurulumPageContract.route
+const SETUP_OPERATION_TYPES = appSistemKurulumLifecycleContract.operationTypes
 
 type WizardStep = 'welcome' | 'scale' | 'company' | 'role' | 'person' | 'review' | 'payment'
 type VisualWizardStep = 'welcome' | 'company' | 'person' | 'review' | 'payment'
@@ -350,7 +355,7 @@ function SetupWizardContent() {
   }, [])
 
   return (
-    <div>
+    <div data-contract-route={SETUP_CONTRACT_ROUTE} data-contract-operations={SETUP_OPERATION_TYPES.join(',')}>
       <PageBanner
         mode="list"
         title="Kurulum Merkezi"
