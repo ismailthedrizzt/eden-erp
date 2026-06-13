@@ -138,6 +138,8 @@ async def insert_ownership_transaction(
         "approved_by": payload.get("approved_by") or context.get("user_id"),
         "created_by": payload.get("created_by") or context.get("user_id"),
         "updated_by": payload.get("updated_by") or context.get("user_id"),
+        "operation_id": context.get("operation_id"),
+        "process_instance_id": context.get("process_instance_id"),
         "capital_distribution": json.dumps(
             payload.get("capital_distribution") or [], ensure_ascii=False, default=str
         ),
@@ -164,7 +166,7 @@ async def insert_ownership_transaction(
               document_status, document_reference_id, decision_reference_id, document_files,
               status, approval_status, workflow_status, description, transaction_reason,
               exit_reason, justification, notes, warnings, history, approved_by,
-              approved_at, created_by, updated_by
+              approved_at, created_by, updated_by, operation_id, process_instance_id
             )
             values (
               :id, :tenant_id, :company_id, :transaction_no, :transaction_type, :transaction_date,
@@ -181,7 +183,8 @@ async def insert_ownership_transaction(
               :decision_reference_id, cast(:document_files as jsonb), :status,
               :approval_status, :workflow_status, :description, :transaction_reason,
               :exit_reason, :justification, :notes, cast(:warnings as jsonb),
-              cast(:history as jsonb), :approved_by, now(), :created_by, :updated_by
+              cast(:history as jsonb), :approved_by, now(), :created_by, :updated_by,
+              :operation_id, :process_instance_id
             )
             returning id, transaction_no, transaction_type, from_partner_id, to_partner_id,
               affected_partner_id, share_ratio, capital_amount, approval_status, workflow_status

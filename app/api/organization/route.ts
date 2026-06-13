@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi
 // CANONICAL_BACKEND: FastAPI
-// TARGET_FASTAPI_ENDPOINT: /api/v1/organization
+// TARGET_FASTAPI_ENDPOINT: /api/v1/organization/units
 // NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
 import { NextRequest } from 'next/server'
@@ -10,7 +10,7 @@ import { fastApiUnavailableResponse, proxyToFastApi } from '@/lib/backend/fastAp
 
 export const runtime = 'nodejs'
 
-const handler = createFastApiProxyHandler('/api/v1/organization')
+const handler = createFastApiProxyHandler('/api/v1/organization/units')
 
 function order(field: 'name') {
   return field
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   canonicalQuery.set('direction', query.direction || 'asc')
   if (query.search) canonicalQuery.set('search', query.search)
 
-  const response = await proxyToFastApi(request, '/api/v1/organization', {
+  const response = await proxyToFastApi(request, '/api/v1/organization/units', {
     internal: true,
     query: canonicalQuery,
   })

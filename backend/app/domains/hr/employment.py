@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.domains.hr.employees import get_employee
+from app.domains.hr.lifecycle import insert_employee_lifecycle_event
 from app.domains.hr.schemas import (
     AssignmentChangeRequest,
     EmploymentStartRequest,
@@ -26,7 +27,20 @@ from app.domains.hr.service import (
     json_list_dumps,
     row_to_dict,
 )
-from app.domains.operations.service import table_exists
+from app.domains.operations.service import (
+    create_or_get_operation_request,
+    duplicate_operation_response,
+    mark_operation_completed,
+    table_exists,
+)
+
+EMPLOYEE_OPERATION_TYPES = {
+    "start_employment": "employee.employment_start",
+    "terminate_employment": "employee.employment_termination",
+    "assignment_change": "employee.assignment_change",
+    "sgk_entry_completed": "employee.sgk_entry_completed",
+    "sgk_exit_completed": "employee.sgk_exit_completed",
+}
 
 
 async def start_employment(
@@ -72,6 +86,14 @@ async def start_employment(
             "SGK_WORKPLACE_REGISTRY_REQUIRED",
             status.HTTP_400_BAD_REQUEST,
         )
+    operation, operation_warnings = await begin_employee_operation(
+        session,
+        context,
+        employee_id,
+        EMPLOYEE_OPERATION_TYPES["start_employment"],
+        payload,
+        client_request_id=payload.get("client_request_id"),
+    )
     record_id = str(uuid4())
     job_title = payload.get("job_title") or (position or {}).get("title")
     result = await session.execute(
@@ -107,6 +129,18 @@ async def start_employment(
         },
     )
     employment = row_to_dict(result.mappings().one())
+    await insert_employment_transaction(
+        session,
+        context,
+        employee,
+        "start_employment",
+        payload.get("start_date"),
+        payload.get("start_date"),
+        {},
+        employment,
+        payload.get("notes"),
+        payload.get("document_files"),
+    )
     await session.execute(
         text(
             """
@@ -126,19 +160,9 @@ async def start_employment(
             "updated_by": context.get("user_id"),
         },
     )
-    await insert_employment_transaction(
-        session,
-        context,
-        employee,
-        "start_employment",
-        payload.get("start_date"),
-        payload.get("start_date"),
-        {},
-        employment,
-        payload.get("notes"),
-        payload.get("document_files"),
-    )
-    return await require_employee(session, context, employee_id)
+    updated = await require_employee(session, context, employee_id)
+    await mark_operation_completed(session, operation, updated, operation_warnings)
+    return updated
 
 
 async def terminate_employment(
@@ -164,6 +188,14 @@ async def terminate_employment(
             status.HTTP_400_BAD_REQUEST,
         )
     old_values = dict(current)
+    operation, operation_warnings = await begin_employee_operation(
+        session,
+        context,
+        employee_id,
+        EMPLOYEE_OPERATION_TYPES["terminate_employment"],
+        payload,
+        client_request_id=payload.get("client_request_id"),
+    )
     await session.execute(
         text(
             """
@@ -188,6 +220,18 @@ async def terminate_employment(
             "updated_by": context.get("user_id"),
         },
     )
+    await insert_employment_transaction(
+        session,
+        context,
+        employee,
+        "terminate_employment",
+        payload.get("end_date"),
+        payload.get("end_date"),
+        old_values,
+        payload,
+        payload.get("termination_reason"),
+        payload.get("document_files"),
+    )
     await session.execute(
         text(
             """
@@ -207,20 +251,9 @@ async def terminate_employment(
             "updated_by": context.get("user_id"),
         },
     )
-    await insert_employment_transaction(
-        session,
-        context,
-        employee,
-        "terminate_employment",
-        payload.get("end_date"),
-        payload.get("end_date"),
-        old_values,
-        payload,
-        payload.get("termination_reason"),
-        payload.get("document_files"),
-    )
     updated = await require_employee(session, context, employee_id)
     updated["warnings"] = await representative_warnings(session, context, employee)
+    await mark_operation_completed(session, operation, updated, operation_warnings)
     return updated
 
 
@@ -270,6 +303,14 @@ async def change_assignment(
             "ASSIGNMENT_NO_CHANGED_FIELDS",
             status.HTTP_400_BAD_REQUEST,
         )
+    operation, operation_warnings = await begin_employee_operation(
+        session,
+        context,
+        employee_id,
+        EMPLOYEE_OPERATION_TYPES["assignment_change"],
+        payload,
+        client_request_id=payload.get("client_request_id"),
+    )
     await session.execute(
         text(
             """
@@ -310,7 +351,9 @@ async def change_assignment(
         payload.get("reason"),
         payload.get("document_files"),
     )
-    return await require_employee(session, context, employee_id)
+    updated = await require_employee(session, context, employee_id)
+    await mark_operation_completed(session, operation, updated, operation_warnings)
+    return updated
 
 
 async def mark_sgk_entry_completed(
@@ -342,6 +385,14 @@ async def mark_sgk_completed(
     employee = await require_employee(session, context, employee_id, write=True)
     current = await require_current_employment(session, context, employee_id)
     payload = request.model_dump(exclude_none=True)
+    operation, operation_warnings = await begin_employee_operation(
+        session,
+        context,
+        employee_id,
+        EMPLOYEE_OPERATION_TYPES[transaction_type],
+        payload,
+        client_request_id=payload.get("client_request_id"),
+    )
     await session.execute(
         text(
             """
@@ -372,7 +423,41 @@ async def mark_sgk_completed(
         payload.get("notes"),
         payload.get("document_files"),
     )
-    return await require_employee(session, context, employee_id)
+    updated = await require_employee(session, context, employee_id)
+    await mark_operation_completed(session, operation, updated, operation_warnings)
+    return updated
+
+
+async def begin_employee_operation(
+    session: AsyncSession,
+    context: dict[str, Any],
+    employee_id: str,
+    operation_type: str,
+    payload: dict[str, Any],
+    *,
+    client_request_id: str | None,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    operation, warnings = await create_or_get_operation_request(
+        session,
+        context,
+        operation_type=operation_type,
+        client_request_id=client_request_id,
+        payload=payload,
+        entity_type="employee",
+        entity_id=employee_id,
+        module_key="hr",
+    )
+    duplicate = duplicate_operation_response(operation) if operation else None
+    if duplicate:
+        raise DomainError(
+            duplicate.get("message") or "Bu islem daha once tamamlanmis.",
+            "DUPLICATE_OPERATION",
+            status.HTTP_409_CONFLICT,
+            duplicate,
+        )
+    if operation:
+        context["operation_id"] = str(operation["id"])
+    return operation, warnings
 
 
 async def require_employee(
@@ -431,6 +516,7 @@ async def insert_employment_transaction(
     reason: str | None = None,
     document_files: list[dict[str, Any]] | None = None,
 ) -> None:
+    operation_id = str(context.get("operation_id") or uuid4())
     await session.execute(
         text(
             """
@@ -443,7 +529,7 @@ async def insert_employment_transaction(
               :id, :tenant_id, :employee_id, :company_id, :transaction_type,
               :transaction_date, :effective_date, cast(:old_values as jsonb),
               cast(:new_values as jsonb), :reason, cast(:document_files as jsonb),
-              null, null, :created_by, now()
+              :operation_id, :process_instance_id, :created_by, now()
             )
             """
         ),
@@ -459,7 +545,26 @@ async def insert_employment_transaction(
             "new_values": json_dumps(new_values),
             "reason": reason,
             "document_files": json_list_dumps(document_files),
+            "operation_id": operation_id,
+            "process_instance_id": context.get("process_instance_id"),
             "created_by": context.get("user_id"),
+        },
+    )
+    await insert_employee_lifecycle_event(
+        session,
+        tenant_id=str(context["tenant_id"]),
+        employee_id=str(employee["id"]),
+        operation_id=operation_id,
+        process_instance_id=context.get("process_instance_id"),
+        operation_type=transaction_type,
+        payload={
+            "transaction_type": transaction_type,
+            "transaction_date": transaction_date,
+            "effective_date": effective_date,
+            "old_values": old_values,
+            "new_values": new_values,
+            "reason": reason,
+            "document_files": document_files or [],
         },
     )
 

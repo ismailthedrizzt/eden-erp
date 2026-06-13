@@ -8,7 +8,7 @@ PartnerOwnerKind = Literal["person", "organization"]
 
 
 class PartnerCreateDraftRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str
     partner_type: PartnerOwnerKind = "person"
@@ -36,10 +36,12 @@ class PartnerCreateDraftRequest(BaseModel):
     contact_points: list[dict[str, Any]] = Field(default_factory=list)
     entity_bank_accounts: list[dict[str, Any]] = Field(default_factory=list)
     client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class PartnerCardUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     first_name: str | None = None
     last_name: str | None = None

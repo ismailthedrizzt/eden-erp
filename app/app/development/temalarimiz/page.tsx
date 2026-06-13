@@ -131,7 +131,7 @@ export default function DevelopmentThemesPage() {
   const [mode, setMode] = useState<ThemeAppearance>('light')
   const [importText, setImportText] = useState('')
   const [toast, setToast] = useState<ToastState | null>(null)
-  const contractColumns = useMemo(() => buildThemeTableDefinition(), [])
+  const tableColumns = useMemo(() => buildThemeTableDefinition(), [])
   const themeContractContext = useMemo(() => ({
     route: themeManagementPageContract.route,
     lifecycleTable: themeManagementLifecycleContract.transactionTable,
@@ -172,7 +172,7 @@ export default function DevelopmentThemesPage() {
   )
   const editable = Boolean(selected && selected.source !== 'system' && selected.status !== 'inactive')
   const canCreateDraftTheme = themeManagementPageContract.allowedActions.includes('create_draft')
-    && themeContractContext.serviceFunctions.includes('createDraftThemeRecord')
+    && themeContractContext.serviceFunctions.includes('themeManagementService.createDraftThemeRecord')
 
   function notify(type: ToastType, message: string, title?: string) {
     setToast({ type, message, title })
@@ -517,7 +517,7 @@ export default function DevelopmentThemesPage() {
         </div>
 
         <SmartDataTable<ThemeTableRow>
-          columns={contractColumns}
+          columns={tableColumns}
           data={tableRows}
           loading={false}
           defaultView="list"

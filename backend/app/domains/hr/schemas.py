@@ -52,7 +52,7 @@ class EmployeeListQuery(BaseModel):
 
 
 class EmployeeCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str
     person_id: str | None = None
@@ -78,6 +78,7 @@ class EmployeeCreateRequest(BaseModel):
     notes: str | None = None
     record_status: RecordStatus = "draft"
     metadata_json: dict[str, Any] = Field(default_factory=dict)
+    base_updated_at: str | None = None
 
     @model_validator(mode="after")
     def derive_full_name(self) -> Self:
@@ -87,7 +88,7 @@ class EmployeeCreateRequest(BaseModel):
 
 
 class EmployeeUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     person_id: str | None = None
     employee_no: str | None = Field(default=None, max_length=64)
@@ -116,7 +117,7 @@ class EmployeeUpdateRequest(BaseModel):
 
 
 class EmploymentStartRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str
     branch_id: str | None = None
@@ -134,10 +135,13 @@ class EmploymentStartRequest(BaseModel):
     currency: str | None = Field(default=None, max_length=8)
     notes: str | None = None
     document_files: list[dict[str, Any]] = Field(default_factory=list)
+    client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class EmploymentTerminateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     end_date: date
     termination_reason: str = Field(min_length=1, max_length=240)
@@ -145,10 +149,13 @@ class EmploymentTerminateRequest(BaseModel):
     sgk_exit_reference_no: str | None = Field(default=None, max_length=120)
     notes: str | None = None
     document_files: list[dict[str, Any]] = Field(default_factory=list)
+    client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class AssignmentChangeRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     effective_date: date
     branch_id: str | None = None
@@ -157,16 +164,26 @@ class AssignmentChangeRequest(BaseModel):
     job_title: str | None = Field(default=None, max_length=160)
     reason: str | None = Field(default=None, max_length=240)
     document_files: list[dict[str, Any]] = Field(default_factory=list)
+    client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class SgkCompletedRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     completed_date: date
     reference_no: str | None = Field(default=None, max_length=120)
     document_files: list[dict[str, Any]] = Field(default_factory=list)
     notes: str | None = None
+    client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class EmployeeDocumentCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     document_type: DocumentType
     file_ref: dict[str, Any]
     issue_date: date | None = None
@@ -174,9 +191,14 @@ class EmployeeDocumentCreateRequest(BaseModel):
     status: DocumentStatus = "uploaded"
     required: bool = False
     notes: str | None = None
+    client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class EmployeeDocumentUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     file_ref: dict[str, Any] | None = None
     issue_date: date | None = None
     expiry_date: date | None = None
@@ -195,6 +217,35 @@ class EmployeeSummary(BaseModel):
     gender_distribution: dict[str, int] = Field(default_factory=dict)
     education_distribution: dict[str, int] = Field(default_factory=dict)
     employment_type_distribution: dict[str, int] = Field(default_factory=dict)
+
+
+class EmployeeRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    tenant_id: str | None = None
+    company_id: str | None = None
+    employee_no: str | None = None
+    full_name: str | None = None
+    employment_status: str | None = None
+    sgk_status: str | None = None
+    record_status: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class EmployeeListResponse(BaseModel):
+    data: list[EmployeeRecordResponse]
+    meta: dict[str, int]
+
+
+class EmployeeDocumentResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    employee_id: str | None = None
+    document_type: str | None = None
+    status: str | None = None
+    file_ref: dict[str, Any] | None = None
 
 
 LeaveCategory = Literal[

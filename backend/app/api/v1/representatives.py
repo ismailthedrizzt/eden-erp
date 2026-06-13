@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.representatives.authority import perform_authority_transaction_for_request
 from app.domains.representatives.schemas import (
     RepresentativeAuthorityTransactionRequest,
@@ -31,6 +32,25 @@ router = APIRouter(dependencies=[Depends(require_access_context)])
 
 RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+class RepresentativeRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    tenant_id: str | None = None
+    company_id: str | None = None
+    display_name: str | None = None
+    person_kind: str | None = None
+    authority_status: str | None = None
+    record_status: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class RepresentativeListResponse(BaseModel):
+    data: list[RepresentativeRecordResponse]
+    meta: dict[str, Any]
+    projection: dict[str, Any] | None = None
 
 
 def _context(
@@ -86,7 +106,7 @@ async def list_representative_authorities(
         raise domain_error_to_http(error) from error
 
 
-@router.get("", response_model=ApiSuccess[dict[str, Any]])
+@router.get("", response_model=ApiSuccess[RepresentativeListResponse])
 async def list_representative_records(
     session: SessionDep,
     context: RequestContextDep,
@@ -103,7 +123,8 @@ async def list_representative_records(
     organization_unit_id: str | None = Query(default=None),
     facility_id: str | None = Query(default=None),
     include_company_wide_for_branch: bool = Query(default=False),
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[RepresentativeListResponse]:
+    ensure_permission(context, "representatives.read")
     tenant_id = require_tenant(context)
     result = await list_representative_projection(
         session,
@@ -139,12 +160,13 @@ async def list_representative_records(
     )
 
 
-@router.post("", response_model=ApiSuccess[dict[str, Any]])
+@router.post("", response_model=ApiSuccess[RepresentativeRecordResponse])
 async def create_representative_record(
     payload: RepresentativeCreateDraftRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[RepresentativeRecordResponse]:
+    ensure_permission(context, "representatives.create")
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
@@ -158,12 +180,13 @@ async def create_representative_record(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/{representative_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/{representative_id}", response_model=ApiSuccess[RepresentativeRecordResponse])
 async def get_representative_record(
     representative_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[RepresentativeRecordResponse]:
+    ensure_permission(context, "representatives.read")
     tenant_id = require_tenant(context)
     try:
         row = await get_representative_by_id(session, tenant_id, representative_id)
@@ -180,13 +203,14 @@ async def get_representative_record(
         raise domain_error_to_http(error) from error
 
 
-@router.patch("/{representative_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.patch("/{representative_id}", response_model=ApiSuccess[RepresentativeRecordResponse])
 async def patch_representative_record(
     representative_id: str,
     payload: RepresentativeCardUpdateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[RepresentativeRecordResponse]:
+    ensure_permission(context, "representatives.update")
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
@@ -227,6 +251,7 @@ async def representative_authority_transaction(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "representatives.authority.manage")
     tenant_id = require_tenant(context)
     try:
         result = await perform_authority_transaction_for_request(
@@ -241,6 +266,15 @@ async def representative_authority_transaction(
         return OperationResponse(**result)
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )
 
 
 @router.get(

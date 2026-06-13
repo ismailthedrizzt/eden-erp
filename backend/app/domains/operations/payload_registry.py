@@ -57,7 +57,11 @@ def operation_payload_model(operation_type: str) -> type[OperationPayload]:
         return RepresentativeAuthorityPayload
     if operation_type.startswith('ownership.'):
         return OperationPayload
+    if operation_type.startswith('employee.'):
+        return OperationPayload
     if operation_type.startswith('company.'):
+        return OperationPayload
+    if operation_type.startswith('accounting.'):
         return OperationPayload
     if operation_type in STRICT_OPERATION_TYPES:
         return STRICT_OPERATION_TYPES[operation_type]

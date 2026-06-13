@@ -59,14 +59,113 @@ function validateLifecycleContract(contract) {
 
 function validateDirectLifecycleMutation() {
   const statusFields = ['record_status', 'employment_status', 'lifecycle_status', 'workflow_status', 'authority_record_status', 'ownership_status', 'company_status']
+  const functionIndex = buildFunctionIndex()
   for (const [file, source] of backendSourceByFile) {
-    const mutatesStatus = statusFields.some(field => new RegExp(`update[\\s\\S]{0,200}\\b${field}\\b\\s*=`, 'i').test(source))
-    if (!mutatesStatus) continue
-    const hasTransactionInsert = /insert\s+into[\s\S]{0,300}(operation_requests|transactions|events|history)/i.test(source)
-    if (!hasTransactionInsert) {
-      errors.push(`${relative(file)}: direct lifecycle/status mutation without visible transaction/event insert`)
+    for (const mutation of findSqlStatusMutations(file, source, statusFields)) {
+      if (!hasVisibleLifecycleRecord(mutation, functionIndex)) {
+        errors.push(`${relative(file)}: direct lifecycle/status mutation without visible transaction/event insert (${mutation.functionName || 'module scope'} updates ${mutation.field})`)
+      }
     }
   }
+}
+
+function findSqlStatusMutations(file, source, statusFields) {
+  const mutations = []
+  const updateRegex = /\bupdate\s+(?:public\.)?[a-zA-Z0-9_."{}]+[\s\S]{0,1200}?\bset\b[\s\S]{0,1200}?(?:where\b|returning\b|"""|'''|`\)|"\)|'\)|\)\s*,)/ig
+  let match
+  while ((match = updateRegex.exec(source))) {
+    const block = match[0]
+    const field = statusFields.find(name => new RegExp(`\\b${name}\\b\\s*=`, 'i').test(block))
+    if (!field) continue
+    const fn = findContainingFunction(file, source, match.index)
+    mutations.push({
+      file,
+      source,
+      field,
+      index: match.index,
+      sql: block,
+      functionName: fn?.name,
+      functionBlock: fn?.block || block,
+    })
+  }
+  return mutations
+}
+
+function hasVisibleLifecycleRecord(mutation, functionIndex, seen = new Set()) {
+  if (hasLifecycleRecordInSource(mutation.functionBlock)) return true
+  if (!mutation.functionName) return false
+
+  const key = `${mutation.file}:${mutation.functionName}`
+  if (seen.has(key)) return false
+  seen.add(key)
+
+  for (const caller of functionIndex) {
+    if (caller.file === mutation.file && caller.name === mutation.functionName) continue
+    if (!callsFunction(caller.block, mutation.functionName)) continue
+    if (hasLifecycleRecordInSource(caller.block)) return true
+    if (hasVisibleLifecycleRecord({ ...mutation, file: caller.file, functionName: caller.name, functionBlock: caller.block }, functionIndex, seen)) {
+      return true
+    }
+  }
+  return false
+}
+
+function hasLifecycleRecordInSource(source) {
+  return (
+    /insert\s+into\s+(?:public\.)?[a-zA-Z0-9_]*(?:operation_requests|transactions|events|history|operations|operation_relations)\b/i.test(source) ||
+    /\bcreate_or_get_operation_request\s*\(/.test(source) ||
+    /\binsert_[a-zA-Z0-9_]*(?:transaction|event)\s*\(/.test(source) ||
+    /\brecord_audit_required\s*\(/.test(source) ||
+    /\benqueue_outbox_event_required\s*\(/.test(source)
+  )
+}
+
+function buildFunctionIndex() {
+  const functions = []
+  for (const [file, source] of backendSourceByFile) {
+    const regex = /^async\s+def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(|^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/gm
+    let match
+    while ((match = regex.exec(source))) {
+      const next = findNextFunctionStart(source, regex.lastIndex)
+      functions.push({
+        file,
+        name: match[1] || match[2],
+        start: match.index,
+        end: next === -1 ? source.length : next,
+        block: source.slice(match.index, next === -1 ? source.length : next),
+      })
+    }
+  }
+  return functions
+}
+
+function findContainingFunction(file, source, index) {
+  const regex = /^async\s+def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(|^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/gm
+  let current
+  let match
+  while ((match = regex.exec(source))) {
+    if (match.index > index) break
+    current = { name: match[1] || match[2], start: match.index, bodyStart: regex.lastIndex }
+  }
+  if (!current) return undefined
+  const next = findNextFunctionStart(source, current.bodyStart)
+  const end = next === -1 ? source.length : next
+  return {
+    file,
+    name: current.name,
+    block: source.slice(current.start, end),
+  }
+}
+
+function findNextFunctionStart(source, fromIndex) {
+  const regex = /^async\s+def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(|^def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(/gm
+  regex.lastIndex = fromIndex
+  const match = regex.exec(source)
+  return match ? match.index : -1
+}
+
+function callsFunction(source, functionName) {
+  return new RegExp(`\\b${escapeRegExp(functionName)}\\s*\\(`).test(source)
 }
 
 function findInsertTargets(tableName) {

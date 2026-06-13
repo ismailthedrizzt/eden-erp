@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.organization.schemas import (
     OrganizationPositionCreateRequest,
     OrganizationUnitCreateRequest,
@@ -32,15 +33,32 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("/units", response_model=ApiSuccess[dict[str, Any]])
+class OrganizationRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    company_id: str | None = None
+    name: str | None = None
+    status: str | None = None
+
+
+class OrganizationListResponse(BaseModel):
+    organization_units: list[OrganizationRecordResponse] = Field(default_factory=list)
+    positions: list[OrganizationRecordResponse] = Field(default_factory=list)
+    unitTypes: list[dict[str, Any]] = Field(default_factory=list)
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.get("/units", response_model=ApiSuccess[OrganizationListResponse])
 async def list_units(
     session: SessionDep,
     context: RequestContextDep,
     company_id: str | None = Query(default=None),
     search: str | None = Query(default=None),
     page_size: int = Query(default=100, alias="pageSize", ge=1, le=200),
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[OrganizationListResponse]:
     tenant_id = require_tenant(context)
+    ensure_permission(context, "organization.read")
     ctx = _context_map(context)
     rows = await list_organization_units(
         session,
@@ -235,6 +253,15 @@ def _flatten_unit_detail(detail: dict[str, Any]) -> dict[str, Any]:
         "employees_summary": detail.get("employees_summary") or {},
         "warnings": detail.get("warnings") or [],
     }
+
+
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )
 
 
 def _unit_blocking_reasons(

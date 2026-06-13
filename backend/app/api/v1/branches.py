@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.branches.schemas import BranchCardUpdateRequest
 from app.domains.branches.service import (
     delete_branch_draft_if_allowed,
@@ -24,7 +25,26 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("")
+class BranchRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    tenant_id: str | None = None
+    company_id: str | None = None
+    branch_name: str | None = None
+    branch_short_name: str | None = None
+    record_status: str | None = None
+    document_files: list[dict[str, Any]] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class BranchListResponse(BaseModel):
+    data: list[BranchRecordResponse]
+    meta: dict[str, Any]
+    projection: dict[str, Any] | None = None
+
+
+@router.get("", response_model=ApiSuccess[BranchListResponse])
 async def list_branch_records(
     context: RequestContextDep,
     session: SessionDep,
@@ -39,6 +59,7 @@ async def list_branch_records(
     city: str | None = Query(default=None),
     is_official_branch: bool | None = Query(default=None),
 ) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "branches.read")
     tenant_id = require_tenant(context)
     result = await list_branch_projection(
         session,
@@ -78,23 +99,25 @@ async def create_branch_record() -> ApiSuccess[dict[str, Any]]:
     )
 
 
-@router.get("/{branch_id}")
+@router.get("/{branch_id}", response_model=ApiSuccess[BranchRecordResponse])
 async def get_branch_record(
     branch_id: str,
     context: RequestContextDep,
     session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "branches.read")
     detail = await get_branch_detail(session, _context_map(context), branch_id)
     return ApiSuccess(data=_flatten_branch_detail(detail), message="Sube kaydi getirildi.")
 
 
-@router.patch("/{branch_id}")
+@router.patch("/{branch_id}", response_model=ApiSuccess[BranchRecordResponse])
 async def patch_branch_record(
     branch_id: str,
     payload: BranchCardUpdateRequest,
     context: RequestContextDep,
     session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "branches.update")
     detail = await update_branch_card(
         session,
         _context_map(context),
@@ -105,6 +128,27 @@ async def patch_branch_record(
     return ApiSuccess(
         data=_flatten_branch_detail(detail),
         message="Sube kart bilgileri guncellendi.",
+    )
+
+
+@router.post("/{branch_id}/documents", response_model=ApiSuccess[BranchRecordResponse])
+async def update_branch_documents(
+    branch_id: str,
+    payload: BranchCardUpdateRequest,
+    context: RequestContextDep,
+    session: SessionDep,
+) -> ApiSuccess[BranchRecordResponse]:
+    ensure_permission(context, "branches.documents.manage")
+    detail = await update_branch_card(
+        session,
+        _context_map(context),
+        branch_id,
+        payload.model_dump(exclude_unset=True),
+    )
+    await session.commit()
+    return ApiSuccess(
+        data=_flatten_branch_detail(detail),
+        message="Sube belgeleri guncellendi.",
     )
 
 
@@ -153,3 +197,12 @@ def _flatten_branch_detail(detail: dict[str, Any]) -> dict[str, Any]:
         "official_change_history": detail.get("official_change_history") or [],
         "warnings": detail.get("warnings") or [],
     }
+
+
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )

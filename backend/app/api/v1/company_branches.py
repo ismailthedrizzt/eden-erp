@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.errors import DomainError
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.branches.operations import (
     build_branch_closing_precheck,
     build_branch_opening_precheck,
@@ -32,6 +33,7 @@ async def branch_opening_precheck(
     branch_name: str | None = Query(default=None),
     address: str | None = Query(default=None),
 ) -> ApiSuccess[PrecheckResponse]:
+    ensure_permission(context, "branches.lifecycle.manage")
     tenant_id = require_tenant(context)
     precheck = await build_branch_opening_precheck(
         session,
@@ -50,6 +52,7 @@ async def complete_branch_opening(
     context: RequestContextDep,
     session: SessionDep,
 ) -> OperationResponse:
+    ensure_permission(context, "branches.lifecycle.manage")
     tenant_id = require_tenant(context)
     result = await open_branch(
         session,
@@ -72,6 +75,7 @@ async def branch_closing_precheck(
     session: SessionDep,
     branch_id: str | None = Query(default=None),
 ) -> ApiSuccess[PrecheckResponse]:
+    ensure_permission(context, "branches.lifecycle.manage")
     tenant_id = require_tenant(context)
     precheck = await build_branch_closing_precheck(
         session,
@@ -89,6 +93,7 @@ async def complete_branch_closing(
     context: RequestContextDep,
     session: SessionDep,
 ) -> OperationResponse:
+    ensure_permission(context, "branches.lifecycle.manage")
     tenant_id = require_tenant(context)
     result = await close_branch(
         session,
@@ -100,3 +105,12 @@ async def complete_branch_closing(
         company_scope=context.company_scope_ids,
     )
     return OperationResponse(**result)
+
+
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )

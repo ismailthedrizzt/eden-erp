@@ -5,6 +5,7 @@ export type EdenHttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
 export interface EdenApiContract {
   id: string
   endpointPath: string
+  backendMode?: 'fastapi' | 'local_only'
   frontendPath?: string
   bffPath?: string
   fastApiPath?: string

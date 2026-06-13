@@ -87,7 +87,14 @@ async def create_or_get_operation_request(
             limit 1
             """
         ),
-        {"tenant_id": context["tenant_id"], "client_request_id": request_id},
+        {
+            "tenant_id": context["tenant_id"],
+            "operation_type": operation_type,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "client_request_id": request_id,
+            "requested_by": context.get("user_id"),
+        },
     )
     duplicate_row = duplicate.mappings().one_or_none()
     if duplicate_row:

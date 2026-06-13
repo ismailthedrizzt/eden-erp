@@ -1,12 +1,13 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.company.capital import (
     build_capital_decrease_precheck_for_request,
     build_capital_increase_precheck_for_request,
@@ -51,7 +52,42 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", response_model=ApiSuccess[dict[str, Any]])
+class CompanyRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    tenant_id: str | None = None
+    company_id: str | None = None
+    trade_name: str | None = None
+    short_name: str | None = None
+    record_status: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class CompanyListResponse(BaseModel):
+    data: list[CompanyRecordResponse]
+    meta: dict[str, Any]
+    projection: dict[str, Any] | None = None
+
+
+class CompanyDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company: dict[str, Any] | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class CompanyPrecheckResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    ok: bool | None = None
+    operation_enabled: bool | None = None
+    message: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+    blocking_reasons: list[str] = Field(default_factory=list)
+
+
+@router.get("", response_model=ApiSuccess[CompanyListResponse])
 async def list_companies(
     session: SessionDep,
     context: RequestContextDep,
@@ -61,7 +97,8 @@ async def list_companies(
     sort: str | None = Query(default=None),
     direction: str = Query(default="asc"),
     statuses: str | None = Query(default=None),
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyListResponse]:
+    ensure_permission(context, "companies.read")
     tenant_id = require_tenant(context)
     try:
         result = await list_company_projection(
@@ -128,12 +165,13 @@ async def list_nace_reference_codes(
     return ApiSuccess(data=[dict(row) for row in result.mappings().all()], message="NACE referans listesi getirildi.")
 
 
-@router.post("", response_model=ApiSuccess[dict[str, Any]])
+@router.post("", response_model=ApiSuccess[CompanyRecordResponse])
 async def create_company_card(
     request: CompanyCreateDraftRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyRecordResponse]:
+    ensure_permission(context, "companies.create")
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
@@ -153,12 +191,13 @@ async def create_company_card(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/{company_id}", response_model=ApiSuccess[CompanyDetailResponse])
 async def company_detail(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyDetailResponse]:
+    ensure_permission(context, "companies.read")
     tenant_id = require_tenant(context)
     try:
         data = await build_company_detail_read_model(
@@ -349,13 +388,14 @@ async def deregistration_wizard_context(
         raise domain_error_to_http(error) from error
 
 
-@router.patch("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.patch("/{company_id}", response_model=ApiSuccess[CompanyRecordResponse])
 async def patch_company_card(
     company_id: str,
     request: CompanyCardUpdateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyRecordResponse]:
+    ensure_permission(context, "companies.update")
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
@@ -403,13 +443,14 @@ async def delete_company_card(
 
 @router.get(
     "/{company_id}/capital-increases/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def capital_increase_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_capital_increase_precheck_for_request(
@@ -425,13 +466,14 @@ async def capital_increase_precheck(
 
 @router.get(
     "/{company_id}/capital-decreases/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def capital_decrease_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_capital_decrease_precheck_for_request(
@@ -452,6 +494,7 @@ async def capital_increase(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_capital_increase_for_request(
@@ -474,6 +517,7 @@ async def current_ownership_for_company(
     session: SessionDep,
     context: RequestContextDep,
 ) -> ApiSuccess[list[dict[str, Any]]]:
+    ensure_permission(context, "partners.read")
     tenant_id = require_tenant(context)
     try:
         company = await get_company_by_id(session, tenant_id, company_id)
@@ -650,13 +694,14 @@ async def passivate_company_nace_code(
 
 @router.get(
     "/{company_id}/official-changes/title-change/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def title_change_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_company_official_change_precheck(
@@ -678,6 +723,7 @@ async def title_change(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_title_change(
@@ -694,13 +740,14 @@ async def title_change(
 
 @router.get(
     "/{company_id}/official-changes/address-change/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def address_change_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_company_official_change_precheck(
@@ -722,6 +769,7 @@ async def address_change(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_address_change(
@@ -736,15 +784,25 @@ async def address_change(
         raise domain_error_to_http(error) from error
 
 
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
 @router.get(
     "/{company_id}/official-changes/public-registration-update/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def public_registration_update_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_company_official_change_precheck(
@@ -769,6 +827,7 @@ async def public_registration_update(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_public_registration_update(
@@ -785,13 +844,14 @@ async def public_registration_update(
 
 @router.get(
     "/{company_id}/official-changes/nace-change/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def nace_change_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_nace_change_precheck(
@@ -812,6 +872,7 @@ async def nace_change(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_nace_change(
@@ -828,13 +889,14 @@ async def nace_change(
 
 @router.get(
     "/{company_id}/official-changes/activity-subject-change/precheck",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[CompanyPrecheckResponse],
 )
 async def activity_subject_change_precheck(
     company_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         data = await build_activity_subject_change_precheck(
@@ -858,6 +920,7 @@ async def activity_subject_change(
     session: SessionDep,
     context: RequestContextDep,
 ) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
     tenant_id = require_tenant(context)
     try:
         result = await complete_activity_subject_change(
@@ -870,3 +933,121 @@ async def activity_subject_change(
         return OperationResponse(**result)
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+@router.get(
+    "/{company_id}/official-changes/{change_type}/precheck",
+    response_model=ApiSuccess[CompanyPrecheckResponse],
+)
+async def official_change_precheck(
+    company_id: str,
+    change_type: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[CompanyPrecheckResponse]:
+    ensure_permission(context, "companies.lifecycle.manage")
+    tenant_id = require_tenant(context)
+    normalized = normalize_official_change_type(change_type)
+    try:
+        if normalized == "nace_change":
+            data = await build_nace_change_precheck(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+            )
+        elif normalized == "activity_subject_change":
+            data = await build_activity_subject_change_precheck(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+            )
+        else:
+            data = await build_company_official_change_precheck(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                change_type=normalized,
+            )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message=data.get("message"))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/{company_id}/official-changes/{change_type}", response_model=OperationResponse)
+async def official_change_complete(
+    company_id: str,
+    change_type: str,
+    request: dict[str, Any],
+    session: SessionDep,
+    context: RequestContextDep,
+) -> OperationResponse:
+    ensure_permission(context, "companies.lifecycle.manage")
+    tenant_id = require_tenant(context)
+    normalized = normalize_official_change_type(change_type)
+    try:
+        if normalized == "title_change":
+            result = await complete_title_change(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                request=TitleChangeRequest.model_validate(request),
+            )
+        elif normalized == "address_change":
+            result = await complete_address_change(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                request=AddressChangeRequest.model_validate(request),
+            )
+        elif normalized == "public_registration_update":
+            result = await complete_public_registration_update(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                request=PublicRegistrationUpdateRequest.model_validate(request),
+            )
+        elif normalized == "nace_change":
+            result = await complete_nace_change(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                request=NaceChangeRequest.model_validate(request),
+            )
+        elif normalized == "activity_subject_change":
+            result = await complete_activity_subject_change(
+                session=session,
+                tenant_id=tenant_id,
+                user_id=context.user_id,
+                company_id=company_id,
+                request=ActivitySubjectChangeRequest.model_validate(request),
+            )
+        else:
+            raise DomainError("Desteklenmeyen resmi degisiklik tipi.", "OFFICIAL_CHANGE_TYPE_UNSUPPORTED", 400)
+        return OperationResponse(**result)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+def normalize_official_change_type(change_type: str) -> str:
+    normalized = change_type.replace("-", "_").strip()
+    allowed = {
+        "title_change",
+        "address_change",
+        "public_registration_update",
+        "nace_change",
+        "activity_subject_change",
+    }
+    if normalized not in allowed:
+        raise DomainError(
+            "Desteklenmeyen resmi degisiklik tipi.",
+            "OFFICIAL_CHANGE_TYPE_UNSUPPORTED",
+            status.HTTP_400_BAD_REQUEST,
+        )
+    return normalized

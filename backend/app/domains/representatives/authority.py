@@ -55,6 +55,7 @@ def _context(
 
 
 def _effect_status(transaction_type: str) -> str:
+    transaction_type = _canonical_transaction_type(transaction_type)
     if transaction_type == "authority_suspend":
         return "suspended"
     if transaction_type in {"authority_terminate", "authority_reverse"}:
@@ -63,6 +64,7 @@ def _effect_status(transaction_type: str) -> str:
 
 
 def _outbox_event_type(transaction_type: str) -> str:
+    transaction_type = _canonical_transaction_type(transaction_type)
     if transaction_type == "authority_start":
         return "representative.authority_started"
     if transaction_type == "authority_suspend":
@@ -73,9 +75,14 @@ def _outbox_event_type(transaction_type: str) -> str:
 
 
 def _operation_type(transaction_type: str) -> str:
+    transaction_type = _canonical_transaction_type(transaction_type)
     if transaction_type not in AUTHORITY_TRANSACTION_TYPES:
         return 'representative.authority_transaction'
     return 'representative.' + transaction_type
+
+
+def _canonical_transaction_type(transaction_type: str) -> str:
+    return AUTHORITY_TRANSACTION_LABELS.get(transaction_type, transaction_type)
 
 
 def _required_permission(transaction_type: str) -> str:
@@ -119,7 +126,8 @@ def _scope_for_transaction(
     request: RepresentativeAuthorityTransactionRequest,
     current_authority: dict[str, Any] | None,
 ) -> RepresentativeAuthorityScope:
-    if request.transaction_type in {
+    transaction_type = _canonical_transaction_type(request.transaction_type)
+    if transaction_type in {
         "authority_suspend",
         "authority_terminate",
         "authority_reverse",
@@ -180,11 +188,12 @@ def _validate_payload(
     request: RepresentativeAuthorityTransactionRequest,
     current_authority: dict[str, Any] | None,
 ) -> None:
-    if request.transaction_type not in AUTHORITY_TRANSACTION_TYPES:
+    transaction_type = _canonical_transaction_type(request.transaction_type)
+    if transaction_type not in AUTHORITY_TRANSACTION_TYPES:
         raise DomainError("Gecersiz temsil yetkisi islemi.", "INVALID_TRANSACTION_TYPE", 400)
     if not request.effective_date:
         raise DomainError("Yururluk tarihi zorunludur.", "EFFECTIVE_DATE_REQUIRED", 400)
-    if request.transaction_type not in {
+    if transaction_type not in {
         'authority_terminate',
         'authority_suspend',
         'authority_reverse',
@@ -194,13 +203,13 @@ def _validate_payload(
         )
         if not authority_types:
             raise DomainError("En az bir yetki tipi secilmelidir.", "AUTHORITY_TYPE_REQUIRED", 400)
-    if request.transaction_type == "authority_start" and not request.document_list():
+    if transaction_type == "authority_start" and not request.document_list():
         raise DomainError(
             "Aktivasyon icin en az bir yetki belgesi gereklidir.",
             "AUTHORITY_DOCUMENT_REQUIRED",
             400,
         )
-    if request.transaction_type == "authority_terminate" and not (
+    if transaction_type == "authority_terminate" and not (
         request.reason or request.termination_reason or request.notes
     ):
         raise DomainError(
@@ -455,6 +464,9 @@ async def perform_authority_transaction(
     warnings: list[str] = []
     try:
         async with session.begin():
+            request = request.model_copy(
+                update={"transaction_type": _canonical_transaction_type(request.transaction_type)}
+            )
             representative = await get_representative_by_id(
                 session, context["tenant_id"], representative_id
             )

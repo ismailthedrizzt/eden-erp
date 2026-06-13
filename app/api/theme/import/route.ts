@@ -4,6 +4,7 @@ import { createThemeImportPreview } from '@/lib/theme/themeImport'
 import { MAX_THEME_JSON_BYTES } from '@/lib/theme/themeSchema'
 
 export const runtime = 'nodejs'
+const THEME_CONTRACT_TARGET = 'local-only:/api/theme/import'
 
 export async function POST(request: NextRequest) {
   if (!isThemeImportAllowed()) {
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Cache-Control': 'no-store',
         'X-Content-Type-Options': 'nosniff',
+        'X-Backend-Contract-Target': THEME_CONTRACT_TARGET,
       },
     }
   )

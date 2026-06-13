@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.domains.hr.lifecycle import insert_employee_lifecycle_event
 from app.domains.hr.schemas import (
     EmployeeCreateRequest,
     EmployeeListQuery,
@@ -25,6 +26,7 @@ from app.domains.hr.service import (
     reject_controlled_employee_patch,
     row_to_dict,
 )
+from app.domains.operations.service import create_or_get_operation_request, mark_operation_completed
 
 EMPLOYEE_SORT_COLUMNS = {
     "employee_no": "e.employee_no",
@@ -388,6 +390,38 @@ async def delete_employee(
             "EMPLOYEE_HAS_EMPLOYMENT_RECORDS",
             status.HTTP_409_CONFLICT,
         )
+    operation, operation_warnings = await create_or_get_operation_request(
+        session,
+        context,
+        operation_type="employee.draft_delete",
+        client_request_id=None,
+        payload={
+            "employee_id": employee_id,
+            "base_version": current.get("version"),
+            "record_status": "passive",
+            "employment_status": current.get("employment_status"),
+        },
+        entity_type="hr_employee",
+        entity_id=employee_id,
+        module_key="hr",
+    )
+    operation_id = str(operation["id"]) if operation else None
+    if operation_id:
+        context["operation_id"] = operation_id
+        await insert_employee_lifecycle_event(
+            session,
+            tenant_id=str(context["tenant_id"]),
+            employee_id=employee_id,
+            operation_id=operation_id,
+            operation_type="employee.draft_delete",
+            payload={
+                "old_values": {
+                    "record_status": current.get("record_status"),
+                    "employment_status": current.get("employment_status"),
+                },
+                "new_values": {"record_status": "passive", "is_deleted": True},
+            },
+        )
     await session.execute(
         text(
             """
@@ -407,7 +441,15 @@ async def delete_employee(
             "updated_by": context.get("user_id"),
         },
     )
-    return {"id": employee_id, "deleted": True, "message": "Taslak calisan karti silindi."}
+    response = {
+        "id": employee_id,
+        "deleted": True,
+        "operation_id": operation_id,
+        "warnings": operation_warnings,
+        "message": "Taslak calisan karti silindi.",
+    }
+    await mark_operation_completed(session, operation, response, operation_warnings)
+    return response
 
 
 async def get_employee_summary(

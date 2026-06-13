@@ -27,6 +27,7 @@ CLOSED_VALUES = {"closed", "passive", "pasif", "deregistered", "deleted"}
 SAFE_DRAFT_DELETE_VALUES = {"draft", "taslak", "error", "partial"}
 BRANCH_CARD_FIELDS = {
     "branch_short_name",
+    "document_files",
     "phone",
     "email",
     "responsible_person_id",
@@ -362,6 +363,11 @@ async def update_branch_card(
             current_metadata.update(value or {})
             assignments.append("metadata_json = cast(:metadata_json as jsonb)")
             params["metadata_json"] = json.dumps(current_metadata, ensure_ascii=False, default=str)
+        elif field == "document_files":
+            current_documents = list(branch.get("document_files") or [])
+            current_documents.extend(value or [])
+            assignments.append("document_files = cast(:document_files as jsonb)")
+            params["document_files"] = json.dumps(current_documents, ensure_ascii=False, default=str)
         else:
             assignments.append(f"{field} = :{field}")
             params[field] = value

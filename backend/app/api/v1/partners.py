@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, require_access_context, require_tenant
+from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
 from app.domains.partners.schemas import PartnerCardUpdateRequest, PartnerCreateDraftRequest
 from app.domains.partners.service import (
     create_partner_draft,
@@ -27,7 +28,25 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", response_model=ApiSuccess[dict[str, Any]])
+class PartnerRecordResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str | None = None
+    tenant_id: str | None = None
+    company_id: str | None = None
+    display_name: str | None = None
+    partner_type: str | None = None
+    record_status: str | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class PartnerListResponse(BaseModel):
+    data: list[PartnerRecordResponse]
+    meta: dict[str, Any]
+    projection: dict[str, Any] | None = None
+
+
+@router.get("", response_model=ApiSuccess[PartnerListResponse])
 async def list_partners(
     session: SessionDep,
     context: RequestContextDep,
@@ -39,7 +58,8 @@ async def list_partners(
     direction: str = Query(default="asc"),
     statuses: str | None = Query(default=None),
     owner_kind: str | None = Query(default=None),
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[PartnerListResponse]:
+    ensure_permission(context, "partners.read")
     tenant_id = require_tenant(context)
     try:
         result = await list_partner_projection(
@@ -69,12 +89,13 @@ async def list_partners(
         raise domain_error_to_http(error) from error
 
 
-@router.post("", response_model=ApiSuccess[dict[str, Any]])
+@router.post("", response_model=ApiSuccess[PartnerRecordResponse])
 async def create_partner_card(
     request: PartnerCreateDraftRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[PartnerRecordResponse]:
+    ensure_permission(context, "partners.create")
     tenant_id = require_tenant(context)
     service_context = {
         "tenant_id": tenant_id,
@@ -95,12 +116,13 @@ async def create_partner_card(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/{partner_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/{partner_id}", response_model=ApiSuccess[PartnerRecordResponse])
 async def get_partner(
     session: SessionDep,
     context: RequestContextDep,
     partner_id: str,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[PartnerRecordResponse]:
+    ensure_permission(context, "partners.read")
     tenant_id = require_tenant(context)
     try:
         partner = await get_partner_by_id(session, tenant_id, partner_id)
@@ -125,13 +147,14 @@ async def get_company_partners(
         raise domain_error_to_http(error) from error
 
 
-@router.patch("/{partner_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.patch("/{partner_id}", response_model=ApiSuccess[PartnerRecordResponse])
 async def update_partner_card(
     session: SessionDep,
     context: RequestContextDep,
     partner_id: str,
     payload: PartnerCardUpdateRequest,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[PartnerRecordResponse]:
+    ensure_permission(context, "partners.update")
     tenant_id = require_tenant(context)
     service_context = {
         "tenant_id": tenant_id,
@@ -151,6 +174,15 @@ async def update_partner_card(
         return ApiSuccess(data=partner, message="Ortak karti guncellendi.")
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+def ensure_permission(context: RequestContext, permission_key: str) -> None:
+    if not has_permission(context, permission_key):
+        raise DomainError(
+            "Bu islem icin yetkiniz bulunmuyor.",
+            "PERMISSION_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )
 
 
 @router.delete("/{partner_id}", response_model=ApiSuccess[dict[str, Any]])

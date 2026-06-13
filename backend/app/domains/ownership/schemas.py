@@ -109,7 +109,7 @@ class CapitalIncreaseValidationSummary(BaseModel):
 
 
 class OwnershipTransactionRequest(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     transaction_type: OwnershipTransactionType | str
     company_id: str

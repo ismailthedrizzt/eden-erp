@@ -5,6 +5,7 @@ import type { ThemeExportFormat } from '@/lib/theme/themeSchema'
 export const runtime = 'nodejs'
 
 const EXPORT_FORMATS = new Set<ThemeExportFormat>(['eden', 'figma', 'css', 'readme'])
+const THEME_CONTRACT_TARGET = 'local-only:/api/theme/export'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
       'Content-Disposition': `attachment; filename="${artifact.filename}"`,
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
+      'X-Backend-Contract-Target': THEME_CONTRACT_TARGET,
     },
   })
 }

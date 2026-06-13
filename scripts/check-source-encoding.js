@@ -23,6 +23,7 @@ const textExtensions = new Set([
 const ignoredDirectories = new Set([
   '.git',
   '.next',
+  '.next-releases',
   '.turbo',
   'node_modules',
   '.venv',

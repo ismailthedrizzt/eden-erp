@@ -25,6 +25,7 @@ from app.domains.accounting.service import (
     list_meta,
     row_to_dict,
 )
+from app.domains.operations.service import create_or_get_operation_request, mark_operation_completed
 
 ACCOUNT_SORT_COLUMNS = {
     "account_code": "account_code",
@@ -320,6 +321,23 @@ async def delete_cari_account(
             "CARI_ACCOUNT_HAS_TRANSACTIONS",
             status.HTTP_409_CONFLICT,
         )
+    operation, operation_warnings = await create_or_get_operation_request(
+        session,
+        context,
+        operation_type="accounting.cari_account_delete",
+        client_request_id=None,
+        payload={
+            "account_id": account_id,
+            "base_version": current.get("version"),
+            "record_status": "passive",
+        },
+        entity_type="accounting_cari_account",
+        entity_id=account_id,
+        module_key="accounting",
+    )
+    operation_id = str(operation["id"]) if operation else None
+    if operation_id:
+        context["operation_id"] = operation_id
     await session.execute(
         text(
             """
@@ -339,7 +357,15 @@ async def delete_cari_account(
             "updated_by": context.get("user_id"),
         },
     )
-    return {"id": account_id, "deleted": True, "message": "Cari kart silindi."}
+    response = {
+        "id": account_id,
+        "deleted": True,
+        "operation_id": operation_id,
+        "warnings": operation_warnings,
+        "message": "Cari kart silindi.",
+    }
+    await mark_operation_completed(session, operation, response, operation_warnings)
+    return response
 
 
 async def assert_unique_cari_account(

@@ -69,8 +69,12 @@ from app.domains.hr.schemas import (
     AttendanceUpdateRequest,
     EmployeeCreateRequest,
     EmployeeDocumentCreateRequest,
+    EmployeeDocumentResponse,
     EmployeeDocumentUpdateRequest,
+    EmployeeListResponse,
+    EmployeeRecordResponse,
     EmployeeListQuery,
+    EmployeeSummary,
     EmployeeUpdateRequest,
     EmploymentStartRequest,
     EmploymentTerminateRequest,
@@ -119,11 +123,11 @@ PeriodFromQuery = Annotated[date | None, Query(alias="periodFrom")]
 PeriodToQuery = Annotated[date | None, Query(alias="periodTo")]
 
 
-@router.get("/employees/summary", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/employees/summary", response_model=ApiSuccess[EmployeeSummary])
 async def employees_summary(
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeSummary]:
     ensure_permission(context, "hr.view")
     tenant_id = require_tenant(context)
     try:
@@ -907,7 +911,7 @@ async def payroll_prep_mark_ready(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/employees", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/employees", response_model=ApiSuccess[EmployeeListResponse])
 async def employees_list(
     session: SessionDep,
     context: RequestContextDep,
@@ -928,7 +932,7 @@ async def employees_list(
     page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
     sort: str = Query(default="updated_at"),
     direction: str = Query(default="desc"),
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeListResponse]:
     ensure_permission(context, "hr.view")
     tenant_id = require_tenant(context)
     try:
@@ -960,12 +964,12 @@ async def employees_list(
         raise domain_error_to_http(error) from error
 
 
-@router.post("/employees", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+@router.post("/employees", response_model=ApiSuccess[EmployeeRecordResponse], status_code=201)
 async def employees_create(
     request: EmployeeCreateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.employeeCreate")
     tenant_id = require_tenant(context)
     try:
@@ -976,12 +980,12 @@ async def employees_create(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/employees/{employee_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.get("/employees/{employee_id}", response_model=ApiSuccess[EmployeeRecordResponse])
 async def employees_get(
     employee_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.view")
     tenant_id = require_tenant(context)
     try:
@@ -993,13 +997,13 @@ async def employees_get(
         raise domain_error_to_http(error) from error
 
 
-@router.patch("/employees/{employee_id}", response_model=ApiSuccess[dict[str, Any]])
+@router.patch("/employees/{employee_id}", response_model=ApiSuccess[EmployeeRecordResponse])
 async def employees_update(
     employee_id: str,
     payload: EmployeeUpdateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.edit")
     tenant_id = require_tenant(context)
     try:
@@ -1037,14 +1041,14 @@ async def employees_delete(
 
 @router.post(
     "/employees/{employee_id}/employment/start",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeRecordResponse],
 )
 async def employment_start(
     employee_id: str,
     request: EmploymentStartRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.employmentStart")
     tenant_id = require_tenant(context)
     try:
@@ -1062,14 +1066,14 @@ async def employment_start(
 
 @router.post(
     "/employees/{employee_id}/employment/terminate",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeRecordResponse],
 )
 async def employment_terminate(
     employee_id: str,
     request: EmploymentTerminateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.employmentTerminate")
     tenant_id = require_tenant(context)
     try:
@@ -1087,14 +1091,14 @@ async def employment_terminate(
 
 @router.post(
     "/employees/{employee_id}/employment/assignment-change",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeRecordResponse],
 )
 async def employment_assignment_change(
     employee_id: str,
     request: AssignmentChangeRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.assignmentChange")
     tenant_id = require_tenant(context)
     try:
@@ -1112,14 +1116,14 @@ async def employment_assignment_change(
 
 @router.post(
     "/employees/{employee_id}/sgk/entry-completed",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeRecordResponse],
 )
 async def sgk_entry_completed(
     employee_id: str,
     request: SgkCompletedRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.employmentStart")
     tenant_id = require_tenant(context)
     try:
@@ -1137,14 +1141,14 @@ async def sgk_entry_completed(
 
 @router.post(
     "/employees/{employee_id}/sgk/exit-completed",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeRecordResponse],
 )
 async def sgk_exit_completed(
     employee_id: str,
     request: SgkCompletedRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeRecordResponse]:
     ensure_permission(context, "hr.employmentTerminate")
     tenant_id = require_tenant(context)
     try:
@@ -1160,12 +1164,12 @@ async def sgk_exit_completed(
         raise domain_error_to_http(error) from error
 
 
-@router.get("/employees/{employee_id}/documents", response_model=ApiSuccess[list[dict[str, Any]]])
+@router.get("/employees/{employee_id}/documents", response_model=ApiSuccess[list[EmployeeDocumentResponse]])
 async def documents_list(
     employee_id: str,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[list[dict[str, Any]]]:
+) -> ApiSuccess[list[EmployeeDocumentResponse]]:
     ensure_permission(context, "hr.view")
     tenant_id = require_tenant(context)
     try:
@@ -1181,7 +1185,7 @@ async def documents_list(
 
 @router.post(
     "/employees/{employee_id}/documents",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeDocumentResponse],
     status_code=201,
 )
 async def documents_create(
@@ -1189,7 +1193,7 @@ async def documents_create(
     request: EmployeeDocumentCreateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeDocumentResponse]:
     ensure_permission(context, "hr.documentsManage")
     tenant_id = require_tenant(context)
     try:
@@ -1207,7 +1211,7 @@ async def documents_create(
 
 @router.patch(
     "/employees/{employee_id}/documents/{document_id}",
-    response_model=ApiSuccess[dict[str, Any]],
+    response_model=ApiSuccess[EmployeeDocumentResponse],
 )
 async def documents_update(
     employee_id: str,
@@ -1215,7 +1219,7 @@ async def documents_update(
     request: EmployeeDocumentUpdateRequest,
     session: SessionDep,
     context: RequestContextDep,
-) -> ApiSuccess[dict[str, Any]]:
+) -> ApiSuccess[EmployeeDocumentResponse]:
     ensure_permission(context, "hr.documentsManage")
     tenant_id = require_tenant(context)
     try:

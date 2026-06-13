@@ -98,9 +98,9 @@ class RepresentativeAuthorityScope(BaseModel):
 
 
 class RepresentativeAuthorityTransactionRequest(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    transaction_type: RepresentativeAuthorityTransactionType
+    transaction_type: str
     authority_action: bool = True
     authority_types: list[str] = Field(default_factory=list)
     primary_authority_type: str | None = None
@@ -138,10 +138,24 @@ class RepresentativeAuthorityTransactionRequest(BaseModel):
     base_version: int | None = None
     base_updated_at: datetime | None = None
 
+    def __init__(self, **data: Any) -> None:
+        raw_transaction_type = data.get("transaction_type")
+        super().__init__(**data)
+        if raw_transaction_type in AUTHORITY_TRANSACTION_LABELS:
+            self.transaction_type = str(raw_transaction_type)
+
+    @classmethod
+    def model_validate(cls, obj: Any, *args: Any, **kwargs: Any) -> RepresentativeAuthorityTransactionRequest:
+        model = super().model_validate(obj, *args, **kwargs)
+        model.transaction_type = AUTHORITY_TRANSACTION_LABELS.get(model.transaction_type, model.transaction_type)
+        return model
+
     @field_validator('transaction_type', mode='before')
     @classmethod
     def normalize_transaction_type(cls, value: Any) -> str:
         raw = str(value or '').strip()
+        if raw not in AUTHORITY_TRANSACTION_LABELS and raw not in AUTHORITY_TRANSACTION_TYPES:
+            raise ValueError("Invalid representative authority transaction_type")
         return AUTHORITY_TRANSACTION_LABELS.get(raw, raw)
 
     @field_validator("authority_types", mode="before")
@@ -213,7 +227,7 @@ class RepresentativeAuthorityTransactionResponse(BaseModel):
 
 
 class RepresentativeCardUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     first_name: str | None = None
     last_name: str | None = None
@@ -239,7 +253,7 @@ class RepresentativeCardUpdateRequest(BaseModel):
 
 
 class RepresentativeCreateDraftRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str
     person_kind: Literal["person", "organization"] = "person"

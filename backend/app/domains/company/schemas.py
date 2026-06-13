@@ -53,7 +53,7 @@ class CompanyOfficialChangePrecheckResponse(BaseModel):
 
 
 class CompanyCreateDraftRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     trade_name: str
     short_name: str | None = None
@@ -74,10 +74,12 @@ class CompanyCreateDraftRequest(BaseModel):
     contact_points: list[dict[str, Any]] = Field(default_factory=list)
     notes: str | None = None
     client_request_id: str | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
 
 
 class CompanyCardUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     trade_name: str | None = None
     short_name: str | None = None
@@ -114,7 +116,7 @@ class CompanyCardResponse(BaseModel):
 
 
 class CompanyOfficialChangeBaseRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     notes: str | None = None
     document_files: list[dict[str, Any]] = Field(default_factory=list)

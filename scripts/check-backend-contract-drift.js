@@ -39,14 +39,15 @@ function validateApiContract(contract, file, source) {
   if (!contract.method) errors.push(`${contractLabel}: missing method`)
   if (!contract.serviceFunction) errors.push(`${contractLabel}: missing serviceFunction`)
 
-  const hasNewPathModel = contract.frontendPath && contract.bffPath && contract.fastApiPath
+  const isLocalOnly = contract.backendMode === 'local_only'
+  const hasNewPathModel = contract.frontendPath && contract.bffPath && (contract.fastApiPath || isLocalOnly)
   const isCritical = /employee|theme|company|partner|representative|branch/i.test(relative(file))
   if (isCritical && !hasNewPathModel) {
-    errors.push(`${contractLabel}: critical API contract must include frontendPath, bffPath and fastApiPath; endpointPath is not enough`)
+    errors.push(`${contractLabel}: critical API contract must include frontendPath, bffPath and fastApiPath unless backendMode is local_only; endpointPath is not enough`)
   }
 
   const fastApiPath = contract.fastApiPath || contract.endpointPath
-  if (fastApiPath && !backendRouteExists(fastApiPath, contract.method)) {
+  if (!isLocalOnly && fastApiPath && !backendRouteExists(fastApiPath, contract.method)) {
     errors.push(`${contractLabel}: FastAPI route not found for ${contract.method} ${fastApiPath}`)
   }
   if (contract.bffPath && !nextBffRouteExists(contract.bffPath, contract.method)) {
@@ -55,13 +56,13 @@ function validateApiContract(contract, file, source) {
   if (contract.frontendPath && contract.serviceFunction && !isCacheInvalidation(contract.serviceFunction) && !serviceCallPathExists(contract.serviceFunction, contract.frontendPath)) {
     errors.push(`${contractLabel}: serviceFunction does not call frontendPath ${contract.frontendPath}`)
   }
-  if (contract.bffPath && fastApiPath && !bffProxiesToFastApi(contract.bffPath, fastApiPath)) {
+  if (!isLocalOnly && contract.bffPath && fastApiPath && !bffProxiesToFastApi(contract.bffPath, fastApiPath)) {
     errors.push(`${contractLabel}: BFF route does not visibly proxy to ${fastApiPath}`)
   }
 
-  const backendRoute = findBackendRoute(fastApiPath, contract.method)
+  const backendRoute = isLocalOnly ? null : findBackendRoute(fastApiPath, contract.method)
   if (backendRoute) {
-    const permission = firstPermission(contract.backendAuthorization || contract.authorization)
+    const permission = firstPermission(contract.backendAuthorization?.length ? contract.backendAuthorization : contract.authorization)
     if (permission && !backendHasPermission(backendRoute.block, permission)) {
       errors.push(`${contractLabel}: backend permission drift. Expected ensure_permission(context, "${permission}")`)
     }
@@ -91,18 +92,25 @@ function findBackendRoute(apiPath, method) {
   const normalized = normalizeApiPath(apiPath).replace(/^\/api\/v1/, '')
   const routerMethod = method.toLowerCase()
   for (const file of backendApiFiles) {
+    const moduleName = path.basename(file, '.py')
+    if (!backendRouterPrefixes.has(moduleName)) continue
     const source = fs.readFileSync(file, 'utf8')
-    const routeRegex = new RegExp(`@router\\.${routerMethod}\\(\\s*["']([^"']*)["'][^\\n]*\\)`, 'g')
+    const routeRegex = new RegExp(`@router\\.${routerMethod}\\(`, 'g')
     let match
     while ((match = routeRegex.exec(source))) {
-      const prefix = backendRouterPrefixes.get(path.basename(file, '.py')) || ''
-      const candidate = normalizeApiPath(`${prefix}/${match[1]}`.replace(/\/+/g, '/'))
+      const openParen = source.indexOf('(', match.index)
+      const closeParen = findMatchingDelimiter(source, openParen, '(', ')')
+      if (closeParen === -1) continue
+      const decoratorText = source.slice(match.index, closeParen + 1)
+      const pathMatch = decoratorText.match(/@router\.\w+\(\s*["']([^"']*)["']/)
+      if (!pathMatch) continue
+      const prefix = backendRouterPrefixes.get(moduleName) || ''
+      const candidate = normalizeApiPath(`${prefix}/${pathMatch[1]}`.replace(/\/+/g, '/'))
       if (candidate === normalized || pathMatches(candidate, normalized)) {
         const start = match.index
         const nextDecorator = source.indexOf('\n@router.', start + 1)
         const block = source.slice(start, nextDecorator === -1 ? source.length : nextDecorator)
-        const decoratorLine = source.slice(start, source.indexOf('\n', start))
-        return { file, block, decorator: decoratorLine }
+        return { file, block, decorator: decoratorText }
       }
     }
   }
@@ -166,6 +174,7 @@ function parseApiContracts(source, fileName) {
     method: field(block, 'method'),
     serviceFunction: field(block, 'serviceFunction'),
     endpointPath: field(block, 'endpointPath'),
+    backendMode: field(block, 'backendMode'),
     frontendPath: field(block, 'frontendPath'),
     bffPath: field(block, 'bffPath') || field(block, 'frontendRoute'),
     fastApiPath: field(block, 'fastApiPath') || field(block, 'endpointPath'),

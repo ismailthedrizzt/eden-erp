@@ -43,7 +43,7 @@ class CapitalIncreasePrecheckResponse(BaseModel):
 
 
 class CapitalIncreaseRequest(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     transaction_date: str
     decision_date: str | None = None

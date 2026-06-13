@@ -264,8 +264,13 @@ async def merge_confirm(session: AsyncSession, context: dict[str, Any], request:
         await _outbox(session, context, MERGE_BLOCKED, row)
         raise DomainError(preview.blocked_reason or "Bu merge islemi guvenli degil.", "MERGE_BLOCKED", status.HTTP_409_CONFLICT, {"preview": preview.model_dump(mode="json"), "merge_operation_id": operation_id})
 
-    result = await apply_safe_merge(session, str(context["tenant_id"]), request)
-    row = await _insert_merge_operation(session, context, operation_id, request, "completed", preview.model_dump(mode="json"), result)
+    row = await _insert_merge_operation(session, context, operation_id, request, "processing", preview.model_dump(mode="json"), {})
+    try:
+        result = await apply_safe_merge(session, str(context["tenant_id"]), request)
+    except Exception as exc:
+        await _complete_merge_operation(session, context, operation_id, "failed", {"error": str(exc)})
+        raise
+    row = await _complete_merge_operation(session, context, operation_id, "completed", result)
     await _insert_merge_relations(session, context, operation_id, preview.relation_impact)
     if request.duplicate_group_id:
         await update_group_status(session, str(context["tenant_id"]), request.duplicate_group_id, status_value="merged", user_id=context.get("user_id"), notes=request.reason)
@@ -560,7 +565,8 @@ async def _insert_merge_operation(
               :id, :tenant_id, :entity_type, cast(:source_entity_ids as jsonb),
               :target_entity_id, cast(:merge_strategy as jsonb), :status,
               cast(:impact_summary as jsonb), cast(:result_json as jsonb),
-              :created_by, :confirmed_by, now(), now(), now()
+              :created_by, :confirmed_by, now(), now(),
+              case when :status in ('completed', 'failed') then now() else null end
             )
             returning *
             """
@@ -577,6 +583,35 @@ async def _insert_merge_operation(
             "result_json": _json(result_json),
             "created_by": context.get("user_id"),
             "confirmed_by": context.get("user_id"),
+        },
+    )
+    return row_to_dict(result.mappings().one()) or {}
+
+
+async def _complete_merge_operation(
+    session: AsyncSession,
+    context: dict[str, Any],
+    operation_id: str,
+    status_value: str,
+    result_json: dict[str, Any],
+) -> dict[str, Any]:
+    result = await session.execute(
+        text(
+            """
+            update public.merge_operations
+            set status = :status,
+                result_json = cast(:result_json as jsonb),
+                completed_at = now()
+            where tenant_id = :tenant_id
+              and id = :operation_id
+            returning *
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "operation_id": operation_id,
+            "status": status_value,
+            "result_json": _json(result_json),
         },
     )
     return row_to_dict(result.mappings().one()) or {}

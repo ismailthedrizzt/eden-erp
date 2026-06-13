@@ -11,9 +11,10 @@ FacilityAction = Literal["deactivate", "keep_open", "reuse"]
 
 
 class BranchCardUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     branch_short_name: str | None = None
+    document_files: list[dict[str, Any]] | None = None
     phone: str | None = None
     email: str | None = None
     responsible_person_id: str | None = None
@@ -65,7 +66,7 @@ def _ensure_date_order(
 
 
 class BranchOpeningRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str | None = None
     branch_name: str | None = None
@@ -130,7 +131,7 @@ class BranchOpeningRequest(BaseModel):
 
 
 class BranchClosingRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     branch_id: str | None = None
     closing_reason: str | None = None
