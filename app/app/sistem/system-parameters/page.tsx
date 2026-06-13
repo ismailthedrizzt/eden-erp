@@ -1,19 +1,4 @@
 'use client'
-
-
-
-import { appSistemSystemParametersListContract } from '@/contracts/pages/generated/app-sistem-system-parameters.list.contract'
-import { appSistemSystemParametersFormContract } from '@/contracts/pages/generated/app-sistem-system-parameters.form.contract'
-
-void appSistemSystemParametersListContract
-void appSistemSystemParametersFormContract
-
-import { appSistemSystemParametersPageContract } from '@/contracts/pages/generated/app-sistem-system-parameters.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemSystemParametersContractReady = requirePageContract(appSistemSystemParametersPageContract)
-void appSistemSystemParametersContractReady
-
 import { useEffect, useMemo, useState } from 'react'
 import { ListChecks, Settings2, SlidersHorizontal } from 'lucide-react'
 import { EntityForm, type FormField, type FormMode, type FormTab } from '@/components/ui/EntityForm'

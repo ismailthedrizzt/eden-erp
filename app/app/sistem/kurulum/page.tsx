@@ -1,13 +1,6 @@
 'use client'
 
 
-import { appSistemKurulumPageContract } from '@/contracts/pages/generated/app-sistem-kurulum.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-import { appSistemKurulumWizardContract } from '@/contracts/pages/generated/app-sistem-kurulum.wizard.contract'
-import { appSistemKurulumLifecycleContract } from '@/contracts/pages/generated/app-sistem-kurulum.lifecycle.contract'
-
-const appSistemKurulumContractReady = requirePageContract(appSistemKurulumPageContract)
-
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {

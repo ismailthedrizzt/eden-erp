@@ -1,12 +1,4 @@
 'use client'
-
-
-import { appSirketSureclerPageContract } from '@/contracts/pages/generated/app-sirket-surecler.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSirketSureclerContractReady = requirePageContract(appSirketSureclerPageContract)
-void appSirketSureclerContractReady
-
 // MODULE LICENSE: sirket/surecler
 // Ana Modül: Şirket Yönetimi (sirket)
 // Alt Modül: Süreçlerimiz

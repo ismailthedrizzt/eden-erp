@@ -1,17 +1,4 @@
 'use client'
-
-
-
-import { appSistemEntegrasyonAyarlariListContract } from '@/contracts/pages/generated/app-sistem-entegrasyon-ayarlari.list.contract'
-
-void appSistemEntegrasyonAyarlariListContract
-
-import { appSistemEntegrasyonAyarlariPageContract } from '@/contracts/pages/generated/app-sistem-entegrasyon-ayarlari.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemEntegrasyonAyarlariContractReady = requirePageContract(appSistemEntegrasyonAyarlariPageContract)
-void appSistemEntegrasyonAyarlariContractReady
-
 import { useEffect, useMemo, useState } from 'react'
 import { DatabaseZap } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'

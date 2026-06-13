@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appSirketCompaniesPartnersFormContract } from '@/contracts/pages/generated/app-sirket-companies-partners.form.contract'
-import { appSirketCompaniesPartnersWizardContract } from '@/contracts/pages/generated/app-sirket-companies-partners.wizard.contract'
-import { appSirketCompaniesPartnersLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies-partners.lifecycle.contract'
-
-
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AlertCircle, CheckCircle2, FileText, ListChecks, Users } from 'lucide-react'
@@ -40,7 +35,8 @@ import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import { partnerPageContract } from '@/contracts/pages/partner.page.contract'
-import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
+import { partnerLifecycleContract } from '@/contracts/lifecycle/partner.lifecycle.contract'
+import { assertFormFieldsMatchContract, assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import {
   INITIAL_PARTNERSHIP_ENTRY_TYPE,
   getOwnershipTransactionTypeLabel,
@@ -436,6 +432,8 @@ const tabs: FormTab[] = [
     ],
   },
 ]
+
+assertFormFieldsMatchContract(partnerPageContract.route, partnerPageContract.form?.fields || [], heroFields, tabs)
 
 export default function OrtaklarPage() {
   const searchParams = useSearchParams()

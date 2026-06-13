@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appSirketCompaniesFormContract } from '@/contracts/pages/generated/app-sirket-companies.form.contract'
-import { appSirketCompaniesWizardContract } from '@/contracts/pages/generated/app-sirket-companies.wizard.contract'
-import { appSirketCompaniesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies.lifecycle.contract'
-
-
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -62,7 +57,8 @@ import { applyFieldControlsToFields, applyFieldControlsToTabs } from '@/lib/fiel
 import { getControlledFieldNames, listFieldControls } from '@/lib/field-controls/fieldControlRegistry'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import { companyPageContract } from '@/contracts/pages/company.page.contract'
-import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
+import { companyLifecycleContract } from '@/contracts/lifecycle/company.lifecycle.contract'
+import { assertFormFieldsMatchContract, assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -439,6 +435,8 @@ const tabs: FormTab[] = [
     ],
   },
 ]
+
+assertFormFieldsMatchContract(companyPageContract.route, companyPageContract.form?.fields || [], heroFields, tabs)
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')

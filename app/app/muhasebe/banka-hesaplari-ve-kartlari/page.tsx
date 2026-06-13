@@ -1,21 +1,4 @@
 'use client'
-
-
-
-import { appMuhasebeBankaHesaplariVeKartlariListContract } from '@/contracts/pages/generated/app-muhasebe-banka-hesaplari-ve-kartlari.list.contract'
-import { appMuhasebeBankaHesaplariVeKartlariWizardContract } from '@/contracts/pages/generated/app-muhasebe-banka-hesaplari-ve-kartlari.wizard.contract'
-import { appMuhasebeBankaHesaplariVeKartlariLifecycleContract } from '@/contracts/pages/generated/app-muhasebe-banka-hesaplari-ve-kartlari.lifecycle.contract'
-
-void appMuhasebeBankaHesaplariVeKartlariListContract
-void appMuhasebeBankaHesaplariVeKartlariWizardContract
-void appMuhasebeBankaHesaplariVeKartlariLifecycleContract
-
-import { appMuhasebeBankaHesaplariVeKartlariPageContract } from '@/contracts/pages/generated/app-muhasebe-banka-hesaplari-ve-kartlari.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appMuhasebeBankaHesaplariVeKartlariContractReady = requirePageContract(appMuhasebeBankaHesaplariVeKartlariPageContract)
-void appMuhasebeBankaHesaplariVeKartlariContractReady
-
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Eye, History, Landmark, Pencil, Power, Star } from 'lucide-react'

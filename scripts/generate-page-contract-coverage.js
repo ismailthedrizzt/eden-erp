@@ -26,18 +26,25 @@ const knownContracts = {
     pageContractPath: 'contracts/pages/company.page.contract.ts',
     symbol: 'companyPageContract',
     listContractPath: 'contracts/pages/company.page.contract.ts',
+    formContractPath: 'contracts/pages/company.page.contract.ts',
+    apiContractPath: 'contracts/api/company.api.contract.ts',
+    lifecycleContractPath: 'contracts/lifecycle/company.lifecycle.contract.ts',
     implementationStatus: 'implemented',
   },
   '/app/sirket/companies/partners': {
     pageContractPath: 'contracts/pages/partner.page.contract.ts',
     symbol: 'partnerPageContract',
     listContractPath: 'contracts/pages/partner.page.contract.ts',
+    formContractPath: 'contracts/pages/partner.page.contract.ts',
+    apiContractPath: 'contracts/api/partner.api.contract.ts',
+    lifecycleContractPath: 'contracts/lifecycle/partner.lifecycle.contract.ts',
     implementationStatus: 'implemented',
   },
   '/app/sirket/companies/representatives': {
     pageContractPath: 'contracts/pages/representative.page.contract.ts',
     symbol: 'representativePageContract',
     listContractPath: 'contracts/pages/representative.page.contract.ts',
+    formContractPath: 'contracts/pages/representative.page.contract.ts',
     apiContractPath: 'contracts/api/representative.api.contract.ts',
     lifecycleContractPath: 'contracts/lifecycle/representative.lifecycle.contract.ts',
     implementationStatus: 'implemented',
@@ -46,6 +53,8 @@ const knownContracts = {
     pageContractPath: 'contracts/pages/branch.page.contract.ts',
     symbol: 'branchPageContract',
     listContractPath: 'contracts/pages/branch.page.contract.ts',
+    formContractPath: 'contracts/pages/branch.page.contract.ts',
+    apiContractPath: 'contracts/api/branch.api.contract.ts',
     lifecycleContractPath: 'contracts/lifecycle/branch.lifecycle.contract.ts',
     implementationStatus: 'implemented',
   },
@@ -154,19 +163,13 @@ for (const route of allRoutes) {
     apiContractPath,
     lifecycleContractPath,
     sourcePagePath,
+    contractDepth: inferContractDepth({ listContractPath, formContractPath, apiContractPath, wizardContractPath, lifecycleContractPath }),
+    contractSource: known ? 'manual_business_contract' : sourcePagePath ? 'generated_from_existing_page' : 'generated_placeholder',
+    businessCriticality: inferBusinessCriticality(mappedReleaseStatus, moduleKey),
     symbol,
     notes: sourcePagePath ? 'Contract coverage generated from route registry and page source.' : 'Release registry route without page source; contract kept explicit.',
   })
 
-  if (sourcePagePath) {
-    ensurePageImportsContract(sourcePagePath, pageContractPath, symbol, {
-      contractId,
-      listContractPath,
-      formContractPath,
-      wizardContractPath,
-      lifecycleContractPath,
-    })
-  }
 }
 
 writeRegistry(registryEntries, imports)
@@ -247,7 +250,7 @@ function writeCompanionContracts(params) {
       `import type { EdenListContract } from '../../core/list.contract'\n\nexport const ${listSymbol} = {\n  columns: [\n    { key: 'id', label: 'ID', searchable: true },\n  ],\n  sortableFields: [],\n  filterableFields: [],\n  searchableFields: ['id'],\n  rowActions: [],\n  bulkActions: [],\n  emptyState: {\n    title: 'Kayit bulunamadi',\n    message: 'Bu liste icin henuz kayit bulunmuyor.',\n  },\n  primaryActionLabel: 'Ekle',\n  primaryActionBehavior: 'open_draft_form',\n} as const satisfies EdenListContract\n`
     )
   }
-  if (formContractPath) {
+  if (formContractPath && formContractPath.startsWith('contracts/pages/generated/')) {
     const formSymbol = toStableSymbol(contractId, 'FormContract')
     writeFileIfChanged(
       path.join(root, formContractPath),
@@ -271,59 +274,14 @@ function writeCompanionContracts(params) {
 }
 
 function writeRegistry(entries, imports) {
-  const registryType = `export type PageImplementationStatus = 'contract_ready' | 'implemented' | 'planned' | 'hidden' | 'deprecated' | 'blocked'\n\nexport interface PageContractRegistryItem {\n  route: string\n  contractId: string\n  moduleKey: string\n  pageKind: 'list' | 'form' | 'detail' | 'wizard' | 'dashboard' | 'shell' | 'placeholder' | 'redirect'\n  implementationStatus: PageImplementationStatus\n  releaseStatus: string\n  owningEntity?: string\n  pageContractPath: string\n  listContractPath?: string\n  formContractPath?: string\n  wizardContractPath?: string\n  apiContractPath?: string\n  lifecycleContractPath?: string\n  sourcePagePath?: string\n  notes?: string\n  pageContract: import('../core/page.contract').EdenPageContract\n}\n`
+  const registryType = `export type PageImplementationStatus = 'contract_ready' | 'implemented' | 'planned' | 'hidden' | 'deprecated' | 'blocked'\nexport type PageContractDepth = 'placeholder_only' | 'page_only' | 'page_and_list' | 'page_list_form' | 'page_list_form_api' | 'full_lifecycle'\nexport type PageContractSource = 'manual_business_contract' | 'generated_placeholder' | 'generated_from_existing_page' | 'temporary_adapter'\nexport type PageBusinessCriticality = 'core_release' | 'core_development' | 'supporting' | 'demo' | 'legacy'\n\nexport interface PageContractRegistryItem {\n  route: string\n  contractId: string\n  moduleKey: string\n  pageKind: 'list' | 'form' | 'detail' | 'wizard' | 'dashboard' | 'shell' | 'placeholder' | 'redirect'\n  implementationStatus: PageImplementationStatus\n  releaseStatus: string\n  owningEntity?: string\n  pageContractPath: string\n  listContractPath?: string\n  formContractPath?: string\n  wizardContractPath?: string\n  apiContractPath?: string\n  lifecycleContractPath?: string\n  sourcePagePath?: string\n  contractDepth: PageContractDepth\n  contractSource: PageContractSource\n  businessCriticality: PageBusinessCriticality\n  notes?: string\n  pageContract: import('../core/page.contract').EdenPageContract\n}\n`
   const body = entries.map((entry) => {
-    return `  {\n    route: '${escapeString(entry.route)}',\n    contractId: '${escapeString(entry.contractId)}',\n    moduleKey: '${escapeString(entry.moduleKey)}',\n    pageKind: '${entry.pageKind}',\n    implementationStatus: '${entry.implementationStatus}',\n    releaseStatus: '${entry.releaseStatus}',\n    owningEntity: '${escapeString(entry.owningEntity)}',\n    pageContractPath: '${escapeString(entry.pageContractPath)}',\n${entry.listContractPath ? `    listContractPath: '${escapeString(entry.listContractPath)}',\n` : ''}${entry.formContractPath ? `    formContractPath: '${escapeString(entry.formContractPath)}',\n` : ''}${entry.wizardContractPath ? `    wizardContractPath: '${escapeString(entry.wizardContractPath)}',\n` : ''}${entry.apiContractPath ? `    apiContractPath: '${escapeString(entry.apiContractPath)}',\n` : ''}${entry.lifecycleContractPath ? `    lifecycleContractPath: '${escapeString(entry.lifecycleContractPath)}',\n` : ''}${entry.sourcePagePath ? `    sourcePagePath: '${escapeString(entry.sourcePagePath)}',\n` : ''}    notes: '${escapeString(entry.notes)}',\n    pageContract: ${entry.symbol},\n  }`
+    return `  {\n    route: '${escapeString(entry.route)}',\n    contractId: '${escapeString(entry.contractId)}',\n    moduleKey: '${escapeString(entry.moduleKey)}',\n    pageKind: '${entry.pageKind}',\n    implementationStatus: '${entry.implementationStatus}',\n    releaseStatus: '${entry.releaseStatus}',\n    owningEntity: '${escapeString(entry.owningEntity)}',\n    pageContractPath: '${escapeString(entry.pageContractPath)}',\n${entry.listContractPath ? `    listContractPath: '${escapeString(entry.listContractPath)}',\n` : ''}${entry.formContractPath ? `    formContractPath: '${escapeString(entry.formContractPath)}',\n` : ''}${entry.wizardContractPath ? `    wizardContractPath: '${escapeString(entry.wizardContractPath)}',\n` : ''}${entry.apiContractPath ? `    apiContractPath: '${escapeString(entry.apiContractPath)}',\n` : ''}${entry.lifecycleContractPath ? `    lifecycleContractPath: '${escapeString(entry.lifecycleContractPath)}',\n` : ''}${entry.sourcePagePath ? `    sourcePagePath: '${escapeString(entry.sourcePagePath)}',\n` : ''}    contractDepth: '${entry.contractDepth}',\n    contractSource: '${entry.contractSource}',\n    businessCriticality: '${entry.businessCriticality}',\n    notes: '${escapeString(entry.notes)}',\n    pageContract: ${entry.symbol},\n  }`
   }).join(',\n')
   writeFileIfChanged(
     path.join(root, 'contracts', 'pages', 'page-contract-registry.ts'),
     `import type { EdenPageContract } from '../core/page.contract'\n${Array.from(new Set(imports)).join('\n')}\n\n${registryType}\n\nexport const pageContractRegistry = [\n${body}\n] as const satisfies readonly PageContractRegistryItem[]\n\nexport const pageContractRoutes = pageContractRegistry.map((entry) => entry.route)\nexport const productionPageContracts = pageContractRegistry.filter((entry) => entry.pageContract.visibleInProduction)\n\nexport function getPageContractRegistryItem(route: string): PageContractRegistryItem | undefined {\n  return pageContractRegistry.find((entry) => entry.route === route)\n}\n`
   )
-}
-
-function ensurePageImportsContract(sourcePagePath, pageContractPath, symbol, companionPaths) {
-  const absolute = path.join(root, sourcePagePath)
-  let source = fs.readFileSync(absolute, 'utf8')
-  const importPath = `@/${pageContractPath.replace(/\.ts$/, '')}`
-  const importLines = []
-  const readyLines = []
-
-  if (!source.includes(importPath) && !source.includes(symbol)) {
-    const safeName = toUniqueSymbol(routeToContractId(pageRoute(absolute)), 'ContractReady')
-    importLines.push(`import { ${symbol} } from '${importPath}'`)
-    if (!source.includes('requirePageContract')) {
-      importLines.push(`import { requirePageContract } from '@/contracts/tests/contract-test-utils'`)
-    }
-    readyLines.push(`const ${safeName} = requirePageContract(${symbol})`)
-    readyLines.push(`void ${safeName}`)
-  }
-
-  for (const [pathKey, suffix] of [
-    ['listContractPath', 'ListContract'],
-    ['formContractPath', 'FormContract'],
-    ['wizardContractPath', 'WizardContract'],
-    ['lifecycleContractPath', 'LifecycleContract'],
-  ]) {
-    const contractPath = companionPaths[pathKey]
-    if (!contractPath || !contractPath.startsWith('contracts/pages/generated/')) continue
-    const companionImportPath = `@/${contractPath.replace(/\.ts$/, '')}`
-    const companionSymbol = toStableSymbol(companionPaths.contractId, suffix)
-    if (source.includes(companionImportPath) || source.includes(companionSymbol)) continue
-    importLines.push(`import { ${companionSymbol} } from '${companionImportPath}'`)
-    readyLines.push(`void ${companionSymbol}`)
-  }
-
-  if (!importLines.length && !readyLines.length) return
-
-  const insertion = `${importLines.join('\n')}\n\n${readyLines.join('\n')}\n\n`
-  if (source.startsWith("'use client'")) {
-    source = source.replace(/'use client'\s*\n+/, (match) => `${match}\n${insertion}`)
-  } else if (source.startsWith('"use client"')) {
-    source = source.replace(/"use client"\s*\n+/, (match) => `${match}\n${insertion}`)
-  } else {
-    source = insertion + source
-  }
-  writeFileIfChanged(absolute, source)
 }
 
 function writeGeneratedIndex(exportLines) {
@@ -364,9 +322,25 @@ function inferImplementationStatus(releaseStatus, sourcePagePath, signals) {
   if (releaseStatus === 'hidden') return 'hidden'
   if (!sourcePagePath) return 'planned'
   if (releaseStatus === 'coming_soon') return 'planned'
-  if (releaseStatus === 'release') return 'contract_ready'
+  if (releaseStatus === 'release') return 'blocked'
   if (signals.pageKind === 'placeholder') return 'planned'
-  return 'contract_ready'
+  return 'blocked'
+}
+
+function inferContractDepth({ listContractPath, formContractPath, apiContractPath, wizardContractPath, lifecycleContractPath }) {
+  if (wizardContractPath || lifecycleContractPath) return 'full_lifecycle'
+  if (apiContractPath && formContractPath && listContractPath) return 'page_list_form_api'
+  if (formContractPath && listContractPath) return 'page_list_form'
+  if (listContractPath) return 'page_and_list'
+  return 'page_only'
+}
+
+function inferBusinessCriticality(releaseStatus, moduleKey) {
+  if (releaseStatus === 'live') return 'core_release'
+  if (moduleKey === 'development' || moduleKey === 'demo') return 'demo'
+  if (releaseStatus === 'preview') return 'core_development'
+  if (releaseStatus === 'deprecated') return 'legacy'
+  return 'supporting'
 }
 
 function inferModuleKey(route) {

@@ -1,13 +1,6 @@
 'use client'
 
 
-import { appSirketCompaniesStakeholdersPageContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-import { appSirketCompaniesStakeholdersListContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.list.contract'
-import { appSirketCompaniesStakeholdersFormContract } from '@/contracts/pages/generated/app-sirket-companies-stakeholders.form.contract'
-
-const appSirketCompaniesStakeholdersContractReady = requirePageContract(appSirketCompaniesStakeholdersPageContract)
-
 import { useEffect, useMemo, useState } from 'react'
 import { Handshake } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'

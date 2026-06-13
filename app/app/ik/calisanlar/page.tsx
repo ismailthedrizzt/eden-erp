@@ -243,7 +243,7 @@ export default function HREmployeesPage() {
     { key: 'sgk', label: employeeListContract.widgets[4].label, render: () => summary?.pending_sgk ?? tableData.filter(row => row.sgk_status === 'pending').length },
   ], [meta.total, summary, tableData])
 
-  const tableDefinition = useMemo(() => buildEmployeeTableDefinition(), [])
+  const tableColumns = useMemo(() => buildEmployeeTableDefinition(), [])
 
   const handleSortChange = (sorts: SortConfig[]) => {
     const sort = sorts[0]
@@ -284,7 +284,7 @@ export default function HREmployeesPage() {
           <div className="mt-5">
             <EdenSmartList>
               <SmartDataTable
-                columns={tableDefinition}
+                columns={tableColumns}
                 data={tableData}
                 loading={loading}
                 widgets={widgets}

@@ -1,17 +1,4 @@
 'use client'
-
-
-
-import { appIkTeskilatListContract } from '@/contracts/pages/generated/app-ik-teskilat.list.contract'
-
-void appIkTeskilatListContract
-
-import { appIkTeskilatPageContract } from '@/contracts/pages/generated/app-ik-teskilat.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appIkTeskilatContractReady = requirePageContract(appIkTeskilatPageContract)
-void appIkTeskilatContractReady
-
 // MODULE LICENSE: ik/teskilat
 // Ana Modül: İnsan Kaynakları (ik)
 // Alt Modül: Teşkilat & Kadro (teskilat)

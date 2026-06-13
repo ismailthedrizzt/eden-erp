@@ -18,7 +18,7 @@ export interface EdenApiContract {
   errorSchema: ZodTypeAny
   authorization: readonly string[]
   backendAuthorization?: readonly string[]
-  tenantScope: 'required' | 'optional' | 'not_applicable'
+  tenantScope: 'required' | 'optional' | 'none'
   companyScope?: 'read' | 'write' | 'none'
   normalization: {
     uuidFields: readonly string[]

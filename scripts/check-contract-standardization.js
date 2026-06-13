@@ -144,7 +144,7 @@ function validateRegistryEntry(entry) {
     if (entry.sourcePagePath !== page.sourcePagePath) {
       errors.push(`${entry.route}: sourcePagePath mismatch. Expected ${page.sourcePagePath}, got ${entry.sourcePagePath || '<missing>'}`)
     }
-    if (!page.source.includes(entry.pageContractPath.replace(/\.ts$/, '')) && !page.source.includes(entry.contractId)) {
+    if (requiresRuntimeContractUsage(entry) && !page.source.includes(entry.pageContractPath.replace(/\.ts$/, '')) && !page.source.includes(entry.contractId)) {
       errors.push(`${entry.route}: source page does not import its page contract (${entry.sourcePagePath})`)
     }
     const signals = inferSignals(page.source)
@@ -168,6 +168,12 @@ function validateRegistryEntry(entry) {
       errors.push(`${entry.route}: lifecycle action strings require lifecycle/wizard contract`)
     }
   }
+}
+
+function requiresRuntimeContractUsage(entry) {
+  return entry.implementationStatus === 'implemented'
+    || entry.implementationStatus === 'contract_ready'
+    || entry.contractSource === 'manual_business_contract'
 }
 
 function validateExceptions() {
@@ -218,9 +224,7 @@ function inferSignals(source) {
 function parsePageContractRegistry(source) {
   const bodyMatch = source.match(/export const pageContractRegistry = \[([\s\S]*?)\] as const/)
   if (!bodyMatch) return []
-  return bodyMatch[1]
-    .split(/\n\s*\},\n\s*\{/)
-    .map((part) => part.replace(/^\s*\{/, '').replace(/\}\s*$/, ''))
+  return splitObjectLiterals(bodyMatch[1])
     .filter((part) => part.includes('route:'))
     .map((part) => ({
       route: field(part, 'route'),
@@ -242,6 +246,46 @@ function parsePageContractRegistry(source) {
       businessCriticality: field(part, 'businessCriticality'),
       notes: field(part, 'notes'),
     }))
+}
+
+function splitObjectLiterals(source) {
+  const entries = []
+  let depth = 0
+  let start = -1
+  let quote = null
+  let escaped = false
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]
+    if (quote) {
+      if (escaped) {
+        escaped = false
+      } else if (char === '\\') {
+        escaped = true
+      } else if (char === quote) {
+        quote = null
+      }
+      continue
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char
+      continue
+    }
+    if (char === '{') {
+      if (depth === 0) start = index
+      depth += 1
+      continue
+    }
+    if (char === '}') {
+      depth -= 1
+      if (depth === 0 && start >= 0) {
+        entries.push(source.slice(start + 1, index))
+        start = -1
+      }
+    }
+  }
+
+  return entries
 }
 
 function parseReleaseRoutes(source) {

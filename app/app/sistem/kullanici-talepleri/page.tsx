@@ -1,19 +1,4 @@
 'use client'
-
-
-
-import { appSistemKullaniciTalepleriWizardContract } from '@/contracts/pages/generated/app-sistem-kullanici-talepleri.wizard.contract'
-import { appSistemKullaniciTalepleriLifecycleContract } from '@/contracts/pages/generated/app-sistem-kullanici-talepleri.lifecycle.contract'
-
-void appSistemKullaniciTalepleriWizardContract
-void appSistemKullaniciTalepleriLifecycleContract
-
-import { appSistemKullaniciTalepleriPageContract } from '@/contracts/pages/generated/app-sistem-kullanici-talepleri.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemKullaniciTalepleriContractReady = requirePageContract(appSistemKullaniciTalepleriPageContract)
-void appSistemKullaniciTalepleriContractReady
-
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle2, Loader2, RefreshCw, UserPlus, XCircle } from 'lucide-react'

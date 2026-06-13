@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appSirketCompaniesRepresentativesFormContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.form.contract'
-import { appSirketCompaniesRepresentativesWizardContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.wizard.contract'
-import { appSirketCompaniesRepresentativesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies-representatives.lifecycle.contract'
-
-
 import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -39,7 +34,8 @@ import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import { representativePageContract } from '@/contracts/pages/representative.page.contract'
-import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
+import { representativeLifecycleContract } from '@/contracts/lifecycle/representative.lifecycle.contract'
+import { assertFormFieldsMatchContract, assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -491,6 +487,8 @@ const tabs: FormTab[] = [
     ],
   },
 ]
+
+assertFormFieldsMatchContract(representativePageContract.route, representativePageContract.form?.fields || [], heroFields, tabs)
 
 export default function TemsilcilerPage() {
   const searchParams = useSearchParams()

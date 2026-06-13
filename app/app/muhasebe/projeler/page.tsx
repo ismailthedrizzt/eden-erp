@@ -1,17 +1,4 @@
 'use client'
-
-
-
-import { appMuhasebeProjelerListContract } from '@/contracts/pages/generated/app-muhasebe-projeler.list.contract'
-
-void appMuhasebeProjelerListContract
-
-import { appMuhasebeProjelerPageContract } from '@/contracts/pages/generated/app-muhasebe-projeler.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appMuhasebeProjelerContractReady = requirePageContract(appMuhasebeProjelerPageContract)
-void appMuhasebeProjelerContractReady
-
 import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'

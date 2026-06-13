@@ -1,19 +1,4 @@
 'use client'
-
-
-
-import { appMuhasebeCariKartlarListContract } from '@/contracts/pages/generated/app-muhasebe-cari-kartlar.list.contract'
-import { appMuhasebeCariKartlarFormContract } from '@/contracts/pages/generated/app-muhasebe-cari-kartlar.form.contract'
-
-void appMuhasebeCariKartlarListContract
-void appMuhasebeCariKartlarFormContract
-
-import { appMuhasebeCariKartlarPageContract } from '@/contracts/pages/generated/app-muhasebe-cari-kartlar.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appMuhasebeCariKartlarContractReady = requirePageContract(appMuhasebeCariKartlarPageContract)
-void appMuhasebeCariKartlarContractReady
-
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { AlertCircle, Building2, FileText, Plus, RefreshCw, WalletCards, X } from 'lucide-react'

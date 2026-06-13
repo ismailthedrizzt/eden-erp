@@ -10,6 +10,7 @@ export type EdenFieldKind =
   | 'percentage'
   | 'jsonb'
   | 'array'
+  | 'custom'
 
 export interface EdenFieldContract {
   name: string

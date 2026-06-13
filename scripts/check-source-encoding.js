@@ -1,102 +1,110 @@
 const fs = require('fs')
 const path = require('path')
-const { TextDecoder } = require('util')
 
-const root = path.resolve(__dirname, '..')
-const strictUtf8Decoder = new TextDecoder('utf-8', { fatal: true })
-
-const sourceRoots = ['app', 'components', 'docs', 'hooks', 'lib', 'scripts', 'supabase', 'types']
-const rootFiles = [
-  'BackendApiMigration.md',
-  'FrontendDataAccessRules.md',
-  'SupabaseUsagePolicy.md',
-  'next.config.mjs',
-  'package-lock.json',
-  'package.json',
-  'postcss.config.mjs',
-  'tailwind.config.ts',
-  'tsconfig.json',
-  'tsconfig.typecheck.json',
-]
+const root = process.cwd()
+const failures = []
+const warnings = []
 const textExtensions = new Set([
   '.css',
+  '.html',
   '.js',
-  '.jsx',
   '.json',
+  '.jsx',
   '.md',
   '.mjs',
+  '.py',
   '.sql',
   '.ts',
   '.tsx',
+  '.txt',
+  '.yml',
+  '.yaml',
 ])
-const mojibakePattern = /[\uFFFD\u0080-\u009F\u00C2-\u00C5]|â(?:€|†|€¢|€¦|„|“|”|˜|‹|›|™|œ|ž|Ÿ)/
+const ignoredDirectories = new Set([
+  '.git',
+  '.next',
+  '.turbo',
+  'node_modules',
+  '.venv',
+  '__pycache__',
+  'outputs',
+  'dist',
+  'build',
+  'coverage',
+])
+const mojibakePatterns = [
+  '\u00C4\u00B0',
+  '\u00C4\u00B1',
+  '\u00C4\u0178',
+  '\u00C5\u0178',
+  '\u00C5\u017D',
+  '\u00C3\u00A7',
+  '\u00C3\u2021',
+  '\u00C3\u00B6',
+  '\u00C3\u2013',
+  '\u00C3\u00BC',
+  '\u00C3\u0153',
+  '\u00C4\u009F',
+  '\u00C5\u009F',
+]
 
-const replacementMojibakePattern = /\u00EF\u00BF\u00BD/
+const sourceFiles = walk(root)
 
-function filePath(relativePath) {
-  return path.join(root, relativePath)
-}
-
-function exists(relativePath) {
-  return fs.existsSync(filePath(relativePath))
-}
-
-function walkFiles(relativeDir, files = []) {
-  const absoluteDir = filePath(relativeDir)
-  if (!fs.existsSync(absoluteDir)) return files
-
-  for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
-    const relativePath = path.join(relativeDir, entry.name)
-    if (entry.isDirectory()) {
-      if (['node_modules', '.next', '.git'].includes(entry.name)) continue
-      walkFiles(relativePath, files)
-      continue
-    }
-
-    if (textExtensions.has(path.extname(entry.name))) {
-      files.push(relativePath.replace(/\\/g, '/'))
-    }
+for (const file of sourceFiles) {
+  const relativePath = relative(file)
+  const ext = path.extname(file)
+  if (!textExtensions.has(ext)) continue
+  const buffer = fs.readFileSync(file)
+  if (buffer.includes(0)) {
+    failures.push(`${relativePath}: contains NUL byte`)
+    continue
   }
-
-  return files
-}
-
-function assertValidUtf8(relativePath, failures) {
-  try {
-    strictUtf8Decoder.decode(fs.readFileSync(filePath(relativePath)))
-  } catch {
-    failures.push(`${relativePath}: source files must be saved as valid UTF-8`)
+  const text = buffer.toString('utf8')
+  if (text.includes('\uFFFD')) {
+    failures.push(`${relativePath}: contains Unicode replacement character`)
+  }
+  const controlMatch = text.match(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/)
+  if (controlMatch) {
+    failures.push(`${relativePath}: contains control character U+${controlMatch[0].charCodeAt(0).toString(16).padStart(4, '0').toUpperCase()}`)
+  }
+  const mojibakeMatch = mojibakePatterns.find(pattern => text.includes(pattern))
+  if (mojibakeMatch) {
+    failures.push(`${relativePath}: contains likely mojibake sequence "${mojibakeMatch}"`)
   }
 }
 
-function assertNoMojibake(relativePath, failures) {
-  const content = fs.readFileSync(filePath(relativePath), 'utf8')
-  const lines = content.split(/\r?\n/)
-  lines.forEach((line, index) => {
-    if (mojibakePattern.test(line) || replacementMojibakePattern.test(line)) {
-      failures.push(`${relativePath}:${index + 1}: possible mojibake/Turkish character corruption`)
-    }
-  })
-}
+console.log('Source encoding guard')
+console.log(`- files scanned: ${sourceFiles.filter(file => textExtensions.has(path.extname(file))).length}`)
+console.log(`- warnings: ${warnings.length}`)
+console.log(`- errors: ${failures.length}`)
 
-const files = new Set()
-for (const sourceRoot of sourceRoots) {
-  for (const file of walkFiles(sourceRoot)) files.add(file)
-}
-for (const file of rootFiles) {
-  if (exists(file)) files.add(file)
-}
-
-const failures = []
-for (const file of [...files].sort()) {
-  assertValidUtf8(file, failures)
-  assertNoMojibake(file, failures)
-}
-
+for (const warning of warnings) console.warn(`WARNING ${warning}`)
 if (failures.length) {
-  console.error('Source encoding check failed:')
-  for (const failure of failures) console.error(`- ${failure}`)
+  for (const failure of failures) console.error(`ERROR ${failure}`)
   process.exit(1)
 }
 
-console.log(`Source encoding check passed (${files.size} files).`)
+function walk(directory) {
+  const results = []
+  let entries
+  try {
+    entries = fs.readdirSync(directory, { withFileTypes: true })
+  } catch (error) {
+    warnings.push(`${relative(directory)}: skipped unreadable directory (${error.code || error.message})`)
+    return results
+  }
+  for (const entry of entries) {
+    if (ignoredDirectories.has(entry.name)) continue
+    const fullPath = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      results.push(...walk(fullPath))
+      continue
+    }
+    results.push(fullPath)
+  }
+  return results
+}
+
+function relative(file) {
+  return path.relative(root, file).split(path.sep).join('/')
+}

@@ -1,12 +1,4 @@
 'use client'
-
-
-import { appDemoUserAvatarPageContract } from '@/contracts/pages/generated/app-demo-user-avatar.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appDemoUserAvatarContractReady = requirePageContract(appDemoUserAvatarPageContract)
-void appDemoUserAvatarContractReady
-
 /**
  * UserAvatar Demo Page
  * 

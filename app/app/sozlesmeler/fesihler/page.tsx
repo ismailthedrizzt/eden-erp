@@ -1,9 +1,3 @@
-import { appSozlesmelerFesihlerPageContract } from '@/contracts/pages/generated/app-sozlesmeler-fesihler.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSozlesmelerFesihlerContractReady = requirePageContract(appSozlesmelerFesihlerPageContract)
-void appSozlesmelerFesihlerContractReady
-
 import { XCircle } from 'lucide-react'
 import { ContractsList } from '@/components/contracts/ContractsList'
 import { PageBanner } from '@/components/ui/PageBanner'

@@ -131,7 +131,7 @@ export default function DevelopmentThemesPage() {
   const [mode, setMode] = useState<ThemeAppearance>('light')
   const [importText, setImportText] = useState('')
   const [toast, setToast] = useState<ToastState | null>(null)
-  const themeTableColumns = useMemo(() => buildThemeTableDefinition(), [])
+  const contractColumns = useMemo(() => buildThemeTableDefinition(), [])
   const themeContractContext = useMemo(() => ({
     route: themeManagementPageContract.route,
     lifecycleTable: themeManagementLifecycleContract.transactionTable,
@@ -517,7 +517,7 @@ export default function DevelopmentThemesPage() {
         </div>
 
         <SmartDataTable<ThemeTableRow>
-          columns={themeTableColumns}
+          columns={contractColumns}
           data={tableRows}
           loading={false}
           defaultView="list"

@@ -1,21 +1,4 @@
 'use client'
-
-
-
-import { appSistemImportListContract } from '@/contracts/pages/generated/app-sistem-import.list.contract'
-import { appSistemImportWizardContract } from '@/contracts/pages/generated/app-sistem-import.wizard.contract'
-import { appSistemImportLifecycleContract } from '@/contracts/pages/generated/app-sistem-import.lifecycle.contract'
-
-void appSistemImportListContract
-void appSistemImportWizardContract
-void appSistemImportLifecycleContract
-
-import { appSistemImportPageContract } from '@/contracts/pages/generated/app-sistem-import.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemImportContractReady = requirePageContract(appSistemImportPageContract)
-void appSistemImportContractReady
-
 import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Download, FileSpreadsheet, Loader2, RefreshCw, ShieldCheck, Upload, type LucideIcon } from 'lucide-react'
 import { Toast, type ToastType } from '@/components/ui/Toast'

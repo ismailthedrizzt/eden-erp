@@ -1,17 +1,4 @@
 'use client'
-
-
-
-import { appMuhasebeHesaplarListContract } from '@/contracts/pages/generated/app-muhasebe-hesaplar.list.contract'
-
-void appMuhasebeHesaplarListContract
-
-import { appMuhasebeHesaplarPageContract } from '@/contracts/pages/generated/app-muhasebe-hesaplar.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appMuhasebeHesaplarContractReady = requirePageContract(appMuhasebeHesaplarPageContract)
-void appMuhasebeHesaplarContractReady
-
 import { useState } from 'react'
 import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY, formatDate } from '@/lib/utils'

@@ -1,12 +1,4 @@
 'use client'
-
-
-import { appDemoDocumentSlotUploaderPageContract } from '@/contracts/pages/generated/app-demo-document-slot-uploader.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appDemoDocumentSlotUploaderContractReady = requirePageContract(appDemoDocumentSlotUploaderPageContract)
-void appDemoDocumentSlotUploaderContractReady
-
 /**
  * DocumentSlotUploader Demo Page
  * 

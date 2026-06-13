@@ -1,21 +1,4 @@
 'use client'
-
-
-
-import { appSistemExportListContract } from '@/contracts/pages/generated/app-sistem-export.list.contract'
-import { appSistemExportWizardContract } from '@/contracts/pages/generated/app-sistem-export.wizard.contract'
-import { appSistemExportLifecycleContract } from '@/contracts/pages/generated/app-sistem-export.lifecycle.contract'
-
-void appSistemExportListContract
-void appSistemExportWizardContract
-void appSistemExportLifecycleContract
-
-import { appSistemExportPageContract } from '@/contracts/pages/generated/app-sistem-export.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemExportContractReady = requirePageContract(appSistemExportPageContract)
-void appSistemExportContractReady
-
 import { useMemo, useState } from 'react'
 import { Download, FileDown, Loader2, PlayCircle, ShieldCheck } from 'lucide-react'
 import { Toast, type ToastType } from '@/components/ui/Toast'

@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appSistemTemalarPageContract } from '@/contracts/pages/generated/app-sistem-temalar.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSistemTemalarContractReady = requirePageContract(appSistemTemalarPageContract)
-
 import { useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Download, Eye, FileJson, Loader2, Palette, ShieldCheck, Upload } from 'lucide-react'
 import { Toast, type ToastType } from '@/components/ui/Toast'

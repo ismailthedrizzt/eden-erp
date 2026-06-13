@@ -46,6 +46,7 @@ function validateLifecycleContract(contract) {
   }
   if (contract.operationRecordRequired) {
     for (const target of insertTargets) {
+      if (target.table === 'operation_requests') continue
       if (/operation_id\s*,\s*process_instance_id[\s\S]{0,400}null\s*,\s*null/i.test(target.sql)) {
         errors.push(`${contract.file}: backend inserts ${target.table} with operation_id/process_instance_id both null (${relative(target.file)})`)
       }

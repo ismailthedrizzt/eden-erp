@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appAboneligimPageContract } from '@/contracts/pages/generated/app-aboneligim.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appAboneligimContractReady = requirePageContract(appAboneligimPageContract)
-
 import { useEffect, useState } from 'react'
 import { BadgeCheck, CreditCard, Database, ShieldCheck } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'

@@ -34,7 +34,7 @@ class _ColumnSession:
 
 def valid_authority_payload() -> dict[str, Any]:
     return {
-        "transaction_type": "authority_start",
+        "transaction_type": "Temsilcilik Başlatma",
         "authority_action": True,
         "authority_types": ["signature_authority"],
         "signature_type": "single",
@@ -47,7 +47,7 @@ def valid_authority_payload() -> dict[str, Any]:
 def test_start_authority_request_accepts_valid_payload() -> None:
     request = RepresentativeAuthorityTransactionRequest(**valid_authority_payload())
 
-    assert request.transaction_type == "authority_start"
+    assert request.transaction_type == "Temsilcilik Başlatma"
     assert request.scope_type == "company_wide"
 
 

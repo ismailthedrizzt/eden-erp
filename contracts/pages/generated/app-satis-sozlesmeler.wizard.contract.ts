@@ -1,13 +1,13 @@
 import type { EdenWizardContract } from '../../core/wizard.contract'
 
-export const appDevelopmentTemalarimizWizardContract = {
-  wizardName: '/app/development/temalarimiz workflow',
-  lifecycleOperationType: 'adminConsole.operation',
-  owningEntity: 'adminConsole',
+export const appSatisSozlesmelerWizardContract = {
+  wizardName: '/app/satis/sozlesmeler workflow',
+  lifecycleOperationType: 'contracts.operation',
+  owningEntity: 'contracts',
   steps: [
     { id: 'review', label: 'Kontrol', requiredFields: [] },
   ],
-  submitOperation: 'adminConsole.operation.submit',
+  submitOperation: 'contracts.operation.submit',
   resultingRecord: 'operation_request',
   allowedSourceStatuses: ['draft', 'active'],
   resultingTargetStatus: 'active',

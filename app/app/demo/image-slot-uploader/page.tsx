@@ -1,12 +1,4 @@
 'use client'
-
-
-import { appDemoImageSlotUploaderPageContract } from '@/contracts/pages/generated/app-demo-image-slot-uploader.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appDemoImageSlotUploaderContractReady = requirePageContract(appDemoImageSlotUploaderPageContract)
-void appDemoImageSlotUploaderContractReady
-
 /**
  * ImageSlotUploader Demo Page
  * 

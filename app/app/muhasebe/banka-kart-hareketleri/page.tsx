@@ -1,17 +1,4 @@
 'use client'
-
-
-
-import { appMuhasebeBankaKartHareketleriListContract } from '@/contracts/pages/generated/app-muhasebe-banka-kart-hareketleri.list.contract'
-
-void appMuhasebeBankaKartHareketleriListContract
-
-import { appMuhasebeBankaKartHareketleriPageContract } from '@/contracts/pages/generated/app-muhasebe-banka-kart-hareketleri.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appMuhasebeBankaKartHareketleriContractReady = requirePageContract(appMuhasebeBankaKartHareketleriPageContract)
-void appMuhasebeBankaKartHareketleriContractReady
-
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'

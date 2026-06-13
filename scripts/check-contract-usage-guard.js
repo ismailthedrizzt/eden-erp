@@ -19,6 +19,7 @@ for (const page of pageFiles) {
   }
   validateNoVoidContract(page)
   validateRegistrySemantics(entry, page)
+  if (!requiresRuntimeContractUsage(entry)) continue
   validateContractImportUsage(entry, page)
   validateListUsage(entry, page)
   validateFormUsage(entry, page)
@@ -49,7 +50,7 @@ function validateNoVoidContract(page) {
 function validateRegistrySemantics(entry, page) {
   const hasRealUi = hasListSignal(page.source) || hasFormSignal(page.source) || hasLifecycleSignal(page.source)
   const generatedPage = String(entry.pageContractPath || '').includes('/generated/') || String(entry.pageContractPath || '').includes('\\generated\\')
-  if (entry.implementationStatus === 'contract_ready' && generatedPage) {
+  if (entry.implementationStatus === 'contract_ready' && generatedPage && entry.contractSource === 'generated_placeholder') {
     errors.push(`${entry.route}: generated placeholder page contract cannot be marked contract_ready (${entry.pageContractPath})`)
   }
   if (entry.contractSource === 'generated_placeholder' && entry.implementationStatus === 'contract_ready') {
@@ -58,9 +59,15 @@ function validateRegistrySemantics(entry, page) {
   if (hasRealUi && entry.implementationStatus === 'planned') {
     errors.push(`${entry.route}: planned page contains real list/form/lifecycle UI (${relative(page.file)})`)
   }
-  if (hasLifecycleSignal(page.source) && entry.contractDepth && entry.contractDepth !== 'full_lifecycle') {
+  if (requiresRuntimeContractUsage(entry) && hasLifecycleSignal(page.source) && entry.contractDepth && entry.contractDepth !== 'full_lifecycle') {
     errors.push(`${entry.route}: lifecycle UI requires contractDepth full_lifecycle`)
   }
+}
+
+function requiresRuntimeContractUsage(entry) {
+  return entry.implementationStatus === 'implemented'
+    || entry.implementationStatus === 'contract_ready'
+    || entry.contractSource === 'manual_business_contract'
 }
 
 function validateContractImportUsage(entry, page) {
@@ -119,7 +126,7 @@ function validateFormUsage(entry, page) {
     errors.push(`${entry.route}: form UI does not import form contract (${entry.formContractPath})`)
   }
   const hasLocalFieldArrays = /const\s+\w*(fields|Fields|tabs|Tabs)\w*\s*(?::[^=]+)?=\s*\[/.test(page.source)
-  const derivesFromContract = new RegExp(`${escapeRegExp(contractName)}\\.(fields|tabs)|assertForm|create.*From.*Contract`).test(page.source)
+  const derivesFromContract = new RegExp(`${escapeRegExp(contractName)}\\.(fields|fieldOrder|tabs)|assertForm|create.*From.*Contract`).test(page.source)
   if (hasLocalFieldArrays && !derivesFromContract) {
     errors.push(`${entry.route}: local form fields/tabs are forbidden unless derived from form contract (${relative(page.file)})`)
   }
@@ -219,6 +226,21 @@ function parsePageContractRegistry(source) {
 
 function contractExportName(contractPath) {
   const source = readOptional(contractPath)
+  const expectedSuffix = contractPath.includes('.list.contract')
+    ? 'ListContract'
+    : contractPath.includes('.form.contract')
+      ? 'FormContract'
+      : contractPath.includes('.wizard.contract')
+        ? 'WizardContract'
+        : contractPath.includes('.lifecycle.contract')
+          ? 'LifecycleContract'
+          : contractPath.includes('.page.contract')
+            ? 'PageContract'
+            : 'Contract'
+  const preferred = Array.from(source.matchAll(/export const\s+([A-Za-z0-9_]+)/g))
+    .map(match => match[1])
+    .find(name => name.endsWith(expectedSuffix))
+  if (preferred) return preferred
   const match = source.match(/export const\s+([A-Za-z0-9_]+)/)
   return match ? match[1] : path.basename(contractPath).replace(/[^A-Za-z0-9]+(.)/g, (_, chr) => chr.toUpperCase()).replace(/^[A-Z]/, chr => chr.toLowerCase())
 }

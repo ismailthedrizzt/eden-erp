@@ -55,6 +55,15 @@ export const employeeFormContract = {
     { name: 'notes', kind: 'string', label: 'Notlar', optional: true },
     { name: 'base_updated_at', kind: 'datetime', label: 'Base Updated At', hidden: true, optional: true },
   ],
+  tabs: [
+    { id: 'general', label: 'Genel Bilgiler', fieldNames: ['company_id', 'employee_no', 'first_name', 'last_name', 'identity_number', 'passport_no', 'nationality', 'gender', 'education_level', 'notes'] },
+    { id: 'contact', label: 'Iletisim', fieldNames: ['phone', 'email'] },
+    { id: 'employment', label: 'Istihdam Durumu' },
+    { id: 'organization', label: 'Organizasyon / Pozisyon' },
+    { id: 'sgk', label: 'SGK / Kamu' },
+    { id: 'documents', label: 'Belgeler / Ozluk Dosyasi' },
+    { id: 'history', label: 'Gecmis / Denetim' },
+  ],
   fieldOrder: [
     'company_id',
     'employee_no',

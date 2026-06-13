@@ -1,218 +1,88 @@
 # Contract Enforcement Drift Audit Report
 
-Date: 2026-06-12
+Date: 2026-06-13
 
-## 1. Contract Usage Guard Results
+## 1. Current Guard Results On Remote
 
-Added `scripts/check-contract-usage-guard.js` and wired it into `npm run validate:contracts`.
-
-Current local result:
+The remote repository at `/home/edengrup-app1/htdocs/app1.edengrup.com` was used for the latest checks.
 
 ```text
-npm run contract:usage
-pages scanned: 15
-registry entries: 152
-warnings: 4
-errors: 50
+npm run contracts:check: pass
+npm run page-flow:contract:check: pass (22 flows)
+npm run frontend:standard:check: pass (152 pages, 2 strict routes, 0 errors)
+npm run release:check: pass (152 registry routes, 152 page routes)
+npm run contract:usage: pass with 3 warnings, 0 errors
+npm run contract:backend-drift: fail with 116 errors
+npm run contract:lifecycle: fail with 10 errors
+npm run validate:contracts: fail at contract:backend-drift
 ```
 
-The guard now fails on:
+`npm run build` was not run after this point because `validate:contracts` is still failing.
 
-- `void SomeContract` fake usage.
-- Generated placeholder contracts marked as `contract_ready`.
-- Real `SmartDataTable` pages using ID-only generated list contracts.
-- Local columns arrays that are not derived from list contracts.
-- Local form fields/tabs that are not derived from form contracts.
-- Lifecycle UI without lifecycle/wizard contract coverage.
-- Page service calls not listed in API contracts.
+## 2. Fixed In This Cleanup Pass
 
-## 2. Pages That Imported Contracts But Did Not Use Them
+- Removed generated fake contract instrumentation from app page files.
+- `void someContract` / `void someContractReady` usage is no longer used to satisfy guards.
+- Updated generated page coverage semantics so generated/scaffolded routes are not marked as runtime contract-ready.
+- Kept strict runtime contract usage checks for implemented/manual business contract pages.
+- Restored real Employee and Theme Management form contracts after the previous generator overwrite.
+- Fixed generator behavior so it no longer overwrites manual form/page contract files.
+- Added form contract sections to company, partner, representative, and branch page contracts.
+- Added form-field assertion support for legacy V1 company form pages.
+- Connected company, partner, and branch registry entries to their API/lifecycle contract files.
+- Fixed `contract:usage` export resolution so it detects the actual `*FormContract` export instead of the first schema export.
+- Employee and Theme Management strict frontend standard checks now pass.
 
-The direct fake usage pattern was removed from the currently detected app pages:
+## 3. Remaining Backend Drift Blockers
 
-- `app/app/profil/page.tsx`
-- `app/app/sistem/temalar/page.tsx`
-- `app/app/sistem/lisanslar/page.tsx`
-- `app/app/sistem/kurulum/page.tsx`
-- `app/app/aboneligim/page.tsx`
-- `app/app/sirket/teskilat/page.tsx`
-- `app/app/sirket/tesisler/page.tsx`
-- `app/app/sirket/companies/stakeholders/page.tsx`
-- `app/app/sirket/companies/representatives/page.tsx`
-- `app/app/sirket/companies/page.tsx`
-- `app/app/sirket/companies/branches/page.tsx`
-- `app/app/sirket/companies/partners/page.tsx`
-- `app/app/satis/sozlesmeler/page.tsx`
+`contract:backend-drift` still fails with 116 errors. Main groups:
 
-The guard now prevents this pattern from being reintroduced.
+- Several API contracts point to FastAPI routes that do not currently exist.
+- Several frontend service paths differ from the contract `frontendPath`.
+- Several Next BFF routes are missing or do not visibly proxy to the declared FastAPI path.
+- Several critical endpoints still use generic `ApiSuccess[dict[str, Any]]`/generic DTO patterns instead of typed business response schemas.
+- Theme management API contracts currently describe admin settings based persistence, but the actual BFF/FastAPI chain is not fully aligned.
 
-## 3. Pages With Local Columns Despite List Contracts
+These are real backend/BFF/API contract drift items and were not converted into warnings.
 
-Current blocking findings include:
+## 4. Remaining Lifecycle Blockers
 
-- `/app/sirket/companies/stakeholders`
-- `/app/sirket/tesisler`
-- `/app/sirket/teskilat`
-- `/app/sistem/lisanslar`
+`contract:lifecycle` still fails with 10 errors:
 
-These pages have real list UI but generated ID-only list contracts or local columns. They need real list contracts and `SmartDataTable` columns derived from those contracts.
+- Employee lifecycle contract requires operation records, but backend does not visibly insert into `hr_employee_lifecycle_events`.
+- Partner ownership transactions lack visible non-null `operation_id` / `process_instance_id` linkage.
+- Theme management lifecycle contract requires operation records, but backend has no visible `workspace_theme_lifecycle_events` insert.
+- Multiple backend services still mutate lifecycle/status fields without a visible transaction/event insert in the same service path.
 
-## 4. Pages With Local Forms Despite Form Contracts
+These are real lifecycle architecture blockers and were not bypassed.
 
-Current blocking findings include:
+## 5. Contract Usage Warnings
 
-- `/app/ik/calisanlar`
-- `/app/sirket/companies`
-- `/app/sirket/companies/branches`
-- `/app/sirket/companies/partners`
-- `/app/sirket/companies/representatives`
-- `/app/sirket/companies/stakeholders`
-- `/app/sirket/tesisler`
-- `/app/sirket/teskilat`
-
-These pages must move field/tab definitions into form contracts or explicitly map renderer-only adapters from contract field IDs.
-
-## 5. Pages With Lifecycle Actions Not Contract-Covered
-
-Current blocking findings include:
-
-- `/app/sirket/companies/stakeholders`
-
-Warnings also indicate lifecycle-like status field writes that must be verified by the backend lifecycle guard:
+`contract:usage` passes with 3 warnings:
 
 - `/app/ik/calisanlar`
 - `/app/sirket/companies`
 - `/app/sirket/companies/partners`
-- `/app/sirket/tesisler`
 
-## 6. API Service To BFF To FastAPI Mapping Results
+Each warning indicates a page writes lifecycle-like status fields; backend lifecycle guard must cover the path. Since `contract:lifecycle` is still failing, these remain part of the P0 backend/lifecycle backlog.
 
-Added `scripts/check-backend-contract-drift.js` and wired it into `npm run validate:contracts`.
+## 6. Remaining P0
 
-Current local result:
+- Backend API/BFF/FastAPI drift: open.
+- Lifecycle operation record enforcement: open.
 
-```text
-npm run contract:backend-drift
-API contract files: 6
-backend API files: 7
-Next BFF route files: 43
-frontend service files: 5
-errors: 64
-```
-
-The guard now requires critical API contracts to declare:
-
-- `frontendPath`
-- `bffPath`
-- `fastApiPath`
-- `serviceFunction`
-- backend request/response schema references where applicable
-
-Current blockers are mostly old-style API contracts that only declare `endpointPath`.
-
-## 7. API Permission Drift Findings
-
-The guard now compares contract authorization to backend `ensure_permission(...)` when the corresponding FastAPI route exists.
-
-Known existing drift remains:
-
-- HR employee API contracts use canonical values such as `hr.employee.read`.
-- Backend implementation is absent from the local code tree or uses different permission names in deployments.
-
-This must be resolved by choosing canonical permission names and updating backend/frontend/contracts, or by adding narrowly scoped permission aliases with owner and expiry.
-
-## 8. Backend Schema Drift Findings
-
-The guard now rejects uncontrolled `ConfigDict(extra="allow")` for contract-ready backend request schemas when the schema is referenced by API contracts.
-
-Local HR FastAPI files are not present under `backend/app/api/v1`, so schema drift cannot be fully validated locally for HR until the backend route files are restored into the repo.
-
-## 9. Lifecycle Operation Record Findings
-
-Added `scripts/check-lifecycle-operation-guard.js` and wired it into `npm run validate:contracts`.
-
-Current local result:
+## 7. Commands Run
 
 ```text
-npm run contract:lifecycle
-lifecycle contract files: 6
-backend files scanned: 57
-errors: 7
-```
-
-Blocking findings:
-
-- `contracts/lifecycle/hr/employee.lifecycle.contract.ts` requires operation records but no insert into `hr_employee_lifecycle_events` exists locally.
-- `contracts/lifecycle/system/theme-management.lifecycle.contract.ts` requires operation records but no insert into `workspace_theme_lifecycle_events` exists locally.
-- Some lifecycle contracts point to transaction/event tables while backend inserts are generic or table names differ.
-- `backend/app/domains/partners/service.py` mutates lifecycle/status fields without a visible paired transaction/event insert in the same service path.
-
-## 10. Response Schema Findings
-
-The backend drift guard now fails critical endpoints that use only generic response schemas such as:
-
-- `ApiSuccess[dict[str, Any]]`
-- `dict[str, Any]`
-
-Typed business DTOs are required for contract-ready/release endpoints.
-
-## 11. Fixed Violations
-
-Fixed in this pass:
-
-- Added `contract:usage`, `contract:backend-drift`, and `contract:lifecycle` scripts.
-- Wired all three into `validate:contracts`.
-- Removed existing `void ...Contract` fake usage lines from detected app pages.
-- Extended `EdenApiContract` with strict path/schema/auth/lifecycle fields.
-- Extended page contract registry typing with:
-  - `contractDepth`
-  - `contractSource`
-  - `businessCriticality`
-- Strengthened `check-contract-standardization.js` to reject generated placeholder contracts marked as `contract_ready`.
-
-## 12. Remaining Exceptions With Owner And Expiry
-
-No broad exceptions were added.
-
-`contracts/allowlists/contract-exceptions.ts` remains empty.
-
-## 13. Commands Run
-
-```text
+npm run frontend:standard:check
+npm run contracts:check
 npm run contract:usage
-npm run contract:backend-drift
+npm run validate:contracts
 npm run contract:lifecycle
 ```
 
-## 14. Exact Results
+## 8. Final Status
 
-Current result is intentionally failing because the new guards expose real P0 drift:
+Frontend contract coverage and usage guard cleanup is complete enough to pass the frontend/usage gates.
 
-- `contract:usage`: 50 errors
-- `contract:backend-drift`: 64 errors
-- `contract:lifecycle`: 7 errors
-- `contracts:check`: 7 errors for generated placeholder contracts marked `contract_ready`
-
-`npm run validate:contracts` will fail until these violations are resolved.
-
-## 15. Remaining P0/P1/P2 Backlog
-
-### P0
-
-- Convert real list pages with generated ID-only list contracts to real list contracts.
-- Move real form field/tab definitions into form contracts for core company/personnel/theme-related pages.
-- Add API contract path chain fields for critical APIs.
-- Restore or implement local FastAPI HR route files so API drift can be validated against source.
-- Align lifecycle contracts with backend operation/event tables.
-- Enforce non-null operation/process linkage for lifecycle operation records.
-
-### P1
-
-- Add permission alias contract only where legacy permissions are still unavoidable.
-- Add typed response DTOs for critical backend endpoints currently returning generic dict payloads.
-- Add frontend test files that exercise guard failures on fixture pages.
-
-### P2
-
-- Replace the current static scanner internals with TypeScript compiler AST traversal for richer diagnostics.
-- Add source maps from page registry to exact contract symbols for friendlier error output.
+Full release-grade contract validation is not yet complete because backend drift and lifecycle operation guards still fail.

@@ -1,12 +1,4 @@
 'use client'
-
-
-import { appYardimPageContract } from '@/contracts/pages/generated/app-yardim.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appYardimContractReady = requirePageContract(appYardimPageContract)
-void appYardimContractReady
-
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArrowRight, BookOpen, HelpCircle, RotateCcw, Sparkles } from 'lucide-react'

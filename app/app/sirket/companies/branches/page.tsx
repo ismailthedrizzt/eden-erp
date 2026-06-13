@@ -1,11 +1,6 @@
 'use client'
 
 
-import { appSirketCompaniesBranchesFormContract } from '@/contracts/pages/generated/app-sirket-companies-branches.form.contract'
-import { appSirketCompaniesBranchesWizardContract } from '@/contracts/pages/generated/app-sirket-companies-branches.wizard.contract'
-import { appSirketCompaniesBranchesLifecycleContract } from '@/contracts/pages/generated/app-sirket-companies-branches.lifecycle.contract'
-
-
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
@@ -31,7 +26,8 @@ import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import { branchPageContract } from '@/contracts/pages/branch.page.contract'
-import { assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
+import { branchLifecycleContract } from '@/contracts/lifecycle/branch.lifecycle.contract'
+import { assertFormFieldsMatchContract, assertListColumnsMatchContract, pagePrimaryActionLabel } from '@/contracts/tests/contract-test-utils'
 
 type PageState = 'list' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -388,6 +384,8 @@ export default function CompanyBranchesPage() {
     { id: 'representatives', label: 'Temsilciler / Yetkililer', fields: [{ name: 'branch_representatives', label: 'Temsilciler / Yetkililer', type: 'custom', colSpan: 3, render: ({ data }) => <BranchRepresentativesSummary branch={data as BranchRow} /> }] },
     { id: 'history', label: 'Geçmiş', fields: [{ name: 'branch_history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: ({ data }) => <BranchHistoryPanel branch={data as BranchRow} /> }] },
   ], [])
+
+  assertFormFieldsMatchContract(branchPageContract.route, branchPageContract.form?.fields || [], branchHeroFields, tabs)
 
   const handleListSortChange = (sorts: SortConfig[]) => {
     const sort = sorts[0]

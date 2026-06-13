@@ -1,9 +1,3 @@
-import { appSozlesmelerYeniPageContract } from '@/contracts/pages/generated/app-sozlesmeler-yeni.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSozlesmelerYeniContractReady = requirePageContract(appSozlesmelerYeniPageContract)
-void appSozlesmelerYeniContractReady
-
 import { FilePlus2 } from 'lucide-react'
 import { ContractForm } from '@/components/contracts/ContractForm'
 import { PageBanner } from '@/components/ui/PageBanner'

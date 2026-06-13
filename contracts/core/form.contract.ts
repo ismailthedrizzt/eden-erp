@@ -2,6 +2,7 @@ import type { EdenFieldContract, EdenReactiveFieldContract } from './field.contr
 
 export interface EdenFormContract {
   fields: readonly EdenFieldContract[]
+  tabs?: readonly EdenFormTabContract[]
   fieldOrder: readonly string[]
   defaultValues: Record<string, unknown>
   readonlyFields: readonly string[]
@@ -11,4 +12,10 @@ export interface EdenFormContract {
   draftSaveBehavior: 'create_draft' | 'update_draft'
   forbiddenBehaviors: readonly string[]
   reactiveFields?: readonly EdenReactiveFieldContract[]
+}
+
+export interface EdenFormTabContract {
+  id: string
+  label: string
+  fieldNames?: readonly string[]
 }

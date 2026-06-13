@@ -1,19 +1,4 @@
 'use client'
-
-
-
-import { appSureclerIdWizardContract } from '@/contracts/pages/generated/app-surecler-id.wizard.contract'
-import { appSureclerIdLifecycleContract } from '@/contracts/pages/generated/app-surecler-id.lifecycle.contract'
-
-void appSureclerIdWizardContract
-void appSureclerIdLifecycleContract
-
-import { appSureclerIdPageContract } from '@/contracts/pages/generated/app-surecler-id.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-
-const appSureclerIdContractReady = requirePageContract(appSureclerIdPageContract)
-void appSureclerIdContractReady
-
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'

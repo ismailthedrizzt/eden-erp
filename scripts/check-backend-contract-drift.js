@@ -10,6 +10,7 @@ const backendApiFiles = walk(path.join(root, 'backend', 'app', 'api', 'v1')).fil
 const nextRouteFiles = walk(path.join(root, 'app', 'api')).filter(file => file.endsWith('route.ts'))
 const serviceFiles = walk(path.join(root, 'lib', 'services')).filter(file => file.endsWith('.ts'))
 const permissionAliases = parsePermissionAliases(readOptional('contracts/security/permission-aliases.contract.ts'))
+const backendRouterPrefixes = parseBackendRouterPrefixes(readOptional('backend/app/api/v1/router.py'))
 validatePermissionAliases()
 
 for (const file of apiContractFiles) {
@@ -51,7 +52,7 @@ function validateApiContract(contract, file, source) {
   if (contract.bffPath && !nextBffRouteExists(contract.bffPath, contract.method)) {
     errors.push(`${contractLabel}: Next BFF route not found for ${contract.method} ${contract.bffPath}`)
   }
-  if (contract.frontendPath && contract.serviceFunction && !serviceCallPathExists(contract.serviceFunction, contract.frontendPath)) {
+  if (contract.frontendPath && contract.serviceFunction && !isCacheInvalidation(contract.serviceFunction) && !serviceCallPathExists(contract.serviceFunction, contract.frontendPath)) {
     errors.push(`${contractLabel}: serviceFunction does not call frontendPath ${contract.frontendPath}`)
   }
   if (contract.bffPath && fastApiPath && !bffProxiesToFastApi(contract.bffPath, fastApiPath)) {
@@ -73,7 +74,7 @@ function validateApiContract(contract, file, source) {
       errors.push(`${contractLabel}: backend route does not declare expected response schema ${backendResponseSchema}`)
     }
     if (/response_model\s*=\s*ApiSuccess\[(dict\[str,\s*Any\]|dict|Any)\]/.test(backendRoute.decorator) && isCritical) {
-      errors.push(`${contractLabel}: critical endpoint uses generic response schema instead of typed business DTO`)
+      errors.push(`${contractLabel}: critical endpoint uses generic response schema instead of typed business DTO (${relative(backendRoute.file)})`)
     }
   }
 
@@ -91,10 +92,11 @@ function findBackendRoute(apiPath, method) {
   const routerMethod = method.toLowerCase()
   for (const file of backendApiFiles) {
     const source = fs.readFileSync(file, 'utf8')
-    const routeRegex = new RegExp(`@router\\.${routerMethod}\\(\\s*["']([^"']+)["'][^\\n]*\\)`, 'g')
+    const routeRegex = new RegExp(`@router\\.${routerMethod}\\(\\s*["']([^"']*)["'][^\\n]*\\)`, 'g')
     let match
     while ((match = routeRegex.exec(source))) {
-      const candidate = normalizeApiPath(match[1])
+      const prefix = backendRouterPrefixes.get(path.basename(file, '.py')) || ''
+      const candidate = normalizeApiPath(`${prefix}/${match[1]}`.replace(/\/+/g, '/'))
       if (candidate === normalized || pathMatches(candidate, normalized)) {
         const start = match.index
         const nextDecorator = source.indexOf('\n@router.', start + 1)
@@ -110,14 +112,27 @@ function findBackendRoute(apiPath, method) {
 function nextBffRouteExists(bffPath) {
   const routePath = path.join(root, 'app', ...bffPath.replace(/^\/api\/?/, '').split('/'), 'route.ts')
   if (fs.existsSync(routePath)) return true
-  return nextRouteFiles.some(file => pathMatches(routeFileToApiPath(file), bffPath))
+  return Boolean(findNextBffRoute(bffPath))
 }
 
 function bffProxiesToFastApi(bffPath, fastApiPath) {
-  const route = nextRouteFiles.find(file => pathMatches(routeFileToApiPath(file), bffPath))
+  const route = findNextBffRoute(bffPath)
   if (!route) return false
   const source = fs.readFileSync(route, 'utf8')
-  return source.includes(fastApiPath) || source.includes(fastApiPath.replace(/\{([^}]+)\}/g, '${$1}'))
+  return sourceContainsApiPath(source, fastApiPath)
+}
+
+function findNextBffRoute(bffPath) {
+  return nextRouteFiles
+    .filter(file => pathMatches(routeFileToApiPath(file), bffPath))
+    .sort((left, right) => routeSpecificity(routeFileToApiPath(right)) - routeSpecificity(routeFileToApiPath(left)))[0]
+}
+
+function routeSpecificity(routePath) {
+  const normalized = normalizeApiPath(routePath)
+  return normalized.split('/').filter(Boolean).length * 10
+    - (normalized.match(/\{\*/g) || []).length * 5
+    - (normalized.match(/\{/g) || []).length
 }
 
 function serviceCallPathExists(serviceFunction, frontendPath) {
@@ -125,8 +140,12 @@ function serviceCallPathExists(serviceFunction, frontendPath) {
   if (!fn) return false
   return serviceFiles.some(file => {
     const source = fs.readFileSync(file, 'utf8')
-    return source.includes(`${fn}(`) && source.includes(frontendPath)
+    return source.includes(`${fn}(`) && sourceContainsApiPath(source, frontendPath)
   })
+}
+
+function isCacheInvalidation(serviceFunction) {
+  return /\.invalidate[A-Za-z0-9_]*$/.test(serviceFunction)
 }
 
 function validateNoExtraAllow(schemaName, label) {
@@ -141,7 +160,7 @@ function validateNoExtraAllow(schemaName, label) {
 }
 
 function parseApiContracts(source, fileName) {
-  const blocks = source.match(/\{\s*id:\s*['"][\s\S]*?\n\s*\}/g) || []
+  const blocks = extractApiContractBlocks(source)
   return blocks.map(block => ({
     id: field(block, 'id'),
     method: field(block, 'method'),
@@ -158,19 +177,129 @@ function parseApiContracts(source, fileName) {
   }))
 }
 
+function extractApiContractBlocks(source) {
+  const blocks = []
+  const declarationRegex = /export\s+const\s+\w*ApiContracts\b[^=]*=\s*\[/g
+  let declaration
+  while ((declaration = declarationRegex.exec(source))) {
+    const arrayStart = source.indexOf('[', declaration.index)
+    if (arrayStart === -1) continue
+    const arrayEnd = findMatchingDelimiter(source, arrayStart, '[', ']')
+    if (arrayEnd === -1) continue
+    blocks.push(...extractTopLevelObjectBlocks(source.slice(arrayStart + 1, arrayEnd)))
+  }
+  return blocks
+}
+
+function extractTopLevelObjectBlocks(source) {
+  const blocks = []
+  let blockStart = -1
+  let depth = 0
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]
+    const skippedTo = skipStringOrComment(source, index)
+    if (skippedTo !== index) {
+      index = skippedTo
+      continue
+    }
+    if (char === '{') {
+      if (depth === 0) blockStart = index
+      depth += 1
+    } else if (char === '}') {
+      depth -= 1
+      if (depth === 0 && blockStart !== -1) {
+        blocks.push(source.slice(blockStart, index + 1))
+        blockStart = -1
+      }
+    }
+  }
+  return blocks.filter(block => /\bid\s*:/.test(block) && /\bmethod\s*:/.test(block))
+}
+
+function findMatchingDelimiter(source, start, open, close) {
+  let depth = 0
+  for (let index = start; index < source.length; index += 1) {
+    const char = source[index]
+    const skippedTo = skipStringOrComment(source, index)
+    if (skippedTo !== index) {
+      index = skippedTo
+      continue
+    }
+    if (char === open) depth += 1
+    if (char === close) {
+      depth -= 1
+      if (depth === 0) return index
+    }
+  }
+  return -1
+}
+
+function skipStringOrComment(source, index) {
+  const char = source[index]
+  const next = source[index + 1]
+  if (char === '/' && next === '/') {
+    const newline = source.indexOf('\n', index + 2)
+    return newline === -1 ? source.length - 1 : newline
+  }
+  if (char === '/' && next === '*') {
+    const end = source.indexOf('*/', index + 2)
+    return end === -1 ? source.length - 1 : end + 1
+  }
+  if (char !== "'" && char !== '"' && char !== '`') return index
+  const quote = char
+  for (let cursor = index + 1; cursor < source.length; cursor += 1) {
+    if (source[cursor] === '\\') {
+      cursor += 1
+      continue
+    }
+    if (source[cursor] === quote) return cursor
+  }
+  return source.length - 1
+}
+
+function sourceContainsApiPath(source, apiPath) {
+  if (!apiPath) return false
+  if (source.includes(apiPath)) return true
+  const normalized = normalizeApiPath(apiPath)
+  const staticPrefix = normalized.split('{')[0].replace(/\/$/, '')
+  if (staticPrefix.length > '/api/v1'.length && source.includes(staticPrefix)) return true
+  const pattern = escapeRegExp(normalized)
+    .replace(/\\\{[^}]+\\\}/g, '[^`\'"\\s/]+')
+    .replace(/\\\$/g, '\\$')
+  const apiPathRegex = new RegExp(pattern)
+  return apiPathRegex.test(source)
+}
+
 function routeFileToApiPath(file) {
   const normalized = relative(file)
-  return '/' + normalized.replace(/^app\/api/, 'api').replace(/\/route\.ts$/, '').replace(/\[([^\]]+)\]/g, '{$1}')
+  return '/' + normalized
+    .replace(/^app\/api/, 'api')
+    .replace(/\/route\.ts$/, '')
+    .replace(/\[\.\.\.([^\]]+)\]/g, '{*$1}')
+    .replace(/\[([^\]]+)\]/g, '{$1}')
 }
 
 function normalizeApiPath(value) {
-  return '/' + String(value || '').replace(/^\/+/, '').replace(/\[([^\]]+)\]/g, '{$1}')
+  const normalized = '/' + String(value || '').replace(/^\/+/, '').replace(/\[([^\]]+)\]/g, '{$1}')
+  return normalized.length > 1 ? normalized.replace(/\/+$/, '') : normalized
 }
 
 function pathMatches(candidate, expected) {
+  if (/\{\*[^}]+\}/.test(candidate)) {
+    const prefix = normalizeApiPath(candidate).replace(/\/\{\*[^}]+\}$/, '')
+    return normalizeApiPath(expected).startsWith(prefix)
+  }
+  if (apiPathRegex(candidate).test(normalizeApiPath(expected))) return true
   const c = normalizeApiPath(candidate).replace(/\{[^}]+\}/g, '{}')
   const e = normalizeApiPath(expected).replace(/\{[^}]+\}/g, '{}')
-  return c === e || c.endsWith(e) || e.endsWith(c)
+  return c === e
+}
+
+function apiPathRegex(value) {
+  const pattern = '^' + escapeRegExp(normalizeApiPath(value))
+    .replace(/\\\{\*[^}]+\\\}/g, '.*')
+    .replace(/\\\{[^}]+\\\}/g, '[^/]+') + '$'
+  return new RegExp(pattern)
 }
 
 function firstPermission(values) {
@@ -196,6 +325,23 @@ function parsePermissionAliases(source) {
       expiresAt: field(block, 'expiresAt'),
       removalPlan: field(block, 'removalPlan'),
     }))
+}
+
+function parseBackendRouterPrefixes(source) {
+  const prefixes = new Map()
+  const includeRegex = /api_router\.include_router\(\s*([a-zA-Z_][\w]*)\.router\s*,([\s\S]*?)\)/g
+  let match
+  while ((match = includeRegex.exec(source))) {
+    const moduleName = match[1]
+    const prefix = pythonKeywordField(match[2], 'prefix') || ''
+    prefixes.set(moduleName, prefix)
+  }
+  return prefixes
+}
+
+function pythonKeywordField(source, name) {
+  const match = source.match(new RegExp(`${name}\\s*=\\s*['"]([^'"]*)['"]`))
+  return match ? match[1] : undefined
 }
 
 function validatePermissionAliases() {

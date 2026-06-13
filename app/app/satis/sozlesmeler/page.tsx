@@ -1,10 +1,3 @@
-import { appSatisSozlesmelerPageContract } from '@/contracts/pages/generated/app-satis-sozlesmeler.page.contract'
-import { requirePageContract } from '@/contracts/tests/contract-test-utils'
-import { appSatisSozlesmelerWizardContract } from '@/contracts/pages/generated/app-satis-sozlesmeler.wizard.contract'
-import { appSatisSozlesmelerLifecycleContract } from '@/contracts/pages/generated/app-satis-sozlesmeler.lifecycle.contract'
-
-const appSatisSozlesmelerContractReady = requirePageContract(appSatisSozlesmelerPageContract)
-
 import { FileText } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 
