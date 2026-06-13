@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T15:10:41.320Z
+Generated: 2026-06-13T16:51:30.654Z
 
 ## Related Contracts
 
@@ -16,11 +16,34 @@ Generated: 2026-06-13T15:10:41.320Z
 
 | Severity | Risk | File/Route | Classification | Mitigation |
 | --- | --- | --- | --- | --- |
+| P1 | contractize_before_promotion | lib/services/accounting/bankAccounts.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/bankTransactions.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/capitalReconciliation.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/cariAccounts.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/cariTransactions.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/eDocuments.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/accounting/reconciliation.service.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/accountingService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/admin/adminService.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/companyService.ts | needs_contractization | contractize_before_promotion |
 | P1 | contractize_before_promotion | lib/services/companyVehicleService.ts | needs_contractization | contractize_before_promotion |
-| P1 | contractize_before_promotion | lib/services/facilityService.ts | needs_contractization | contractize_before_promotion |
-| P1 | contractize_before_promotion | lib/services/organizationService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/dataQuality/dataQualityService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/documents/documentRequirements.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/documents/documentService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/hr/employees.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/hr/employees.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/hr/leaveAttendance.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/importExport/bulkService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/importExport/exportService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/importExport/importService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/licensing/licensingService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/notifications/emailService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/notifications/notificationService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/notifications/preferences.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/notifications/reminderService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/onboarding/onboardingService.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/search/commandPalette.service.ts | needs_contractization | contractize_before_promotion |
+| P1 | contractize_before_promotion | lib/services/search/searchService.ts | needs_contractization | contractize_before_promotion |
 | P1 | add_migration_header_or_contractize | app/api/accounting/bank-accounts-cards/[id]/history/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/auth/logout/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/auth/me/route.ts | needs_contractization | add_migration_header_or_contractize |
@@ -93,26 +116,3 @@ Generated: 2026-06-13T15:10:41.320Z
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/[licenseId]/usage-snapshot/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/[licenseId]/usage/route.ts | needs_contractization | add_migration_header_or_contractize |
 | P1 | add_migration_header_or_contractize | app/api/licensing/tenant-licenses/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/archive/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/dismiss/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/read/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/[id]/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/counts/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/preferences/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/read-all/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/notifications/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/system-tour/complete/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/system-tour/postpone/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/system-tour/skip/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/system-tour/start/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/system-tour/step/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/user/complete-tour/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/user/dismiss-hint/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/user/reset-help/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/user/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/workspace/complete-step/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/workspace/reset/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/workspace/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/onboarding/workspace/skip/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/reminders/[id]/cancel/route.ts | needs_contractization | add_migration_header_or_contractize |
-| P1 | add_migration_header_or_contractize | app/api/reminders/[id]/dismiss/route.ts | needs_contractization | add_migration_header_or_contractize |

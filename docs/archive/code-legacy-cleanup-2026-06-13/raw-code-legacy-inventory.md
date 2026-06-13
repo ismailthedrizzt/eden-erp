@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T15:10:41.320Z
+Generated: 2026-06-13T16:51:30.654Z
 
 ## Related Contracts
 
@@ -18,19 +18,19 @@ Generated: 2026-06-13T15:10:41.320Z
 
 ```json
 {
-  "scannedFiles": 2118,
+  "scannedFiles": 2123,
   "routes": 152,
   "services": 534,
   "bffRoutes": 552,
-  "residueHits": 192,
+  "residueHits": 194,
   "generatedContractItems": 146,
   "orphanCandidates": 0,
   "p0": 0,
-  "p1": 171,
-  "p2": 247,
+  "p1": 194,
+  "p2": 238,
   "safeDeleteCandidates": 11,
-  "needsManualReview": 321,
-  "activeRuntimeDependency": 1041
+  "needsManualReview": 323,
+  "activeRuntimeDependency": 897
 }
 ```
 
@@ -200,306 +200,306 @@ Total: 534
 
 | Severity | Classification | File/Route | Decision | Evidence |
 | --- | --- | --- | --- | --- |
-| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
-| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
-| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
-| P2 | needs_manual_review | lib/api/listEndpoint.ts | manual_review | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
-| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
-| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts | delete_later_after_reference_scan | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | safe_delete_candidate | lib/services/accounting/accountingService.ts | delete_later_after_reference_scan | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/bankTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/capitalReconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariAccounts.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/cariTransactions.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/eDocuments.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/accounting/reconciliation.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/accountingService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/admin/adminService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | safe_delete_candidate | lib/services/after-sales/afterSales.service.ts | delete_later_after_reference_scan | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/automation/automationService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyService.ts | contractize_before_promotion | missing API contract coverage; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/companyService.ts | retain_contract_covered_service | serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/companyVehicleService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/crm/crmService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/dataQuality/dataQualityService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentRequirements.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentRequirements.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/documents/documentService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/employeeService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P1 | needs_contractization | lib/services/facilityService.ts | contractize_before_promotion | missing API contract coverage; 4 API call(s); API path not covered by contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts | retain_used_service_or_helper | serviceFunction appears in contracts/api |
-| P2 | active_runtime_dependency | lib/services/hr/hrService.ts | retain_used_service_or_helper | missing API contract coverage |
-| P2 | active_runtime_dependency | lib/services/hr/hrService.ts | retain_used_service_or_helper | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts#parseListQuery | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts#listRange | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts#listMeta | manual_review | missing API contract coverage |
+| P2 | needs_manual_review | lib/api/listEndpoint.ts#listMetaFromRows | manual_review | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts#getPublicApiBaseUrl | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/api/publicApiBaseUrl.ts#hasPublicApiBaseUrl | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts#getServerResponseCache | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts#setServerResponseCache | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/api/serverResponseCache.ts#serverListCacheKey | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts#unwrapList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/accounting/accountingService.ts#unwrapData | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/services/accounting/accountingService.ts#normalizeMoney | delete_later_after_reference_scan | missing API contract coverage |
+| P1 | needs_contractization | lib/services/accounting/bankAccounts.service.ts#bankAccountsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankAccounts.service.ts#bankAccountsService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankAccounts.service.ts#bankAccountsService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankAccounts.service.ts#bankAccountsService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankAccounts.service.ts#bankAccountsService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.importRows | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.match | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/bankTransactions.service.ts#bankTransactionsService.ignore | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/capitalReconciliation.service.ts#capitalReconciliationService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/capitalReconciliation.service.ts#capitalReconciliationService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/capitalReconciliation.service.ts#capitalReconciliationService.matchPayment | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.summary | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariAccounts.service.ts#cariAccountsService.companySummary | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariTransactions.service.ts#cariTransactionsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariTransactions.service.ts#cariTransactionsService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariTransactions.service.ts#cariTransactionsService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariTransactions.service.ts#cariTransactionsService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/cariTransactions.service.ts#cariTransactionsService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.detail | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.importRows | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.match | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/eDocuments.service.ts#eDocumentsService.reject | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.suggestions | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.summary | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.unmatched | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.match | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accounting/reconciliation.service.ts#reconciliationService.unmatch | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/accountingService.ts#accountingService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/accountingService.ts#accountingService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.dashboard | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.workspaceSettings | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.updateWorkspaceSettings | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.modules | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.setModuleActivation | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.features | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.setFeature | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/admin/adminService.ts#adminService.health | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.integrations | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.testIntegration | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.outbox | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.retryOutbox | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.dispatchOutboxOnce | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/admin/adminService.ts#adminService.settings | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesAssets.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesAssets.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesAssets.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesAssets.serviceHistory | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRequests.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRequests.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRequests.assign | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRequests.assignTechnician | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRequests.close | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.complete | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.start | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.addPhotos | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.checklist | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.patchChecklist | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesRecords.report | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenancePlans.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenancePlans.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenancePlans.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenanceDue.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenanceDue.createServiceRequest | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesMaintenanceDue.skip | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesFieldAssignments.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesFieldAssignments.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesFieldAssignments.accept | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesFieldAssignments.reject | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesFieldAssignments.setStatus | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesChecklistTemplates.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#afterSalesChecklistTemplates.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | safe_delete_candidate | lib/services/after-sales/afterSales.service.ts#getAfterSalesSummary | delete_later_after_reference_scan | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#listMaintenanceDue | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/after-sales/afterSales.service.ts#warrantyCheck | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.query | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.context | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.actionPreview | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.formAssist | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.documentSummary | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.documentExtract | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.suggestions | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.history | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/ai/aiCopilot.service.ts#aiCopilotService.feedback | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.remove | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.activate | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.pause | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.disable | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.runNow | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRules.simulate | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRegistry.triggers | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRegistry.conditions | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRegistry.actions | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRegistry.templates | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRuns.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#automationRuns.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#requestJson | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/automation/automationService.ts#toQueryString | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.list | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.detail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.detailSection | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.create | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.update | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.delete | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.capitalIncreasePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeCapitalIncrease | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.capitalDecreasePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P1 | needs_contractization | lib/services/companyService.ts#companyService.requestCapitalDecrease | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.officialChangePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeOfficialChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchesList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchDetail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateBranch | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateBranchDocuments | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchOpeningPrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeBranchOpening | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.branchClosingPrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeBranchClosing | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.naceChangePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeNaceChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.activitySubjectChangePrecheck | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.completeActivitySubjectChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partners | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnersList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnerDetail | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.partnerDetailSection | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.createPartner | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updatePartner | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.deletePartner | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representatives | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representativesList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.representativeDetail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.createRepresentative | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.updateRepresentative | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.deleteRepresentativeDraft | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.startRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.renewRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.changeRepresentativeAuthorityScope | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.changeRepresentativeLimit | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.suspendRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.resumeRepresentativeAuthority | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.terminateRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.correctRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.reverseRepresentativeAuthority | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.stakeholdersList | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.stakeholderDetail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.currentOwnership | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.documents | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.logos | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.invalidateList | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyService.ts#companyService.invalidateRelations | retain_used_service_or_helper | serviceFunction appears in contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.references | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/companyVehicleService.ts#companyVehicleService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/companyVehicleService.ts#companyVehicleService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.lifecycle | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.precheck | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.relations | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.obligations | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/contracts/contractService.ts#contractService.events | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.remove | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.relatedRecords | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.summary | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.createCariAccount | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmStakeholders.createFollowupTask | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmMasterData.searchPersons | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmMasterData.createPerson | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmMasterData.searchOrganizations | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmMasterData.createOrganization | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmInteractions.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmInteractions.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.qualify | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.convert | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.markLost | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.interactions | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmLeads.addInteraction | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.get | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.changeStage | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.markWon | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.markLost | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.createFollowupTask | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.uploadProposal | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.interactions | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmOpportunities.addInteraction | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmPipelines.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmPipelines.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmPipelines.stages | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmPipelines.updateStage | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmFollowups.due | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmFollowups.complete | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#crmFollowups.snooze | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#requestJson | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#unwrapList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/crm/crmService.ts#toQueryString | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.summary | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.runCheck | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.checkEntity | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.duplicates | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.duplicateGroup | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.detectDuplicates | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.dismissDuplicate | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.falsePositive | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.mergePreview | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.mergeConfirm | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.rules | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/dataQuality/dataQualityService.ts#dataQualityService.updateRule | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentRequirements.service.ts#documentRequirementsService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentRequirements.service.ts#documentRequirementsService.forOperation | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.list | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.get | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.create | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts#documentService.upload | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts#documentService.uploadForEntity | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.byEntity | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/documents/documentService.ts#documentService.newVersion | retain_used_service_or_helper | missing API contract coverage |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.update | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.verify | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.reject | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.remove | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.downloadUrl | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.previewUrl | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.expiring | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.expired | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P1 | needs_contractization | lib/services/documents/documentService.ts#documentService.accessLogs | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.list | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.detail | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.detailSection | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.create | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.update | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.delete | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/employeeService.ts#employeeService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/facilityService.ts#facilityService.list | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/facilityService.ts#facilityService.detail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/facilityService.ts#facilityService.create | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/facilityService.ts#facilityService.update | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/facilityService.ts#facilityService.invalidateList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.list | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.detail | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.create | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.update | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P1 | needs_contractization | lib/services/hr/employees.service.ts#employeesService.delete | contractize_before_promotion | missing API contract coverage; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.summary | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P1 | needs_contractization | lib/services/hr/employees.service.ts#employeesService.companySummary | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.documents | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employees.service.ts#employeesService.createDocument | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P1 | needs_contractization | lib/services/hr/employees.service.ts#employeesService.updateDocument | contractize_before_promotion | missing API contract coverage; 1 API call(s); API path not covered by contracts/api |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts#employmentService.start | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts#employmentService.terminate | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts#employmentService.assignmentChange | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts#employmentService.sgkEntryCompleted | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/employment.service.ts#employmentService.sgkExitCompleted | retain_contract_covered_service | serviceFunction appears in contracts/api; 1 API call(s) |
+| P2 | active_runtime_dependency | lib/services/hr/hrService.ts#unwrapList | retain_used_service_or_helper | missing API contract coverage |
+| P2 | active_runtime_dependency | lib/services/hr/hrService.ts#unwrapData | retain_used_service_or_helper | missing API contract coverage |
 
 _Only first 300 rows shown._
 
@@ -814,7 +814,7 @@ _Only first 300 rows shown._
 
 ## Supabase/Vercel/Old Runtime Residue Inventory
 
-Total: 192
+Total: 194
 
 | Severity | Classification | File/Route | Decision | Evidence |
 | --- | --- | --- | --- | --- |
@@ -1004,11 +1004,13 @@ Total: 192
 | P2 | needs_manual_review | lib/user-state/server.ts | manual_review_runtime_residue | Supabase, @supabase/supabase-js, lib/supabase in lib/user-state/server.ts |
 | P2 | needs_manual_review | scripts/audit-next-backend-boundary.js | manual_review_runtime_residue | Supabase, lib/supabase in scripts/audit-next-backend-boundary.js |
 | P2 | needs_manual_review | scripts/check-backend-migration-status.js | manual_review_runtime_residue | SUPABASE_SERVICE_ROLE_KEY in scripts/check-backend-migration-status.js |
+| P2 | needs_manual_review | scripts/check-code-legacy-inventory.js | manual_review_runtime_residue | Supabase, Vercel in scripts/check-code-legacy-inventory.js |
 | P2 | needs_manual_review | scripts/check-database-target.js | manual_review_runtime_residue | VERCEL_ENV in scripts/check-database-target.js |
 | P2 | needs_manual_review | scripts/check-import-boundaries.js | manual_review_runtime_residue | Supabase, SUPABASE_SERVICE_ROLE_KEY in scripts/check-import-boundaries.js |
 | P2 | needs_manual_review | scripts/check-performance-contracts.js | manual_review_runtime_residue | Supabase in scripts/check-performance-contracts.js |
 | P2 | needs_manual_review | scripts/check-release-env-safety.js | manual_review_runtime_residue | Supabase, NEXT_PUBLIC_SUPABASE, SUPABASE_SERVICE_ROLE_KEY, VERCEL_ENV in scripts/check-release-env-safety.js |
 | P2 | needs_manual_review | scripts/check-security-reference-contracts.js | manual_review_runtime_residue | Supabase, SUPABASE_SERVICE_ROLE_KEY in scripts/check-security-reference-contracts.js |
+| P2 | needs_manual_review | scripts/generate-code-legacy-inventory.js | manual_review_runtime_residue | Supabase, NEXT_PUBLIC_SUPABASE, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET, @supabase/supabase-js, @supabase/ssr, Vercel, VERCEL_ENV, lib/supabase, check-supabase-target, supabase:migrate in scripts/generate-code-legacy-inventory.js |
 | P2 | needs_manual_review | scripts/generate-next-api-burndown-docs.js | manual_review_runtime_residue | Supabase in scripts/generate-next-api-burndown-docs.js |
 
 

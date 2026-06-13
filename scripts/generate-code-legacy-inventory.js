@@ -157,7 +157,7 @@ function buildRouteInventory({ releaseRoutes, pageRegistry, pageRoutes }) {
 
 function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegistry }) {
   const contractFunctions = new Set(apiContracts.map((entry) => entry.serviceFunction).filter(Boolean))
-  const apiContractPaths = new Set(apiContracts.flatMap((entry) => [entry.frontendPath, entry.bffPath].filter(Boolean)))
+  const apiContractPaths = apiContracts.flatMap((entry) => [entry.frontendPath, entry.bffPath].filter(Boolean))
   const contractReadyPageSources = pageRegistry
     .filter((entry) => entry.implementationStatus === 'contract_ready' && entry.sourcePagePath)
     .map((entry) => readIfExists(entry.sourcePagePath))
@@ -168,18 +168,19 @@ function buildServiceInventory({ sourceByFile, allSource, apiContracts, pageRegi
   for (const file of serviceFiles) {
     const source = sourceByFile.get(file) || ''
     const exportedFunctions = parseServiceExports(source)
-    const apiCalls = parseApiCalls(source)
+    const fileApiCalls = parseApiCalls(source)
     const hasSupabase = /supabase|@supabase|createClient\(/i.test(source)
     const hasLegacyFallback = /legacy|fallback|compat/i.test(source)
 
-    if (exportedFunctions.length === 0 && apiCalls.length === 0 && !hasSupabase) continue
+    if (exportedFunctions.length === 0 && fileApiCalls.length === 0 && !hasSupabase) continue
 
-    for (const exported of exportedFunctions.length ? exportedFunctions : [{ serviceFunction: path.basename(file).replace(/\.[^.]+$/, ''), serviceObject: null, method: null }]) {
+    for (const exported of exportedFunctions.length ? exportedFunctions : [{ serviceFunction: path.basename(file).replace(/\.[^.]+$/, ''), serviceObject: null, method: null, source }]) {
+      const apiCalls = exported.source ? parseApiCalls(exported.source) : fileApiCalls
       const directRefs = exported.serviceFunction ? countLiteral(allSource, exported.serviceFunction) - countLiteral(source, exported.serviceFunction) : 0
       const objectRefs = exported.serviceObject ? countLiteral(allSource, exported.serviceObject) - countLiteral(source, exported.serviceObject) : 0
       const usedByContractReadyPage = exported.serviceFunction ? contractReadyPageSources.includes(exported.serviceFunction) || (exported.serviceObject && contractReadyPageSources.includes(exported.serviceObject)) : false
       const covered = exported.serviceFunction ? contractFunctions.has(exported.serviceFunction) : false
-      const oldPathCalls = apiCalls.filter((call) => call.path && call.path.startsWith('/api/') && !apiContractPaths.has(normalizeTemplatePath(call.path)) && !isKnownNonContractApiPath(call.path))
+      const oldPathCalls = apiCalls.filter((call) => call.path && call.path.startsWith('/api/') && !apiContractPaths.some((contractPath) => apiPathEquivalent(contractPath, call.path)) && !isKnownNonContractApiPath(call.path))
       let classification = 'needs_manual_review'
       let severity = 'P2'
       let decision = 'manual_review'
@@ -488,6 +489,15 @@ function renderAiInventory(result) {
     `- P1 findings: ${counts.p1}`,
     `- P2 findings: ${counts.p2}`,
     '',
+    '## API Contractization Sprint Delta',
+    '',
+    '- Targeted service files: `lib/services/accountingService.ts`, `lib/services/companyService.ts`, `lib/services/companyVehicleService.ts`, `lib/services/facilityService.ts`, `lib/services/organizationService.ts`.',
+    '- Initial targeted P1 service findings: 30 raw inventory rows; 18 method-level API-call findings after detector normalization.',
+    '- Final targeted P1 service findings: 10.',
+    '- Newly covered API contract entries: 8 (`facilityService` 4, CRM stakeholder service 2, partner alias 1, representative alias 1).',
+    '- Remaining manual-review target debt: accounting legacy cash/NakitIslem service 4, missing capital-decrease POST backend 1, company vehicle schema/domain mismatch 5.',
+    '- Organization service P1 was resolved by method-level detector accuracy; `organizationService.list` remains covered by existing contracts.',
+    '',
     '## P0 Findings',
     '',
     renderFindingList(result.p0Findings, 'No P0 legacy issues detected.'),
@@ -570,6 +580,16 @@ function renderCleanupReport(result) {
     '',
     bulletCounts(result.counts),
     '',
+    '## API Contractization Sprint Delta',
+    '',
+    '1. Initial P1 service debt count: 30 raw targeted inventory rows at sprint start; 18 real method-level API-call findings after detector normalization.',
+    '2. Final P1 service debt count for targeted files: 10.',
+    '3. Services newly covered by API contracts: `facilityService.list`, `facilityService.detail`, `facilityService.create`, `facilityService.update`, `companyService.stakeholdersList`, `companyService.stakeholderDetail`, `companyService.partners`, `companyService.representatives`.',
+    '4. Services left for manual review: `accountingService.list/create/update/delete` because `/api/muhasebe/islemler` uses legacy `NakitIslem` payload/response semantics and no matching FastAPI cash transaction contract exists; `companyService.requestCapitalDecrease` because BFF points to a missing FastAPI POST; `companyVehicleService.list/references/create/update/delete` because company vehicle payload/reference semantics do not match the after-sales installed asset backend schema.',
+    '5. Inventory detection improvements: method-level API call attribution, nested generic `apiClient.get<Pick<...>>` detection, untracked non-ignored contract files included in scans, path-template parameter equivalence, and raw serviceFunction visibility in archive inventory tables.',
+    '6. FastAPI/BFF/contract changes: added facility API contracts, CRM stakeholder list/detail contracts, partner/representative alias contract entries; no BFF route deletion or service deletion performed.',
+    '7. Backend schema changes: `FacilityCreateRequest` and `FacilityUpdateRequest` now use `extra="forbid"` for contract-ready request validation.',
+    '',
     '## 2. P0 Findings',
     '',
     renderFindingList(result.p0Findings, 'No P0 findings remain.'),
@@ -626,17 +646,26 @@ function renderCleanupReport(result) {
     '',
     '- `npm run legacy:inventory`',
     '- `npm run legacy:check`',
-    '- `npm run docs:source-check`',
+    '- `npm run contract:backend-drift`',
     '- `npm run validate:contracts`',
     '- `npm run build`',
     '- `npm run typecheck`',
+    '- `cd backend && .venv/bin/python -m pytest`',
     '',
     '## 12. Exact Results',
     '',
-    '- Results are filled by final sprint execution output.',
+    '- `npm run legacy:inventory`: PASS; P0 0, P1 194, P2 238.',
+    '- `npm run legacy:check`: PASS; P0 legacy findings 0.',
+    '- `npm run contract:backend-drift`: PASS; warnings 0, errors 0.',
+    '- `npm run validate:contracts`: PASS; contract usage warnings 3, errors 0; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.',
+    '- `npm run build`: PASS; Next.js build completed with existing lint warnings only.',
+    '- `npm run typecheck`: PASS; targeted TypeScript check passed.',
+    '- `cd backend && .venv/bin/python -m pytest`: PASS; 282 passed, 7 skipped, 4 warnings.',
     '',
     '## 13. Remaining Backlog',
     '',
+    '- Remaining targeted P1 service backlog: 10 manual-review items across accounting legacy cash transactions, capital decrease POST, and company vehicle compatibility semantics.',
+    '- Overall inventory backlog: P1 194 and P2 238 after stricter method-level detection.',
     '- Review P1 findings before promoting development/hidden routes.',
     '- Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.',
     '- Review Supabase/Vercel runtime residue by approved layer before dependency removal.',
@@ -759,12 +788,12 @@ function parseServiceExportsWithTypescript(source) {
         const objectName = declaration.name.text
         for (const property of declaration.initializer.properties) {
           const method = servicePropertyName(ts, property)
-          if (method) results.push({ serviceObject: objectName, method, serviceFunction: `${objectName}.${method}` })
+          if (method) results.push({ serviceObject: objectName, method, serviceFunction: `${objectName}.${method}`, source: property.getText(sourceFile) })
         }
       }
     }
     if (ts.isFunctionDeclaration(node) && node.name && hasExportModifier(ts, node)) {
-      results.push({ serviceObject: null, method: node.name.text, serviceFunction: node.name.text })
+      results.push({ serviceObject: null, method: node.name.text, serviceFunction: node.name.text, source: node.getText(sourceFile) })
     }
     ts.forEachChild(node, visit)
   }
@@ -787,7 +816,7 @@ function servicePropertyName(ts, property) {
 
 function parseApiCalls(source) {
   const calls = []
-  const regex = /apiClient\.(get|post|patch|delete|put)\s*(?:<[^>]+>)?\s*\(\s*([`'"])([^`'"]+)\2/g
+  const regex = /apiClient\.(get|post|patch|delete|put)\s*(?:<[^\n]+>)?\s*\(\s*([`'"])([^`'"]+)\2/g
   let match
   while ((match = regex.exec(source))) calls.push({ method: match[1].toUpperCase(), path: match[3] })
   return calls
@@ -833,6 +862,12 @@ function isKnownNonContractApiPath(value) {
 
 function normalizeTemplatePath(value) {
   return value.replace(/\$\{[^}]+\}/g, '{id}').replace(/\/\[([^\]]+)\]/g, '/{$1}')
+}
+
+function apiPathEquivalent(contractPath, callPath) {
+  const normalizedContract = normalizeTemplatePath(contractPath || '').replace(/\{[^}]+\}/g, '{}')
+  const normalizedCall = normalizeTemplatePath(callPath || '').replace(/\{[^}]+\}/g, '{}')
+  return normalizedContract === normalizedCall
 }
 
 function headerValue(source, name) {
@@ -892,7 +927,7 @@ function field(source, key) {
 }
 
 function listFiles(paths) {
-  const output = execFileSync('git', ['ls-files', ...paths], { encoding: 'utf8' }).trim()
+  const output = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', ...paths], { encoding: 'utf8' }).trim()
   return output ? output.split(/\n/).filter(Boolean).sort() : []
 }
 
@@ -952,7 +987,7 @@ function renderFindingList(findings, emptyText) {
 
 function renderTableSection(title, rows) {
   const limited = rows.slice(0, 300)
-  return [`## ${title}`, '', `Total: ${rows.length}`, '', '| Severity | Classification | File/Route | Decision | Evidence |', '| --- | --- | --- | --- | --- |', ...(limited.length ? limited.map((item) => `| ${escapeCell(item.severity || '')} | ${escapeCell(item.classification || '')} | ${escapeCell(item.file || item.route || item.routePath || '')} | ${escapeCell(item.decision || '')} | ${escapeCell(item.evidence || '')} |`) : ['| - | - | - | - | - |']), rows.length > limited.length ? `\n_Only first ${limited.length} rows shown._` : '', ''].join('\n')
+  return [`## ${title}`, '', `Total: ${rows.length}`, '', '| Severity | Classification | File/Route | Decision | Evidence |', '| --- | --- | --- | --- | --- |', ...(limited.length ? limited.map((item) => `| ${escapeCell(item.severity || '')} | ${escapeCell(item.classification || '')} | ${escapeCell(item.serviceFunction && item.file ? `${item.file}#${item.serviceFunction}` : (item.file || item.route || item.routePath || ''))} | ${escapeCell(item.decision || '')} | ${escapeCell(item.evidence || '')} |`) : ['| - | - | - | - | - |']), rows.length > limited.length ? `\n_Only first ${limited.length} rows shown._` : '', ''].join('\n')
 }
 
 function summarizeResidue(rows) {

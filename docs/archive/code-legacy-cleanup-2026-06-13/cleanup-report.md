@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T15:10:41.320Z
+Generated: 2026-06-13T16:51:30.654Z
 
 ## Related Contracts
 
@@ -20,19 +20,29 @@ Generated: 2026-06-13T15:10:41.320Z
 
 ## 1. Inventory Counts
 
-- scannedFiles: 2118
+- scannedFiles: 2123
 - routes: 152
 - services: 534
 - bffRoutes: 552
-- residueHits: 192
+- residueHits: 194
 - generatedContractItems: 146
 - orphanCandidates: 0
 - p0: 0
-- p1: 171
-- p2: 247
+- p1: 194
+- p2: 238
 - safeDeleteCandidates: 11
-- needsManualReview: 321
-- activeRuntimeDependency: 1041
+- needsManualReview: 323
+- activeRuntimeDependency: 897
+
+## API Contractization Sprint Delta
+
+1. Initial P1 service debt count: 30 raw targeted inventory rows at sprint start; 18 real method-level API-call findings after detector normalization.
+2. Final P1 service debt count for targeted files: 10.
+3. Services newly covered by API contracts: `facilityService.list`, `facilityService.detail`, `facilityService.create`, `facilityService.update`, `companyService.stakeholdersList`, `companyService.stakeholderDetail`, `companyService.partners`, `companyService.representatives`.
+4. Services left for manual review: `accountingService.list/create/update/delete` because `/api/muhasebe/islemler` uses legacy `NakitIslem` payload/response semantics and no matching FastAPI cash transaction contract exists; `companyService.requestCapitalDecrease` because BFF points to a missing FastAPI POST; `companyVehicleService.list/references/create/update/delete` because company vehicle payload/reference semantics do not match the after-sales installed asset backend schema.
+5. Inventory detection improvements: method-level API call attribution, nested generic `apiClient.get<Pick<...>>` detection, untracked non-ignored contract files included in scans, path-template parameter equivalence, and raw serviceFunction visibility in archive inventory tables.
+6. FastAPI/BFF/contract changes: added facility API contracts, CRM stakeholder list/detail contracts, partner/representative alias contract entries; no BFF route deletion or service deletion performed.
+7. Backend schema changes: `FacilityCreateRequest` and `FacilityUpdateRequest` now use `extra="forbid"` for contract-ready request validation.
 
 ## 2. P0 Findings
 
@@ -40,11 +50,34 @@ Generated: 2026-06-13T15:10:41.320Z
 
 ## 3. P1 Findings
 
-- P1: contractize_before_promotion (lib/services/accountingService.ts) - missing API contract coverage; 4 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/companyService.ts) - missing API contract coverage; 20 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/companyVehicleService.ts) - missing API contract coverage; 4 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/facilityService.ts) - missing API contract coverage; 4 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/organizationService.ts) - missing API contract coverage; 1 API call(s)
+- P1: contractize_before_promotion (lib/services/accounting/bankAccounts.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/bankTransactions.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/capitalReconciliation.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/cariAccounts.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/cariTransactions.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/eDocuments.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accounting/reconciliation.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/accountingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/admin/adminService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/companyService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/companyVehicleService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/dataQuality/dataQualityService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/documents/documentRequirements.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/documents/documentService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/hr/employees.service.ts) - missing API contract coverage; 1 API call(s)
+- P1: contractize_before_promotion (lib/services/hr/employees.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/hr/leaveAttendance.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/importExport/bulkService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/importExport/exportService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/importExport/importService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/licensing/licensingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/notifications/emailService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/notifications/notificationService.ts) - missing API contract coverage; 1 API call(s)
+- P1: contractize_before_promotion (lib/services/notifications/preferences.service.ts) - missing API contract coverage; 1 API call(s)
+- P1: contractize_before_promotion (lib/services/notifications/reminderService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/onboarding/onboardingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/search/commandPalette.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/search/searchService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: add_migration_header_or_contractize (app/api/accounting/bank-accounts-cards/[id]/history/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/auth/logout/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/auth/me/route.ts) - missing migration header
@@ -67,29 +100,6 @@ Generated: 2026-06-13T15:10:41.320Z
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/[merge_id]/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/confirm/route.ts) - missing migration header
 - P1: add_migration_header_or_contractize (app/api/data-quality/merge/preview/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/data-quality/rules/[rule_key]/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/data-quality/rules/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/data-quality/summary/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/access-logs/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/download-url/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/new-version/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/preview-url/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/reject/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/[id]/verify/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/by-entity/[entity_type]/[entity_id]/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/by-entity/[entity_type]/[entity_id]/upload/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/expired/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/expiring/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/requirements/[module_key]/[operation_key]/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/requirements/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/documents/upload/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/export/jobs/[id]/download/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/export/jobs/[id]/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/export/jobs/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/import/jobs/[id]/cancel/route.ts) - missing migration header
-- P1: add_migration_header_or_contractize (app/api/import/jobs/[id]/confirm/route.ts) - missing migration header
 
 ## 4. P2 Findings
 
@@ -98,43 +108,34 @@ Generated: 2026-06-13T15:10:41.320Z
 - P2: delete_later_after_reference_scan (lib/api/serverResponseCache.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/accounting/accountingService.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/accounting/accountingService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/bankAccounts.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/bankTransactions.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/capitalReconciliation.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/cariAccounts.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/cariTransactions.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/eDocuments.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/accounting/reconciliation.service.ts) - missing API contract coverage
+- P2: retain_used_service_or_helper (lib/services/accountingService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/admin/adminService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/after-sales/afterSales.service.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/after-sales/afterSales.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/ai/aiCopilot.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/automation/automationService.ts) - missing API contract coverage
-- P2: retain_contract_covered_service (lib/services/companyService.ts) - serviceFunction appears in contracts/api; 20 API call(s); API path not covered by contracts/api
+- P2: retain_used_service_or_helper (lib/services/companyService.ts) - serviceFunction appears in contracts/api
+- P2: retain_used_service_or_helper (lib/services/companyService.ts) - missing API contract coverage
+- P2: retain_contract_covered_service (lib/services/companyService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
+- P2: retain_used_service_or_helper (lib/services/companyVehicleService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/contracts/contractService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/crm/crmService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/dataQuality/dataQualityService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/documents/documentRequirements.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/documents/documentService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/employeeService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/hr/employees.service.ts) - serviceFunction appears in contracts/api
-- P2: retain_used_service_or_helper (lib/services/hr/employees.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/hr/employment.service.ts) - serviceFunction appears in contracts/api
+- P2: retain_contract_covered_service (lib/services/facilityService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
+- P2: retain_used_service_or_helper (lib/services/facilityService.ts) - missing API contract coverage
+- P2: retain_contract_covered_service (lib/services/hr/employees.service.ts) - serviceFunction appears in contracts/api; 1 API call(s)
+- P2: retain_contract_covered_service (lib/services/hr/employment.service.ts) - serviceFunction appears in contracts/api; 1 API call(s)
 - P2: retain_used_service_or_helper (lib/services/hr/hrService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/hr/leaveAttendance.service.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/importExport/bulkService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/importExport/exportService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/importExport/importService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/integrations/integrationService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/licensing/licensingService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/notifications/emailService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/notifications/notificationService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/notifications/preferences.service.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/notifications/processNotification.server.ts) - missing API contract coverage; Supabase reference
-- P2: retain_used_service_or_helper (lib/services/notifications/reminderService.ts) - missing API contract coverage
-- P2: retain_used_service_or_helper (lib/services/onboarding/onboardingService.ts) - missing API contract coverage
 - P2: retain_contract_covered_service (lib/services/organizationService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
-- P2: retain_contract_covered_service (lib/services/ownershipTransactionsService.ts) - serviceFunction appears in contracts/api; 3 API call(s); API path not covered by contracts/api
+- P2: retain_used_service_or_helper (lib/services/organizationService.ts) - missing API contract coverage
+- P2: retain_contract_covered_service (lib/services/ownershipTransactionsService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
+- P2: retain_used_service_or_helper (lib/services/ownershipTransactionsService.ts) - serviceFunction appears in contracts/api
 - P2: retain_used_service_or_helper (lib/services/portal/portalService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/processCenterService.ts) - missing API contract coverage
 - P2: delete_later_after_reference_scan (lib/services/processCenterService.ts) - missing API contract coverage
@@ -143,6 +144,15 @@ Generated: 2026-06-13T15:10:41.320Z
 - P2: retain_used_service_or_helper (lib/services/projects/projectService.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/projects/projects.service.ts) - missing API contract coverage
 - P2: retain_used_service_or_helper (lib/services/projects/tasks.service.ts) - missing API contract coverage
+- P2: retain_used_service_or_helper (lib/services/reporting/reportingService.ts) - missing API contract coverage
+- P2: manual_review (lib/services/security/securityService.ts) - missing API contract coverage
+- P2: retain_contract_covered_service (lib/services/themeManagementService.ts) - serviceFunction appears in contracts/api; 1 API call(s)
+- P2: manual_review_runtime_residue (app/api/accounting/_banking.ts) - Supabase, @supabase/supabase-js in app/api/accounting/_banking.ts
+- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/passivate/route.ts
+- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/route.ts
+- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/[id]/set-default/route.ts
+- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/_shared.ts) - Supabase, @supabase/supabase-js in app/api/accounting/bank-accounts-cards/_shared.ts
+- P2: manual_review_runtime_residue (app/api/accounting/bank-accounts-cards/route.ts) - Supabase in app/api/accounting/bank-accounts-cards/route.ts
 
 ## 5. Safe Cleanup Performed
 
@@ -191,7 +201,7 @@ Generated: 2026-06-13T15:10:41.320Z
 
 ## 9. Supabase/Vercel Residue Classification
 
-- needs_manual_review: 183
+- needs_manual_review: 185
 - active_runtime_dependency: 9
 
 ## 10. Generated/Blocked Contract Debt
@@ -243,34 +253,26 @@ Generated: 2026-06-13T15:10:41.320Z
 
 - `npm run legacy:inventory`
 - `npm run legacy:check`
-- `npm run docs:source-check`
+- `npm run contract:backend-drift`
 - `npm run validate:contracts`
 - `npm run build`
 - `npm run typecheck`
+- `cd backend && .venv/bin/python -m pytest`
 
 ## 12. Exact Results
 
-- `npm run legacy:inventory`: PASS. scannedFiles=2118, routes=152, services=534, bffRoutes=552, residueHits=192, generatedContractItems=146, orphanCandidates=0, P0=0, P1=171, P2=247.
-- `npm run legacy:check`: PASS. P0 findings=0.
-- `npm run docs:source-check`: PASS. markdown files scanned=609, source-of-truth docs=405, ai-context docs=8, archived docs=196, audit allowlist entries=1, errors=0.
-- `npm run validate:contracts`: PASS. contracts/page-flow/frontend/release/backend-drift/lifecycle/docs/legacy guards passed. contract:usage warnings=3, errors=0.
-- `npm run build`: PASS. validate:contracts, encoding:guard, backend:boundary:enforce, and Next production build completed. Existing Next lint warnings remain; build exit code=0.
-- `npm run typecheck`: PASS. shared TypeScript check passed; targeted TypeScript check passed for 4 files.
-- Backend tests: not run because no backend files were changed in this sprint.
-
-Remaining warnings:
-
-- `/app/ik/calisanlar`: page writes lifecycle-like status fields; backend lifecycle guard must cover this path.
-- `/app/sirket/companies`: page writes lifecycle-like status fields; backend lifecycle guard must cover this path.
-- `/app/sirket/companies/partners`: page writes lifecycle-like status fields; backend lifecycle guard must cover this path.
-- Existing Next lint warnings remain from pre-existing hook dependency and `<img>` usage locations; build passes.
-
-Files deleted: 0.
-
-Files retained intentionally: 626 unique files classified as active runtime dependency, keep_redirect, or keep_compatibility_adapter were retained; 1041 active runtime dependency inventory items remain. Route files, API/BFF route files, service files, generated contracts, backend domain services, DB migrations, auth/security code, hidden aliases, and demo/dev routes were retained.
+- `npm run legacy:inventory`: PASS; P0 0, P1 194, P2 238.
+- `npm run legacy:check`: PASS; P0 legacy findings 0.
+- `npm run contract:backend-drift`: PASS; warnings 0, errors 0.
+- `npm run validate:contracts`: PASS; contract usage warnings 3, errors 0; backend drift 0; lifecycle 0; docs source errors 0; legacy P0 0.
+- `npm run build`: PASS; Next.js build completed with existing lint warnings only.
+- `npm run typecheck`: PASS; targeted TypeScript check passed.
+- `cd backend && .venv/bin/python -m pytest`: PASS; 282 passed, 7 skipped, 4 warnings.
 
 ## 13. Remaining Backlog
 
+- Remaining targeted P1 service backlog: 10 manual-review items across accounting legacy cash transactions, capital decrease POST, and company vehicle compatibility semantics.
+- Overall inventory backlog: P1 194 and P2 238 after stricter method-level detection.
 - Review P1 findings before promoting development/hidden routes.
 - Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.
 - Review Supabase/Vercel runtime residue by approved layer before dependency removal.

@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class FacilityUpdateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     facility_name: str | None = None
     name: str | None = None
@@ -19,7 +19,7 @@ class FacilityUpdateRequest(BaseModel):
 
 
 class FacilityCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     company_id: str
     name: str | None = None
