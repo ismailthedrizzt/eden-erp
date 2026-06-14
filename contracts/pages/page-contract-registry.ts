@@ -10,7 +10,7 @@ import { appCrmPaydaslarPageContract } from './generated/app-crm-paydaslar.page.
 import { appCrmPipelinePageContract } from './generated/app-crm-pipeline.page.contract'
 import { appCrmPipelineAyarlariPageContract } from './generated/app-crm-pipeline-ayarlari.page.contract'
 import { appCrmTakiplerPageContract } from './generated/app-crm-takipler.page.contract'
-import { appDashboardPageContract } from './generated/app-dashboard.page.contract'
+import { dashboardRedirectPageContract } from './dashboard/dashboard-redirect.page.contract'
 import { appDemoDocumentSlotUploaderPageContract } from './generated/app-demo-document-slot-uploader.page.contract'
 import { appDemoImageSlotUploaderPageContract } from './generated/app-demo-image-slot-uploader.page.contract'
 import { appDemoUserAvatarPageContract } from './generated/app-demo-user-avatar.page.contract'
@@ -38,7 +38,7 @@ import { appIkPersonelEklePageContract } from './generated/app-ik-personel-ekle.
 import { appIkPersonelIdPageContract } from './generated/app-ik-personel-id.page.contract'
 import { appIkPuantajPageContract } from './generated/app-ik-puantaj.page.contract'
 import { appIkTeskilatPageContract } from './generated/app-ik-teskilat.page.contract'
-import { appMuhasebePageContract } from './generated/app-muhasebe.page.contract'
+import { accountingHubPageContract } from './accounting/accounting-hub.page.contract'
 import { appMuhasebeBankaHareketleriPageContract } from './generated/app-muhasebe-banka-hareketleri.page.contract'
 import { appMuhasebeBankaHesaplariPageContract } from './generated/app-muhasebe-banka-hesaplari.page.contract'
 import { appMuhasebeBankaHesaplariVeKartlariPageContract } from './generated/app-muhasebe-banka-hesaplari-ve-kartlari.page.contract'
@@ -55,7 +55,7 @@ import { appMuhasebeMutabakatPageContract } from './generated/app-muhasebe-mutab
 import { appMuhasebeOnMuhasebeHareketleriPageContract } from './generated/app-muhasebe-on-muhasebe-hareketleri.page.contract'
 import { appMuhasebeProjelerPageContract } from './generated/app-muhasebe-projeler.page.contract'
 import { appMuhasebeSermayeMutabakatiPageContract } from './generated/app-muhasebe-sermaye-mutabakati.page.contract'
-import { appOnboardingPageContract } from './generated/app-onboarding.page.contract'
+import { onboardingRedirectPageContract } from './onboarding/onboarding-redirect.page.contract'
 import { profilePageContract } from './security/profile.page.contract'
 import { appRaporlamaOzelRaporlarPageContract } from './generated/app-raporlama-ozel-raporlar.page.contract'
 import { appRaporlamaZamanlanmisRaporlarPageContract } from './generated/app-raporlama-zamanlanmis-raporlar.page.contract'
@@ -74,7 +74,7 @@ import { appSatisSonrasiServisDestekKayitlariPageContract } from './generated/ap
 import { appSatisSonrasiServisKayitlariPageContract } from './generated/app-satis-sonrasi-servis-kayitlari.page.contract'
 import { appSatisSonrasiServisTalepleriPageContract } from './generated/app-satis-sonrasi-servis-talepleri.page.contract'
 import { appSatisSozlesmelerPageContract } from './generated/app-satis-sozlesmeler.page.contract'
-import { appSirketPageContract } from './generated/app-sirket.page.contract'
+import { companyHubPageContract } from './company/company-hub.page.contract'
 import { appSirketAraclarPageContract } from './generated/app-sirket-araclar.page.contract'
 import { companyPageContract } from './company.page.contract'
 import { branchPageContract } from './branch.page.contract'
@@ -86,14 +86,14 @@ import { appSirketPaydaslarPageContract } from './generated/app-sirket-paydaslar
 import { appSirketSureclerPageContract } from './generated/app-sirket-surecler.page.contract'
 import { appSirketTesislerPageContract } from './generated/app-sirket-tesisler.page.contract'
 import { appSirketTeskilatPageContract } from './generated/app-sirket-teskilat.page.contract'
-import { appSistemPageContract } from './generated/app-sistem.page.contract'
+import { adminConsolePageContract } from './system/admin-console.page.contract'
 import { appSistemAiCopilotPageContract } from './generated/app-sistem-ai-copilot.page.contract'
 import { appSistemAuditPageContract } from './generated/app-sistem-audit.page.contract'
 import { appSistemEPostalarPageContract } from './generated/app-sistem-e-postalar.page.contract'
 import { appSistemEntegrasyonAyarlariPageContract } from './generated/app-sistem-entegrasyon-ayarlari.page.contract'
 import { appSistemEntegrasyonlarPageContract } from './generated/app-sistem-entegrasyonlar.page.contract'
 import { appSistemExportPageContract } from './generated/app-sistem-export.page.contract'
-import { appSistemGenelPageContract } from './generated/app-sistem-genel.page.contract'
+import { adminConsoleWorkspacePageContract } from './system/admin-console-workspace.page.contract'
 import { appSistemImportPageContract } from './generated/app-sistem-import.page.contract'
 import { appSistemKullaniciTalepleriPageContract } from './generated/app-sistem-kullanici-talepleri.page.contract'
 import { appSistemKullanicilarPageContract } from './generated/app-sistem-kullanicilar.page.contract'
@@ -108,7 +108,7 @@ import { appSistemOzelliklerPageContract } from './generated/app-sistem-ozellikl
 import { appSistemRollerPageContract } from './generated/app-sistem-roller.page.contract'
 import { appSistemSaglikPageContract } from './generated/app-sistem-saglik.page.contract'
 import { appSistemSystemParametersPageContract } from './generated/app-sistem-system-parameters.page.contract'
-import { appSistemTeknikPageContract } from './generated/app-sistem-teknik.page.contract'
+import { adminConsoleTechnicalPageContract } from './system/admin-console-technical.page.contract'
 import { appSistemTemalarPageContract } from './generated/app-sistem-temalar.page.contract'
 import { appSistemVeriKalitesiPageContract } from './generated/app-sistem-veri-kalitesi.page.contract'
 import { appSistemYetkilerPageContract } from './generated/app-sistem-yetkiler.page.contract'
@@ -128,7 +128,7 @@ import { appUrunVeHizmetlerKatalogPageContract } from './generated/app-urun-ve-h
 import { appUrunVeHizmetlerLisansAbonelikUrunleriPageContract } from './generated/app-urun-ve-hizmetler-lisans-abonelik-urunleri.page.contract'
 import { appUrunVeHizmetlerSeriNumaraliUrunlerPageContract } from './generated/app-urun-ve-hizmetler-seri-numarali-urunler.page.contract'
 import { appUrunVeHizmetlerUrunKartlariPageContract } from './generated/app-urun-ve-hizmetler-urun-kartlari.page.contract'
-import { appYardimPageContract } from './generated/app-yardim.page.contract'
+import { helpCenterPageContract } from './help/help-center.page.contract'
 import { ayarlarEntegrasyonAyarlariPageContract } from './generated/ayarlar-entegrasyon-ayarlari.page.contract'
 import { ikPersonelPageContract } from './generated/ik-personel.page.contract'
 import { loginPageContract } from './auth/login.page.contract'
@@ -365,16 +365,16 @@ export const pageContractRegistry = [
     contractId: 'app-dashboard',
     moduleKey: 'reporting',
     pageKind: 'redirect',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'reporting',
-    pageContractPath: 'contracts/pages/generated/app-dashboard.page.contract.ts',
+    pageContractPath: 'contracts/pages/dashboard/dashboard-redirect.page.contract.ts',
     sourcePagePath: 'app/app/dashboard/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appDashboardPageContract,
+    notes: 'Manual redirect contract drives the compatibility redirect target to the contracted home dashboard.',
+    pageContract: dashboardRedirectPageContract,
   },
   {
     route: '/app/demo/document-slot-uploader',
@@ -827,19 +827,17 @@ export const pageContractRegistry = [
     route: '/app/muhasebe',
     contractId: 'app-muhasebe',
     moduleKey: 'accounting',
-    pageKind: 'wizard',
-    implementationStatus: 'blocked',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'accounting',
-    pageContractPath: 'contracts/pages/generated/app-muhasebe.page.contract.ts',
-    wizardContractPath: 'contracts/pages/generated/app-muhasebe.wizard.contract.ts',
-    lifecycleContractPath: 'contracts/pages/generated/app-muhasebe.lifecycle.contract.ts',
+    pageContractPath: 'contracts/pages/accounting/accounting-hub.page.contract.ts',
     sourcePagePath: 'app/app/muhasebe/page.tsx',
-    contractDepth: 'full_lifecycle',
-    contractSource: 'generated_from_existing_page',
+    contractDepth: 'page_only',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appMuhasebePageContract,
+    notes: 'Manual module hub contract replaces generated wizard debt; the current page is a dashboard of accounting module links, not lifecycle UI.',
+    pageContract: accountingHubPageContract,
   },
   {
     route: '/app/muhasebe/banka-hareketleri',
@@ -1126,16 +1124,16 @@ export const pageContractRegistry = [
     contractId: 'app-onboarding',
     moduleKey: 'settings',
     pageKind: 'redirect',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'settings',
-    pageContractPath: 'contracts/pages/generated/app-onboarding.page.contract.ts',
+    pageContractPath: 'contracts/pages/onboarding/onboarding-redirect.page.contract.ts',
     sourcePagePath: 'app/app/onboarding/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appOnboardingPageContract,
+    notes: 'Manual redirect contract keeps onboarding as a development compatibility route with a contract-derived target.',
+    pageContract: onboardingRedirectPageContract,
   },
   {
     route: '/app/profil',
@@ -1433,16 +1431,16 @@ export const pageContractRegistry = [
     contractId: 'app-sirket',
     moduleKey: 'companies',
     pageKind: 'dashboard',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'companies',
-    pageContractPath: 'contracts/pages/generated/app-sirket.page.contract.ts',
+    pageContractPath: 'contracts/pages/company/company-hub.page.contract.ts',
     sourcePagePath: 'app/app/sirket/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSirketPageContract,
+    notes: 'Manual module hub contract drives banner copy, module card destinations, labels, and empty widget copy.',
+    pageContract: companyHubPageContract,
   },
   {
     route: '/app/sirket/araclar',
@@ -1656,16 +1654,16 @@ export const pageContractRegistry = [
     contractId: 'app-sistem',
     moduleKey: 'adminConsole',
     pageKind: 'dashboard',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development_internal',
     owningEntity: 'adminConsole',
-    pageContractPath: 'contracts/pages/generated/app-sistem.page.contract.ts',
+    pageContractPath: 'contracts/pages/system/admin-console.page.contract.ts',
     sourcePagePath: 'app/app/sistem/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'supporting',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSistemPageContract,
+    notes: 'Manual admin console contract drives the dashboard section passed to AdminConsolePage.',
+    pageContract: adminConsolePageContract,
   },
   {
     route: '/app/sistem/ai-copilot',
@@ -1773,17 +1771,17 @@ export const pageContractRegistry = [
     route: '/app/sistem/genel',
     contractId: 'app-sistem-genel',
     moduleKey: 'adminConsole',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development_internal',
     owningEntity: 'adminConsole',
-    pageContractPath: 'contracts/pages/generated/app-sistem-genel.page.contract.ts',
+    pageContractPath: 'contracts/pages/system/admin-console-workspace.page.contract.ts',
     sourcePagePath: 'app/app/sistem/genel/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'supporting',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSistemGenelPageContract,
+    notes: 'Manual admin console contract corrects the generated placeholder status; runtime section is contract-derived.',
+    pageContract: adminConsoleWorkspacePageContract,
   },
   {
     route: '/app/sistem/import',
@@ -2023,17 +2021,17 @@ export const pageContractRegistry = [
     route: '/app/sistem/teknik',
     contractId: 'app-sistem-teknik',
     moduleKey: 'adminConsole',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development_internal',
     owningEntity: 'adminConsole',
-    pageContractPath: 'contracts/pages/generated/app-sistem-teknik.page.contract.ts',
+    pageContractPath: 'contracts/pages/system/admin-console-technical.page.contract.ts',
     sourcePagePath: 'app/app/sistem/teknik/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'supporting',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSistemTeknikPageContract,
+    notes: 'Manual admin console contract corrects the generated placeholder status; runtime section is contract-derived.',
+    pageContract: adminConsoleTechnicalPageContract,
   },
   {
     route: '/app/sistem/temalar',
@@ -2354,16 +2352,16 @@ export const pageContractRegistry = [
     contractId: 'app-yardim',
     moduleKey: 'help',
     pageKind: 'dashboard',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'help',
-    pageContractPath: 'contracts/pages/generated/app-yardim.page.contract.ts',
+    pageContractPath: 'contracts/pages/help/help-center.page.contract.ts',
     sourcePagePath: 'app/app/yardim/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appYardimPageContract,
+    notes: 'Manual help contract drives hero copy, action labels, storage key, tour route, and help topic cards.',
+    pageContract: helpCenterPageContract,
   },
   {
     route: '/ayarlar/entegrasyon-ayarlari',

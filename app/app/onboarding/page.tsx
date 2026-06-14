@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
+import { onboardingRedirectPageContract } from '@/contracts/pages/onboarding/onboarding-redirect.page.contract'
 
 export default function OnboardingPage() {
-  redirect('/app')
+  redirect(onboardingRedirectPageContract.redirect.targetRoute)
 }

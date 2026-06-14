@@ -1,7 +1,7 @@
 # Code Legacy Inventory
 
 Status: controlled cleanup sprint inventory
-Generated: 2026-06-14T02:51:55.871Z
+Generated: 2026-06-14T04:18:33.907Z
 
 This file is the concise AI-facing inventory for code legacy cleanup. Contracts and guards remain the executable source of truth; Markdown cannot override contracts.
 
@@ -37,15 +37,15 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 
 ## Counts
 
-- Scanned files: 2132
+- Scanned files: 2140
 - Legacy route inventory items: 152
 - Legacy service inventory items: 534
 - BFF/API route inventory items: 552
 - Supabase/Vercel/old runtime residue hits: 194
-- Generated/blocked contract debt items: 140
+- Generated/blocked contract debt items: 132
 - Orphan candidates: 0
 - P0 legacy issues: 0
-- P1 findings: 67
+- P1 findings: 64
 - P2 findings: 241
 
 ## Targeted Remaining P1 Decision Table
@@ -82,7 +82,7 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 - Pages downgraded/planned/hidden/blocked: 0
 - Pages intentionally retained as generated debt in selected batch: 0
 - Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
-- Remaining generated_from_existing_page debt backlog: 140
+- Remaining generated_from_existing_page debt backlog: 132
 
 | Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -278,3 +278,25 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 - Raw inventory: `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`
 - Cleanup report: `docs/archive/code-legacy-cleanup-2026-06-13/cleanup-report.md`
 - Risk register: `docs/archive/code-legacy-cleanup-2026-06-13/risk-register.md`
+
+## Generated Contract Debt Sprint Batch 2
+
+- Initial generated_from_existing_page debt: 140.
+- Selected routes: /app/dashboard, /app/onboarding, /app/sirket, /app/muhasebe, /app/sistem, /app/sistem/genel, /app/sistem/teknik, /app/yardim.
+- Converted to manual_business_contract: 8.
+- Downgraded/planned/hidden: 0.
+- Retained as generated debt in selected batch: 0.
+- Guard changes: none; existing contract usage guard already rejects fake usage and all selected pages now use contracts in redirect/render/action behavior.
+- Remaining generated_from_existing_page debt: 132.
+- Remaining P1/P2 backlog: P1 64, P2 241.
+
+| Route | Page file | Release status | Navigation/Search visibility | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /app/dashboard | app/app/dashboard/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | redirect | no | navigation-visible generated redirect wrapper | converted_to_manual_business_contract |
+| /app/onboarding | app/app/onboarding/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | redirect | no | navigation-visible generated redirect wrapper | converted_to_manual_business_contract |
+| /app/sirket | app/app/sirket/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | module hub generated real UI | converted_to_manual_business_contract |
+| /app/muhasebe | app/app/muhasebe/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated registry claimed wizard/lifecycle while runtime is module hub | converted_to_manual_business_contract |
+| /app/sistem | app/app/sistem/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | internal admin console generated wrapper | converted_to_manual_business_contract |
+| /app/sistem/genel | app/app/sistem/genel/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated placeholder but runtime renders AdminConsolePage | converted_to_manual_business_contract |
+| /app/sistem/teknik | app/app/sistem/teknik/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated placeholder but runtime renders AdminConsolePage | converted_to_manual_business_contract |
+| /app/yardim | app/app/yardim/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | help center generated real UI | converted_to_manual_business_contract |

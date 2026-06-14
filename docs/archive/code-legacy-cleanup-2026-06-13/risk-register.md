@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-14T02:51:55.871Z
+Generated: 2026-06-14T04:18:33.907Z
 
 ## Related Contracts
 
@@ -22,7 +22,7 @@ Generated: 2026-06-14T02:51:55.871Z
 - Pages downgraded/planned/hidden/blocked: 0
 - Pages intentionally retained as generated debt in selected batch: 0
 - Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
-- Remaining generated_from_existing_page debt backlog: 140
+- Remaining generated_from_existing_page debt backlog: 132
 
 | Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -65,7 +65,6 @@ Generated: 2026-06-14T02:51:55.871Z
 | P1 | contractize_real_ui_before_promotion | app/app/ayarlar/bildirimler/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/belgeler/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/ik/personel/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
-| P1 | contractize_real_ui_before_promotion | app/app/muhasebe/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/banka-kart-hareketleri/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/borclar/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
@@ -77,7 +76,6 @@ Generated: 2026-06-14T02:51:55.871Z
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/islemler/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/on-muhasebe-hareketleri/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/muhasebe/projeler/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
-| P1 | contractize_real_ui_before_promotion | app/app/sirket/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/sirket/araclar/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/sirket/companies/stakeholders/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | planned_page_has_real_ui_signals | app/app/sirket/demirbas/page.tsx | needs_manual_review | planned_page_has_real_ui_signals |
@@ -101,5 +99,25 @@ Generated: 2026-06-14T02:51:55.871Z
 | P1 | planned_page_has_real_ui_signals | app/app/sozlesmeler/yenilemeler/page.tsx | needs_manual_review | planned_page_has_real_ui_signals |
 | P1 | contractize_real_ui_before_promotion | app/app/surecler/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | contractize_real_ui_before_promotion | app/app/surecler/[id]/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
-| P1 | contractize_real_ui_before_promotion | app/app/yardim/page.tsx | needs_contractization | contractize_real_ui_before_promotion |
 | P1 | planned_page_has_real_ui_signals | app/test/page.tsx | needs_manual_review | planned_page_has_real_ui_signals |
+
+## Generated Contract Debt Sprint Batch 2
+
+- Initial generated_from_existing_page debt: 140.
+- Final generated_from_existing_page debt after selected batch: 132.
+- P0 legacy issues: 0.
+- Converted routes: /app/dashboard, /app/onboarding, /app/sirket, /app/muhasebe, /app/sistem, /app/sistem/genel, /app/sistem/teknik, /app/yardim.
+- Downgrades: none.
+- Retained generated debt in selected batch: none.
+- Guard changes: none; existing fake-usage protections remain active.
+
+| Severity | Route | Risk before | Mitigation | Residual risk |
+| --- | --- | --- | --- | --- |
+| P1 | /app/dashboard | navigation-visible generated redirect wrapper | Manual redirect contract drives target route | Low; compatibility redirect retained |
+| P1 | /app/onboarding | navigation-visible generated redirect wrapper | Manual redirect contract drives target route | Low; compatibility redirect retained |
+| P1 | /app/sirket | generated module hub real UI | Manual dashboard contract drives banner, cards, links, empty copy | Low; development route remains non-release |
+| P1 | /app/muhasebe | generated wizard/lifecycle registry mismatch | Manual dashboard contract reflects actual module hub runtime | Low; deeper accounting pages remain backlog |
+| P1 | /app/sistem | generated internal admin wrapper | Manual contract drives AdminConsolePage section | Low; internal route remains hidden from release |
+| P1 | /app/sistem/genel | planned/generated placeholder with real AdminConsole runtime | Manual contract drives workspace section | Low; internal route remains hidden from release |
+| P1 | /app/sistem/teknik | planned/generated placeholder with real AdminConsole runtime | Manual contract drives technical section | Low; internal route remains hidden from release |
+| P1 | /app/yardim | generated help center real UI | Manual contract drives hero, actions, tour storage key, and topics | Low; development route remains non-release |
