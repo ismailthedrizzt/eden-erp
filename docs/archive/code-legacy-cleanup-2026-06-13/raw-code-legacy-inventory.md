@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-14T04:18:33.907Z
+Generated: 2026-06-14T05:04:06.136Z
 
 ## Related Contracts
 
@@ -18,21 +18,64 @@ Generated: 2026-06-14T04:18:33.907Z
 
 ```json
 {
-  "scannedFiles": 2140,
+  "scannedFiles": 2148,
   "routes": 152,
   "services": 534,
   "bffRoutes": 552,
   "residueHits": 194,
-  "generatedContractItems": 132,
+  "generatedContractItems": 126,
   "orphanCandidates": 0,
   "p0": 0,
-  "p1": 64,
+  "p1": 61,
   "p2": 241,
   "safeDeleteCandidates": 11,
-  "needsManualReview": 343,
+  "needsManualReview": 338,
   "activeRuntimeDependency": 973
 }
 ```
+
+## Generated Contract Debt Sprint Batch 3
+
+- Initial generated_from_existing_page debt: 132
+- Selected routes: `/app/ik/teskilat`, `/app/sirket/demirbas`, `/app/sirket/surecler`, `/app/sozlesmeler/turler`, `/app/satis-sonrasi`, `/app/urun-ve-hizmetler`
+- Real UI routes selected: 6 (`/app/ik/teskilat` list/tree/service-backed UI, `/app/sozlesmeler/turler` registry list UI, and 4 action/dashboard hub UIs)
+- Converted to manual_business_contract: 6
+- Downgraded/planned/hidden: 0
+- Retained as generated debt in selected batch: 0
+- Guard changes: none; existing fake-usage rejection stayed unchanged.
+- Backend files changed: no.
+- Backend pytest: not run because no backend files changed.
+- Remaining generated_from_existing_page debt: 126
+- Remaining P1/P2 backlog: P1 61, P2 241.
+
+| Route | Page file | Release status | Navigation/Search visibility | Implementation status | Contract source | Page kind | UI type | Service calls? | Risk | Decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /app/ik/teskilat | app/app/ik/teskilat/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | list | organization tree, staffing cards, staffing list | yes, `organizationService.list` covered by HR employee API contract | implemented generated page with real list/service UI | converted_to_manual_business_contract |
+| /app/sirket/demirbas | app/app/sirket/demirbas/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | dashboard | action dashboard | no | generated hub with real action UI | converted_to_manual_business_contract |
+| /app/sirket/surecler | app/app/sirket/surecler/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | dashboard | action dashboard | no | generated hub with real action UI | converted_to_manual_business_contract |
+| /app/sozlesmeler/turler | app/app/sozlesmeler/turler/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | list | contract type registry list | no | implemented generated page with real list UI | converted_to_manual_business_contract |
+| /app/satis-sonrasi | app/app/satis-sonrasi/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | dashboard | action dashboard | no | generated hub with real action UI | converted_to_manual_business_contract |
+| /app/urun-ve-hizmetler | app/app/urun-ve-hizmetler/page.tsx | development | navigation/search/command visible | implemented | manual_business_contract | dashboard | action dashboard | no | generated hub with real action UI | converted_to_manual_business_contract |
+
+### Batch 3 Contract Decisions
+
+- `/app/ik/teskilat` now derives dashboard copy, tabs, stats, tree/list labels, staffing columns, empty states, and action labels from `contracts/pages/hr/organization-staffing.page.contract.ts` and `contracts/lists/hr/organization-staffing.list.contract.ts`.
+- `/app/sozlesmeler/turler` now derives registry rows, table columns, empty state, and page actions from `contracts/pages/contracts/contract-types.page.contract.ts` and `contracts/lists/contracts/contract-types.list.contract.ts`.
+- `/app/sirket/demirbas`, `/app/sirket/surecler`, `/app/satis-sonrasi`, and `/app/urun-ve-hizmetler` now render their action dashboard behavior from manual page contracts instead of generated contracts or wrapper components.
+- Accounting cash pages, project/task pages, and contract mutation pages were intentionally not selected because their service/API/backend contract chains require separate backend/API contractization work.
+
+### Batch 3 Commands And Exact Results
+
+- `npm run legacy:inventory`: PASS; generated contract items 126, P0 0, P1 61, P2 241.
+- `npm run legacy:check`: PASS; P0 findings 0.
+- `npm run contracts:check`: PASS; 152 page contracts, 0 missing, 0 temporary exceptions.
+- `npm run contract:usage`: PASS with existing 3 lifecycle warnings only.
+- `npm run contract:backend-drift`: PASS; warnings 0, errors 0.
+- `npm run contract:lifecycle`: PASS; warnings 0, errors 0.
+- `npm run docs:source-check`: PASS; errors 0.
+- `npm run validate:contracts`: PASS; P0 legacy findings 0.
+- `npm run build`: PASS; existing lint warnings only.
+- `npm run typecheck`: PASS.
 
 ## Generated Contract Debt Sprint
 
@@ -42,7 +85,7 @@ Generated: 2026-06-14T04:18:33.907Z
 - Pages downgraded/planned/hidden/blocked: 0
 - Pages intentionally retained as generated debt in selected batch: 0
 - Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
-- Remaining generated_from_existing_page debt backlog: 132
+- Remaining generated_from_existing_page debt backlog: 126
 
 | Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -239,7 +282,7 @@ Total: 152
 | P2 | needs_manual_review | app/app/ik/personel-ekle/page.tsx | keep_development_placeholder | release=coming_soon; implementation=planned; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | needs_manual_review | app/app/ik/personel/[id]/page.tsx | keep_development_placeholder | release=coming_soon; implementation=planned; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | active_runtime_dependency | app/app/ik/puantaj/page.tsx | retain | release=development; implementation=planned; no real UI signals |
-| P2 | active_runtime_dependency | app/app/ik/teskilat/page.tsx | retain | release=development; implementation=blocked; no real UI signals |
+| P2 | active_runtime_dependency | app/app/ik/teskilat/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/muhasebe/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/muhasebe/banka-hareketleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/muhasebe/banka-hesaplari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
@@ -261,7 +304,7 @@ Total: 152
 | P2 | active_runtime_dependency | app/app/profil/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/raporlama/ozel-raporlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/raporlama/zamanlanmis-raporlar/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
-| P2 | active_runtime_dependency | app/app/satis-sonrasi/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/satis-sonrasi/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/satis-sonrasi/bakim-planlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/satis-sonrasi/bakim-sozlesme-takip/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/satis-sonrasi/bakimi-gelenler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
@@ -283,9 +326,9 @@ Total: 152
 | P2 | active_runtime_dependency | app/app/sirket/companies/partners/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sirket/companies/representatives/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sirket/companies/stakeholders/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
-| P2 | active_runtime_dependency | app/app/sirket/demirbas/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/demirbas/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | keep_compatibility_adapter | app/app/sirket/paydaslar/page.tsx | keep_hidden_wrapper | release=hidden; implementation=hidden; no real UI signals; legacy/deprecated signal |
-| P2 | active_runtime_dependency | app/app/sirket/surecler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sirket/surecler/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sirket/tesisler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sirket/teskilat/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sistem/page.tsx | retain | release=development_internal; implementation=implemented; no real UI signals |
@@ -317,12 +360,12 @@ Total: 152
 | P2 | active_runtime_dependency | app/app/sozlesmeler/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sozlesmeler/[id]/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/sozlesmeler/fesihler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
-| P2 | active_runtime_dependency | app/app/sozlesmeler/turler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/sozlesmeler/turler/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sozlesmeler/yeni/page.tsx | retain | release=development; implementation=planned; real UI signals present |
 | P2 | active_runtime_dependency | app/app/sozlesmeler/yenilemeler/page.tsx | retain | release=development; implementation=planned; real UI signals present |
 | P2 | active_runtime_dependency | app/app/surecler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/surecler/[id]/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
-| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/page.tsx | retain | release=development; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/page.tsx | retain | release=development; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/bakim-paketleri/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/garanti-sablonlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
 | P2 | active_runtime_dependency | app/app/urun-ve-hizmetler/hizmet-kartlari/page.tsx | retain | release=development; implementation=planned; no real UI signals |
@@ -1177,7 +1220,7 @@ Total: 194
 
 ## Generated/Blocked Contract Debt
 
-Total: 132
+Total: 126
 
 | Severity | Classification | File/Route | Decision | Evidence |
 | --- | --- | --- | --- | --- |
@@ -1214,7 +1257,6 @@ Total: 132
 | P2 | needs_manual_review | app/app/ik/personel-ekle/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/ik/personel/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/ik/puantaj/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/app/ik/teskilat/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/muhasebe/banka-hareketleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/muhasebe/banka-hesaplari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P1 | needs_contractization | app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
@@ -1233,7 +1275,6 @@ Total: 132
 | P2 | needs_manual_review | app/app/muhasebe/sermaye-mutabakati/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/raporlama/ozel-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/raporlama/zamanlanmis-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/app/satis-sonrasi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/satis-sonrasi/bakim-planlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/satis-sonrasi/bakim-sozlesme-takip/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/satis-sonrasi/bakimi-gelenler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
@@ -1250,9 +1291,7 @@ Total: 132
 | P2 | needs_manual_review | app/app/satis/sozlesmeler/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; real UI signals present |
 | P1 | needs_contractization | app/app/sirket/araclar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_contractization | app/app/sirket/companies/stakeholders/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
-| P1 | needs_manual_review | app/app/sirket/demirbas/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P2 | needs_manual_review | app/app/sirket/paydaslar/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
-| P1 | needs_contractization | app/app/sirket/surecler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_contractization | app/app/sirket/tesisler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_contractization | app/app/sirket/teskilat/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P2 | needs_manual_review | app/app/sistem/ai-copilot/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
@@ -1280,12 +1319,10 @@ Total: 132
 | P1 | needs_contractization | app/app/sozlesmeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P2 | needs_manual_review | app/app/sozlesmeler/[id]/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P1 | needs_manual_review | app/app/sozlesmeler/fesihler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
-| P1 | needs_manual_review | app/app/sozlesmeler/turler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_manual_review | app/app/sozlesmeler/yeni/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_manual_review | app/app/sozlesmeler/yenilemeler/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P1 | needs_contractization | app/app/surecler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P1 | needs_contractization | app/app/surecler/[id]/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
-| P2 | needs_manual_review | app/app/urun-ve-hizmetler/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/urun-ve-hizmetler/bakim-paketleri/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/urun-ve-hizmetler/garanti-sablonlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/urun-ve-hizmetler/hizmet-kartlari/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
@@ -1322,29 +1359,3 @@ Total: 0
 | Severity | Classification | File/Route | Decision | Evidence |
 | --- | --- | --- | --- | --- |
 | - | - | - | - | - |
-
-## Generated Contract Debt Sprint Batch 2
-
-1. Initial generated_from_existing_page debt: 140.
-2. Selected routes: /app/dashboard, /app/onboarding, /app/sirket, /app/muhasebe, /app/sistem, /app/sistem/genel, /app/sistem/teknik, /app/yardim.
-3. Decision per route: all selected routes were converted to real manual_business_contract entries; no fake usage, hidden span, unused import, route deletion, service deletion, or broad allowlist was added.
-4. Converted to manual_business_contract: 8.
-5. Downgraded/planned/hidden: 0.
-6. Retained as generated debt in selected batch: 0.
-7. Guard changes: none in batch 2; the existing guard already requires manual contracts to affect runtime behavior and rejects hidden/data-only usage.
-8. Files changed: page runtime files for the 8 selected routes, contracts/pages/page-contract-registry.ts, and new manual contracts under contracts/pages/{accounting,company,dashboard,help,onboarding,system}/.
-9. Commands run so far: npm run legacy:inventory, npm run legacy:check, npm run contracts:check, npm run contract:usage, npm run typecheck.
-10. Exact interim results: legacy:inventory PASS with generated contract items 132, P0 0, P1 64, P2 241; contracts:check PASS; contract:usage PASS with the existing 3 lifecycle warnings only; typecheck PASS targeted 9 files.
-11. Remaining generated debt: 132.
-12. Remaining P1/P2 backlog: P1 64 and P2 241, mainly API-calling service contractization, generated/blocked real UI pages, and Supabase/Vercel residue manual review.
-
-| Route | Page file | Release status | Navigation/Search visibility | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| /app/dashboard | app/app/dashboard/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | redirect | no | navigation-visible generated redirect wrapper | converted_to_manual_business_contract |
-| /app/onboarding | app/app/onboarding/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | redirect | no | navigation-visible generated redirect wrapper | converted_to_manual_business_contract |
-| /app/sirket | app/app/sirket/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | module hub generated real UI | converted_to_manual_business_contract |
-| /app/muhasebe | app/app/muhasebe/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated registry claimed wizard/lifecycle while runtime is module hub | converted_to_manual_business_contract |
-| /app/sistem | app/app/sistem/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | internal admin console generated wrapper | converted_to_manual_business_contract |
-| /app/sistem/genel | app/app/sistem/genel/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated placeholder but runtime renders AdminConsolePage | converted_to_manual_business_contract |
-| /app/sistem/teknik | app/app/sistem/teknik/page.tsx | development_internal | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | generated placeholder but runtime renders AdminConsolePage | converted_to_manual_business_contract |
-| /app/yardim | app/app/yardim/page.tsx | development | nav/search/command visible | implemented | manual_business_contract | dashboard | yes | help center generated real UI | converted_to_manual_business_contract |

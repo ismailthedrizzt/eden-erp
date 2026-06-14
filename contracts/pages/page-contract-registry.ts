@@ -37,7 +37,7 @@ import { appIkPersonelPageContract } from './generated/app-ik-personel.page.cont
 import { appIkPersonelEklePageContract } from './generated/app-ik-personel-ekle.page.contract'
 import { appIkPersonelIdPageContract } from './generated/app-ik-personel-id.page.contract'
 import { appIkPuantajPageContract } from './generated/app-ik-puantaj.page.contract'
-import { appIkTeskilatPageContract } from './generated/app-ik-teskilat.page.contract'
+import { organizationStaffingPageContract } from './hr/organization-staffing.page.contract'
 import { accountingHubPageContract } from './accounting/accounting-hub.page.contract'
 import { appMuhasebeBankaHareketleriPageContract } from './generated/app-muhasebe-banka-hareketleri.page.contract'
 import { appMuhasebeBankaHesaplariPageContract } from './generated/app-muhasebe-banka-hesaplari.page.contract'
@@ -59,7 +59,7 @@ import { onboardingRedirectPageContract } from './onboarding/onboarding-redirect
 import { profilePageContract } from './security/profile.page.contract'
 import { appRaporlamaOzelRaporlarPageContract } from './generated/app-raporlama-ozel-raporlar.page.contract'
 import { appRaporlamaZamanlanmisRaporlarPageContract } from './generated/app-raporlama-zamanlanmis-raporlar.page.contract'
-import { appSatisSonrasiPageContract } from './generated/app-satis-sonrasi.page.contract'
+import { afterSalesHubPageContract } from './after-sales/after-sales-hub.page.contract'
 import { appSatisSonrasiBakimPlanlariPageContract } from './generated/app-satis-sonrasi-bakim-planlari.page.contract'
 import { appSatisSonrasiBakimSozlesmeTakipPageContract } from './generated/app-satis-sonrasi-bakim-sozlesme-takip.page.contract'
 import { appSatisSonrasiBakimiGelenlerPageContract } from './generated/app-satis-sonrasi-bakimi-gelenler.page.contract'
@@ -81,9 +81,9 @@ import { branchPageContract } from './branch.page.contract'
 import { partnerPageContract } from './partner.page.contract'
 import { representativePageContract } from './representative.page.contract'
 import { appSirketCompaniesStakeholdersPageContract } from './generated/app-sirket-companies-stakeholders.page.contract'
-import { appSirketDemirbasPageContract } from './generated/app-sirket-demirbas.page.contract'
+import { companyFixedAssetsHubPageContract } from './company/company-fixed-assets-hub.page.contract'
 import { appSirketPaydaslarPageContract } from './generated/app-sirket-paydaslar.page.contract'
-import { appSirketSureclerPageContract } from './generated/app-sirket-surecler.page.contract'
+import { companyProcessesHubPageContract } from './company/company-processes-hub.page.contract'
 import { appSirketTesislerPageContract } from './generated/app-sirket-tesisler.page.contract'
 import { appSirketTeskilatPageContract } from './generated/app-sirket-teskilat.page.contract'
 import { adminConsolePageContract } from './system/admin-console.page.contract'
@@ -115,12 +115,12 @@ import { appSistemYetkilerPageContract } from './generated/app-sistem-yetkiler.p
 import { appSozlesmelerPageContract } from './generated/app-sozlesmeler.page.contract'
 import { appSozlesmelerIdPageContract } from './generated/app-sozlesmeler-id.page.contract'
 import { appSozlesmelerFesihlerPageContract } from './generated/app-sozlesmeler-fesihler.page.contract'
-import { appSozlesmelerTurlerPageContract } from './generated/app-sozlesmeler-turler.page.contract'
+import { contractTypesPageContract } from './contracts/contract-types.page.contract'
 import { appSozlesmelerYeniPageContract } from './generated/app-sozlesmeler-yeni.page.contract'
 import { appSozlesmelerYenilemelerPageContract } from './generated/app-sozlesmeler-yenilemeler.page.contract'
 import { appSureclerPageContract } from './generated/app-surecler.page.contract'
 import { appSureclerIdPageContract } from './generated/app-surecler-id.page.contract'
-import { appUrunVeHizmetlerPageContract } from './generated/app-urun-ve-hizmetler.page.contract'
+import { productServicesHubPageContract } from './product-services/product-services-hub.page.contract'
 import { appUrunVeHizmetlerBakimPaketleriPageContract } from './generated/app-urun-ve-hizmetler-bakim-paketleri.page.contract'
 import { appUrunVeHizmetlerGarantiSablonlariPageContract } from './generated/app-urun-ve-hizmetler-garanti-sablonlari.page.contract'
 import { appUrunVeHizmetlerHizmetKartlariPageContract } from './generated/app-urun-ve-hizmetler-hizmet-kartlari.page.contract'
@@ -811,17 +811,18 @@ export const pageContractRegistry = [
     contractId: 'app-ik-teskilat',
     moduleKey: 'hr',
     pageKind: 'list',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
-    owningEntity: 'hr',
-    pageContractPath: 'contracts/pages/generated/app-ik-teskilat.page.contract.ts',
-    listContractPath: 'contracts/pages/generated/app-ik-teskilat.list.contract.ts',
+    owningEntity: 'organization_staffing',
+    pageContractPath: 'contracts/pages/hr/organization-staffing.page.contract.ts',
+    listContractPath: 'contracts/lists/hr/organization-staffing.list.contract.ts',
+    apiContractPath: 'contracts/api/hr/employee.api.contract.ts',
     sourcePagePath: 'app/app/ik/teskilat/page.tsx',
     contractDepth: 'page_and_list',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appIkTeskilatPageContract,
+    notes: 'Manual HR organization/staffing contract derives runtime tabs, labels, table columns and states from page/list contracts; organizationService.list is covered by the HR employee API reference contract.',
+    pageContract: organizationStaffingPageContract,
   },
   {
     route: '/app/muhasebe',
@@ -1188,17 +1189,17 @@ export const pageContractRegistry = [
     route: '/app/satis-sonrasi',
     contractId: 'app-satis-sonrasi',
     moduleKey: 'after_sales',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'after_sales',
-    pageContractPath: 'contracts/pages/generated/app-satis-sonrasi.page.contract.ts',
+    pageContractPath: 'contracts/pages/after-sales/after-sales-hub.page.contract.ts',
     sourcePagePath: 'app/app/satis-sonrasi/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSatisSonrasiPageContract,
+    notes: 'Manual after-sales hub contract derives banner, navigation cards and info panel from the page contract; no API calls are performed by this hub route.',
+    pageContract: afterSalesHubPageContract,
   },
   {
     route: '/app/satis-sonrasi/bakim-planlari',
@@ -1564,18 +1565,18 @@ export const pageContractRegistry = [
   {
     route: '/app/sirket/demirbas',
     contractId: 'app-sirket-demirbas',
-    moduleKey: 'assets',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    moduleKey: 'company',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
-    owningEntity: 'assets',
-    pageContractPath: 'contracts/pages/generated/app-sirket-demirbas.page.contract.ts',
+    owningEntity: 'company_fixed_asset',
+    pageContractPath: 'contracts/pages/company/company-fixed-assets-hub.page.contract.ts',
     sourcePagePath: 'app/app/sirket/demirbas/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSirketDemirbasPageContract,
+    notes: 'Manual fixed-assets hub contract derives banner, navigation cards and coming-soon state from the page contract; no API calls are performed by this hub route.',
+    pageContract: companyFixedAssetsHubPageContract,
   },
   {
     route: '/app/sirket/paydaslar',
@@ -1596,18 +1597,18 @@ export const pageContractRegistry = [
   {
     route: '/app/sirket/surecler',
     contractId: 'app-sirket-surecler',
-    moduleKey: 'process',
+    moduleKey: 'company',
     pageKind: 'dashboard',
-    implementationStatus: 'blocked',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
-    owningEntity: 'process',
-    pageContractPath: 'contracts/pages/generated/app-sirket-surecler.page.contract.ts',
+    owningEntity: 'company_process',
+    pageContractPath: 'contracts/pages/company/company-processes-hub.page.contract.ts',
     sourcePagePath: 'app/app/sirket/surecler/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSirketSureclerPageContract,
+    notes: 'Manual company processes hub contract derives banner, navigation cards and architecture reference from the page contract; no API calls are performed by this hub route.',
+    pageContract: companyProcessesHubPageContract,
   },
   {
     route: '/app/sirket/tesisler',
@@ -2138,17 +2139,18 @@ export const pageContractRegistry = [
     route: '/app/sozlesmeler/turler',
     contractId: 'app-sozlesmeler-turler',
     moduleKey: 'contracts',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'list',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
-    owningEntity: 'contracts',
-    pageContractPath: 'contracts/pages/generated/app-sozlesmeler-turler.page.contract.ts',
+    owningEntity: 'contract_type',
+    pageContractPath: 'contracts/pages/contracts/contract-types.page.contract.ts',
+    listContractPath: 'contracts/lists/contracts/contract-types.list.contract.ts',
     sourcePagePath: 'app/app/sozlesmeler/turler/page.tsx',
-    contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractDepth: 'page_and_list',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSozlesmelerTurlerPageContract,
+    notes: 'Manual contract type registry derives banner, registry rows and list metadata from page/list contracts; this route is read-only and performs no API calls.',
+    pageContract: contractTypesPageContract,
   },
   {
     route: '/app/sozlesmeler/yeni',
@@ -2223,17 +2225,17 @@ export const pageContractRegistry = [
     route: '/app/urun-ve-hizmetler',
     contractId: 'app-urun-ve-hizmetler',
     moduleKey: 'product_services',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'development',
     owningEntity: 'product_services',
-    pageContractPath: 'contracts/pages/generated/app-urun-ve-hizmetler.page.contract.ts',
+    pageContractPath: 'contracts/pages/product-services/product-services-hub.page.contract.ts',
     sourcePagePath: 'app/app/urun-ve-hizmetler/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_development',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appUrunVeHizmetlerPageContract,
+    notes: 'Manual product services hub contract derives banner, navigation cards and info panel from the page contract; no API calls are performed by this hub route.',
+    pageContract: productServicesHubPageContract,
   },
   {
     route: '/app/urun-ve-hizmetler/bakim-paketleri',
