@@ -4,7 +4,7 @@ from sqlalchemy import text
 
 from app.core.database import get_session_factory
 
-EXPECTED_ALEMBIC_REVISION = "20260610_0120"
+EXPECTED_ALEMBIC_REVISION = "20260613_0100"
 
 REQUIRED_PERSISTENCE_COLUMNS = {
     "audit_logs": {
