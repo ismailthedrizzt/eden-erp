@@ -18,6 +18,7 @@ for (const page of pageFiles) {
     continue
   }
   validateNoVoidContract(page)
+  validateNoHiddenContractMarker(entry, page)
   validateRegistrySemantics(entry, page)
   if (!requiresRuntimeContractUsage(entry)) continue
   validateContractImportUsage(entry, page)
@@ -80,6 +81,31 @@ function validateContractImportUsage(entry, page) {
 
   if (entry.pageContractPath && !page.source.includes(importPathFor(entry.pageContractPath)) && !page.source.includes(entry.contractId)) {
     errors.push(`${page.route}: page contract is not imported (${entry.pageContractPath})`)
+  }
+  if (entry.contractSource === 'manual_business_contract') validateMeaningfulPageContractUsage(entry, page)
+}
+
+function validateNoHiddenContractMarker(entry, page) {
+  if (!requiresRuntimeContractUsage(entry)) return
+  if (/<span\s+hidden[\s\S]{0,300}?data-contract-route/.test(page.source)) {
+    errors.push(`${page.route}: hidden data-contract-route marker is forbidden as contract usage proof (${relative(page.file)})`)
+  }
+}
+
+function validateMeaningfulPageContractUsage(entry, page) {
+  if (!entry.pageContractPath) return
+  const contractName = contractExportName(entry.pageContractPath)
+  if (!contractName || !page.source.includes(contractName)) return
+  const routeAliases = Array.from(page.source.matchAll(new RegExp(`const\\s+([A-Za-z0-9_$]+)\\s*=\\s*${escapeRegExp(contractName)}\\.route\\b`, 'g'))).map(match => match[1])
+  let meaningfulSource = page.source.replace(/^\s*import\s+[\s\S]*?from\s+['"][^'"]*contracts\/[^'"]*['"]\s*$/gm, '')
+  meaningfulSource = meaningfulSource.replace(new RegExp(`const\\s+(?:${routeAliases.map(escapeRegExp).join('|') || '__NO_ROUTE_ALIAS__'})\\s*=\\s*${escapeRegExp(contractName)}\\.route\\s*`, 'g'), '')
+  meaningfulSource = meaningfulSource.replace(new RegExp(`data-contract-[A-Za-z0-9_-]+=\\{[^}]*${escapeRegExp(contractName)}[^}]*\\}`, 'g'), '')
+  for (const alias of routeAliases) {
+    meaningfulSource = meaningfulSource.replace(new RegExp(`data-contract-[A-Za-z0-9_-]+=\\{[^}]*${escapeRegExp(alias)}[^}]*\\}`, 'g'), '')
+  }
+  meaningfulSource = meaningfulSource.replace(/<span\s+hidden[\s\S]*?<\/span>/g, '')
+  if (!new RegExp(`\\b${escapeRegExp(contractName)}\\b`).test(meaningfulSource)) {
+    errors.push(`${page.route}: manual business contract must affect render/action behavior; data-contract markers or route constants alone are not enough (${relative(page.file)})`)
   }
 }
 

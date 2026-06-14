@@ -1,7 +1,7 @@
 import type { EdenPageContract } from '../core/page.contract'
 import { rootPageContract } from './generated/root.page.contract'
-import { appPageContract } from './generated/app.page.contract'
-import { appAboneligimPageContract } from './generated/app-aboneligim.page.contract'
+import { homePageContract } from './home/home.page.contract'
+import { subscriptionPageContract } from './licensing/subscription.page.contract'
 import { appAyarlarBildirimlerPageContract } from './generated/app-ayarlar-bildirimler.page.contract'
 import { appBelgelerPageContract } from './generated/app-belgeler.page.contract'
 import { appCrmFirsatlarPageContract } from './generated/app-crm-firsatlar.page.contract'
@@ -56,7 +56,7 @@ import { appMuhasebeOnMuhasebeHareketleriPageContract } from './generated/app-mu
 import { appMuhasebeProjelerPageContract } from './generated/app-muhasebe-projeler.page.contract'
 import { appMuhasebeSermayeMutabakatiPageContract } from './generated/app-muhasebe-sermaye-mutabakati.page.contract'
 import { appOnboardingPageContract } from './generated/app-onboarding.page.contract'
-import { appProfilPageContract } from './generated/app-profil.page.contract'
+import { profilePageContract } from './security/profile.page.contract'
 import { appRaporlamaOzelRaporlarPageContract } from './generated/app-raporlama-ozel-raporlar.page.contract'
 import { appRaporlamaZamanlanmisRaporlarPageContract } from './generated/app-raporlama-zamanlanmis-raporlar.page.contract'
 import { appSatisSonrasiPageContract } from './generated/app-satis-sonrasi.page.contract'
@@ -97,7 +97,7 @@ import { appSistemGenelPageContract } from './generated/app-sistem-genel.page.co
 import { appSistemImportPageContract } from './generated/app-sistem-import.page.contract'
 import { appSistemKullaniciTalepleriPageContract } from './generated/app-sistem-kullanici-talepleri.page.contract'
 import { appSistemKullanicilarPageContract } from './generated/app-sistem-kullanicilar.page.contract'
-import { appSistemKurulumPageContract } from './generated/app-sistem-kurulum.page.contract'
+import { setupWizardPageContract } from './system/setup-wizard.page.contract'
 import { appSistemLisanslarPageContract } from './generated/app-sistem-lisanslar.page.contract'
 import { appSistemLoginSayfasiPageContract } from './generated/app-sistem-login-sayfasi.page.contract'
 import { appSistemModuleLicensesPageContract } from './generated/app-sistem-module-licenses.page.contract'
@@ -131,7 +131,7 @@ import { appUrunVeHizmetlerUrunKartlariPageContract } from './generated/app-urun
 import { appYardimPageContract } from './generated/app-yardim.page.contract'
 import { ayarlarEntegrasyonAyarlariPageContract } from './generated/ayarlar-entegrasyon-ayarlari.page.contract'
 import { ikPersonelPageContract } from './generated/ik-personel.page.contract'
-import { loginPageContract } from './generated/login.page.contract'
+import { loginPageContract } from './auth/login.page.contract'
 import { muhasebePageContract } from './generated/muhasebe.page.contract'
 import { muhasebeBankaHesaplariVeKartlariPageContract } from './generated/muhasebe-banka-hesaplari-ve-kartlari.page.contract'
 import { muhasebeBankaKartHareketleriPageContract } from './generated/muhasebe-banka-kart-hareketleri.page.contract'
@@ -139,7 +139,7 @@ import { muhasebeCariHareketlerPageContract } from './generated/muhasebe-cari-ha
 import { muhasebeCariKartlarPageContract } from './generated/muhasebe-cari-kartlar.page.contract'
 import { muhasebeHesapVeKartHareketleriPageContract } from './generated/muhasebe-hesap-ve-kart-hareketleri.page.contract'
 import { muhasebeOnMuhasebeHareketleriPageContract } from './generated/muhasebe-on-muhasebe-hareketleri.page.contract'
-import { offlinePageContract } from './generated/offline.page.contract'
+import { offlinePageContract } from './system/offline.page.contract'
 import { portalPageContract } from './generated/portal.page.contract'
 import { portalDashboardPageContract } from './generated/portal-dashboard.page.contract'
 import { portalDocumentsPageContract } from './generated/portal-documents.page.contract'
@@ -205,29 +205,30 @@ export const pageContractRegistry = [
     implementationStatus: 'implemented',
     releaseStatus: 'release',
     owningEntity: 'home',
-    pageContractPath: 'contracts/pages/generated/app.page.contract.ts',
+    pageContractPath: 'contracts/pages/home/home.page.contract.ts',
     sourcePagePath: 'app/app/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appPageContract,
+    notes: 'Manual dashboard contract drives widget preference keys, actions, and empty-state copy.',
+    pageContract: homePageContract,
   },
   {
     route: '/app/aboneligim',
     contractId: 'app-aboneligim',
-    moduleKey: 'settings',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    moduleKey: 'licensing',
+    pageKind: 'dashboard',
+    implementationStatus: 'implemented',
     releaseStatus: 'release',
-    owningEntity: 'settings',
-    pageContractPath: 'contracts/pages/generated/app-aboneligim.page.contract.ts',
+    owningEntity: 'tenant_license',
+    pageContractPath: 'contracts/pages/licensing/subscription.page.contract.ts',
+    apiContractPath: 'contracts/api/licensing.api.contract.ts',
     sourcePagePath: 'app/app/aboneligim/page.tsx',
-    contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractDepth: 'page_list_form_api',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appAboneligimPageContract,
+    notes: 'Manual dashboard contract drives subscription summary cards and BFF/FastAPI entitlement API coverage.',
+    pageContract: subscriptionPageContract,
   },
   {
     route: '/app/ayarlar/bildirimler',
@@ -1143,15 +1144,15 @@ export const pageContractRegistry = [
     pageKind: 'form',
     implementationStatus: 'implemented',
     releaseStatus: 'release',
-    owningEntity: 'security',
-    pageContractPath: 'contracts/pages/generated/app-profil.page.contract.ts',
-    formContractPath: 'contracts/pages/generated/app-profil.form.contract.ts',
+    owningEntity: 'security_user_profile',
+    pageContractPath: 'contracts/pages/security/profile.page.contract.ts',
+    formContractPath: 'contracts/forms/security/profile.form.contract.ts',
     sourcePagePath: 'app/app/profil/page.tsx',
-    contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractDepth: 'page_list_form',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appProfilPageContract,
+    notes: 'Manual profile contract drives page copy and form field rendering order.',
+    pageContract: profilePageContract,
   },
   {
     route: '/app/raporlama/ozel-raporlar',
@@ -1845,15 +1846,14 @@ export const pageContractRegistry = [
     implementationStatus: 'implemented',
     releaseStatus: 'release',
     owningEntity: 'settings',
-    pageContractPath: 'contracts/pages/generated/app-sistem-kurulum.page.contract.ts',
-    wizardContractPath: 'contracts/pages/generated/app-sistem-kurulum.wizard.contract.ts',
-    lifecycleContractPath: 'contracts/pages/generated/app-sistem-kurulum.lifecycle.contract.ts',
+    pageContractPath: 'contracts/pages/system/setup-wizard.page.contract.ts',
+    wizardContractPath: 'contracts/wizards/system/setup-wizard.wizard.contract.ts',
     sourcePagePath: 'app/app/sistem/kurulum/page.tsx',
     contractDepth: 'full_lifecycle',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
-    pageContract: appSistemKurulumPageContract,
+    notes: 'Manual setup wizard contract drives visible wizard steps and setup actions.',
+    pageContract: setupWizardPageContract,
   },
   {
     route: '/app/sistem/lisanslar',
@@ -2401,16 +2401,16 @@ export const pageContractRegistry = [
     route: '/login',
     contractId: 'login',
     moduleKey: 'auth',
-    pageKind: 'placeholder',
-    implementationStatus: 'planned',
+    pageKind: 'shell',
+    implementationStatus: 'implemented',
     releaseStatus: 'release',
     owningEntity: 'auth',
-    pageContractPath: 'contracts/pages/generated/login.page.contract.ts',
+    pageContractPath: 'contracts/pages/auth/login.page.contract.ts',
     sourcePagePath: 'app/login/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
+    notes: 'Manual login shell contract selects the LoginExperience component.',
     pageContract: loginPageContract,
   },
   {
@@ -2528,17 +2528,17 @@ export const pageContractRegistry = [
   {
     route: '/offline',
     contractId: 'offline',
-    moduleKey: 'pwa',
-    pageKind: 'dashboard',
-    implementationStatus: 'planned',
+    moduleKey: 'shell',
+    pageKind: 'shell',
+    implementationStatus: 'implemented',
     releaseStatus: 'release',
-    owningEntity: 'pwa',
-    pageContractPath: 'contracts/pages/generated/offline.page.contract.ts',
+    owningEntity: 'shell',
+    pageContractPath: 'contracts/pages/system/offline.page.contract.ts',
     sourcePagePath: 'app/offline/page.tsx',
     contractDepth: 'page_only',
-    contractSource: 'generated_from_existing_page',
+    contractSource: 'manual_business_contract',
     businessCriticality: 'core_release',
-    notes: 'Contract coverage generated from route registry and page source.',
+    notes: 'Manual offline shell contract drives visible offline copy and return action.',
     pageContract: offlinePageContract,
   },
   {

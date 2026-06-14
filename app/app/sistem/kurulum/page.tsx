@@ -22,14 +22,16 @@ import Modal from '@/components/ui/Modal'
 import { Toast, type ToastType } from '@/components/ui/Toast'
 import { formControlClass, type FormControlState } from '@/components/ui/formControlStyles'
 import { TenantReadinessPanel } from '@/components/setup/TenantReadinessPanel'
-import { appSistemKurulumPageContract } from '@/contracts/pages/generated/app-sistem-kurulum.page.contract'
-import { appSistemKurulumLifecycleContract } from '@/contracts/pages/generated/app-sistem-kurulum.lifecycle.contract'
+import { setupWizardPageContract } from '@/contracts/pages/system/setup-wizard.page.contract'
+import { setupWizardContract } from '@/contracts/wizards/system/setup-wizard.wizard.contract'
 import { apiClient } from '@/lib/api/apiClient'
 import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
 
-const SETUP_CONTRACT_ROUTE = appSistemKurulumPageContract.route
-const SETUP_OPERATION_TYPES = appSistemKurulumLifecycleContract.operationTypes
+const SETUP_CONTRACT_ROUTE = setupWizardPageContract.route
+const SETUP_OPERATION_TYPES = setupWizardContract.operationTypes
+const SETUP_PAGE_ACTIONS = setupWizardPageContract.allowedActions
+const SHOW_READINESS_PANEL = setupWizardPageContract.requiredComponents.includes('TenantReadinessPanel')
 
 type WizardStep = 'welcome' | 'scale' | 'company' | 'role' | 'person' | 'review' | 'payment'
 type VisualWizardStep = 'welcome' | 'company' | 'person' | 'review' | 'payment'
@@ -100,13 +102,10 @@ type TurkeyLocationsResponse = {
   provinces?: TurkeyProvince[]
 }
 
-const STEPS: { id: VisualWizardStep; label: string }[] = [
-  { id: 'welcome', label: 'Karşılama' },
-  { id: 'company', label: 'Şirket' },
-  { id: 'person', label: 'Kişi' },
-  { id: 'review', label: 'Özet' },
-  { id: 'payment', label: 'Ödeme' },
-]
+const STEPS: { id: VisualWizardStep; label: string }[] = setupWizardContract.visualSteps.map(stepId => {
+  const step = setupWizardContract.steps.find(item => item.id === stepId)
+  return { id: stepId, label: step?.label || stepId }
+})
 
 const COMPANY_TYPES = [
   { value: 'limited', label: 'Limited Şirket' },
@@ -363,7 +362,7 @@ function SetupWizardContent() {
         icon={<Sparkles size={24} />}
         addButtonText="Sihirbazı Aç"
         customButtonIcon={<Sparkles size={16} />}
-        onAddClick={() => setOpen(true)}
+        onAddClick={SETUP_PAGE_ACTIONS.includes('open_setup_wizard') ? () => setOpen(true) : undefined}
       />
 
       <div className="border-b border-gray-200 dark:border-gray-700">
@@ -377,7 +376,7 @@ function SetupWizardContent() {
         </button>
       </div>
 
-      <TenantReadinessPanel />
+      {SHOW_READINESS_PANEL ? <TenantReadinessPanel /> : null}
 
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-eden-navy-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

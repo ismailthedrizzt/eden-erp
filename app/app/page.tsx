@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Home, Settings, SlidersHorizontal } from 'lucide-react'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import { ActionCenterSummaryCards } from '@/components/action-center/ActionCenterSummaryCards'
-import { appPageContract } from '@/contracts/pages/generated/app.page.contract'
+import { homePageContract } from '@/contracts/pages/home/home.page.contract'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -21,11 +21,11 @@ import { getEducationSummary } from '@/lib/modules/employees/education'
 import type { Personel } from '@/types'
 import { getCachedTablePreference, syncUiPreferencesPatch } from '@/lib/user-state/client'
 
-const PAGE_CONTRACT_ROUTE = appPageContract.route
-
-const WIDGET_STORAGE_KEY = 'user_widgets'
-const WIDGET_STORAGE_SCOPE = 'home'
-const HOME_WIDGET_PREFERENCE_KEY = 'home-dashboard-widgets'
+const HOME_DASHBOARD_CONTRACT = homePageContract.dashboard
+const WIDGET_STORAGE_KEY = HOME_DASHBOARD_CONTRACT.legacyStorageKey
+const WIDGET_STORAGE_SCOPE = HOME_DASHBOARD_CONTRACT.widgetStorageScope
+const HOME_WIDGET_PREFERENCE_KEY = HOME_DASHBOARD_CONTRACT.widgetPreferenceKey
+const CAN_CONFIGURE_HOME_WIDGETS = homePageContract.allowedActions.includes('configure_dashboard_widgets')
 const CURRENT_USER = {
   first_name: 'İsmail',
   last_name: 'ILGAR',
@@ -235,8 +235,7 @@ export default function AnaSayfa() {
   }
 
   return (
-    <>
-      <span hidden data-contract-route={PAGE_CONTRACT_ROUTE} />
+    <main data-contract-route={homePageContract.route}>
       <WidgetModal
         open={widgetModalOpen}
         selectedWidgetIds={selectedWidgetIds}
@@ -253,8 +252,8 @@ export default function AnaSayfa() {
           : `${duration.years} yıl ${duration.months} ay, ${duration.days} gündür bizimlesin. İyi ki varsın!`
         }
         icon={<Home size={24} />}
-        onAddClick={() => setWidgetModalOpen(true)}
-        addButtonText="Ekle"
+        onAddClick={CAN_CONFIGURE_HOME_WIDGETS ? () => setWidgetModalOpen(true) : undefined}
+        addButtonText={HOME_DASHBOARD_CONTRACT.addWidgetActionLabel}
         addButtonTourId="quick-actions"
       />
 
@@ -271,12 +270,12 @@ export default function AnaSayfa() {
         ) : (
           <div className="rounded-lg border border-dashed border-gray-200 bg-white py-12 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <Settings size={48} className="mx-auto mb-4 opacity-50" />
-            <p>Henüz widget eklenmemiş</p>
-            <p className="mt-1 text-sm">&quot;Ekle&quot; butonuyla mevcut widget kayıtlarını ana sayfaya ekleyebilirsiniz.</p>
+            <p>{HOME_DASHBOARD_CONTRACT.emptyState.title}</p>
+            <p className="mt-1 text-sm">{HOME_DASHBOARD_CONTRACT.emptyState.message}</p>
           </div>
         )}
       </div>
-    </>
+    </main>
   )
 }
 

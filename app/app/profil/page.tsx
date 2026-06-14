@@ -4,11 +4,18 @@
 import { FormEvent, useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Loader2, Save, Trash2, Upload, UserRound } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
-import { appProfilPageContract } from '@/contracts/pages/generated/app-profil.page.contract'
-import { appProfilFormContract } from '@/contracts/pages/generated/app-profil.form.contract'
+import { profilePageContract } from '@/contracts/pages/security/profile.page.contract'
+import { profileFormContract } from '@/contracts/forms/security/profile.form.contract'
 
-const PROFILE_CONTRACT_ROUTE = appProfilPageContract.route
-const PROFILE_FORM_FIELD_ORDER = appProfilFormContract.fieldOrder
+const PROFILE_CONTRACT_ROUTE = profilePageContract.route
+const PROFILE_FORM_FIELD_ORDER = profileFormContract.fieldOrder
+const PROFILE_PAGE_COPY = profilePageContract.profile
+const PROFILE_FORM_FIELDS = PROFILE_FORM_FIELD_ORDER.map(fieldName => {
+  const field = profileFormContract.fields.find(item => item.name === fieldName)
+  if (!field) throw new Error(`Profile form contract is missing field ${fieldName}`)
+  return field
+})
+type ProfileFieldName = typeof PROFILE_FORM_FIELD_ORDER[number]
 
 type UserProfile = {
   user_id?: string | null
@@ -36,6 +43,16 @@ const emptyForm: FormState = {
   displayName: '',
   email: '',
   phone: '',
+}
+
+function profileFieldClassName(fieldName: ProfileFieldName) {
+  return fieldName === 'email' ? 'block text-sm sm:col-span-2' : 'block text-sm'
+}
+
+function profileInputType(fieldName: ProfileFieldName) {
+  if (fieldName === 'email') return 'email'
+  if (fieldName === 'phone') return 'tel'
+  return 'text'
 }
 
 export default function ProfilePage() {
@@ -183,8 +200,8 @@ export default function ProfilePage() {
               showTooltip={false}
             />
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Profilim</h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{profile?.roleLabel || 'Tenant kullanicisi'}</p>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{PROFILE_PAGE_COPY.pageTitle}</h1>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{profile?.roleLabel || PROFILE_PAGE_COPY.roleFallbackLabel}</p>
             </div>
           </div>
           <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
@@ -208,32 +225,21 @@ export default function ProfilePage() {
 
         <form data-contract-fields={PROFILE_FORM_FIELD_ORDER.join(',')} onSubmit={saveProfile} className="grid gap-4 lg:grid-cols-[1fr_18rem]">
           <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Tenant ici kisi profili</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{PROFILE_PAGE_COPY.profileSectionTitle}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm">
-                <span className="font-medium text-gray-700 dark:text-gray-200">Ad soyad</span>
-                <input
-                  value={form.displayName}
-                  onChange={event => setForm(previous => ({ ...previous, displayName: event.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-eden-blue focus:outline-none focus:ring-2 focus:ring-eden-blue/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium text-gray-700 dark:text-gray-200">Telefon</span>
-                <input
-                  value={form.phone}
-                  onChange={event => setForm(previous => ({ ...previous, phone: event.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-eden-blue focus:outline-none focus:ring-2 focus:ring-eden-blue/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-                />
-              </label>
-              <label className="block text-sm sm:col-span-2">
-                <span className="font-medium text-gray-700 dark:text-gray-200">E-posta</span>
-                <input
-                  value={form.email}
-                  onChange={event => setForm(previous => ({ ...previous, email: event.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-eden-blue focus:outline-none focus:ring-2 focus:ring-eden-blue/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
-                />
-              </label>
+              {PROFILE_FORM_FIELDS.map(field => (
+                <label key={field.name} className={profileFieldClassName(field.name as ProfileFieldName)}>
+                  <span className="font-medium text-gray-700 dark:text-gray-200">{field.label}</span>
+                  <input
+                    type={profileInputType(field.name as ProfileFieldName)}
+                    value={form[field.name as ProfileFieldName]}
+                    required={Boolean('required' in field && field.required)}
+                    readOnly={Boolean('readonly' in field && field.readonly)}
+                    onChange={event => setForm(previous => ({ ...previous, [field.name]: event.target.value }))}
+                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-eden-blue focus:outline-none focus:ring-2 focus:ring-eden-blue/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+                  />
+                </label>
+              ))}
             </div>
             <div className="mt-5 flex justify-end">
               <button
@@ -248,7 +254,7 @@ export default function ProfilePage() {
           </section>
 
           <aside className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Login hesabi</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{PROFILE_PAGE_COPY.accountSectionTitle}</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="text-xs font-medium uppercase tracking-normal text-gray-400 dark:text-gray-500">User ID</dt>
@@ -264,7 +270,7 @@ export default function ProfilePage() {
               </div>
             </dl>
             <div className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-800">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Avatar</h3>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{PROFILE_PAGE_COPY.avatarSectionTitle}</h3>
               <div className="mt-3 flex flex-col gap-2">
                 <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
                   {avatarSaving ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}

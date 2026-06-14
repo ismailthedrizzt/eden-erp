@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T19:04:54.945Z
+Generated: 2026-06-14T02:51:55.871Z
 
 ## Related Contracts
 
@@ -18,21 +18,41 @@ Generated: 2026-06-13T19:04:54.945Z
 
 ```json
 {
-  "scannedFiles": 2123,
+  "scannedFiles": 2132,
   "routes": 152,
   "services": 534,
   "bffRoutes": 552,
   "residueHits": 194,
-  "generatedContractItems": 146,
+  "generatedContractItems": 140,
   "orphanCandidates": 0,
   "p0": 0,
   "p1": 67,
   "p2": 241,
   "safeDeleteCandidates": 11,
-  "needsManualReview": 354,
+  "needsManualReview": 348,
   "activeRuntimeDependency": 973
 }
 ```
+
+## Generated Contract Debt Sprint
+
+- Initial generated_from_existing_page debt count: 146
+- Selected routes: `/app`, `/app/aboneligim`, `/app/profil`, `/app/sistem/kurulum`, `/login`, `/offline`
+- Pages converted to manual_business_contract: 6
+- Pages downgraded/planned/hidden/blocked: 0
+- Pages intentionally retained as generated debt in selected batch: 0
+- Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
+- Remaining generated_from_existing_page debt backlog: 140
+
+| Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /app | app/app/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/aboneligim | app/app/aboneligim/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/profil | app/app/profil/page.tsx | release | implemented | manual_business_contract | form | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/sistem/kurulum | app/app/sistem/kurulum/page.tsx | release | implemented | manual_business_contract | wizard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /login | app/login/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+| /offline | app/offline/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+
 
 ## BFF Migration Header Sprint
 
@@ -104,7 +124,7 @@ Generated: 2026-06-13T19:04:54.945Z
 | app/api/import/templates/route.ts | /api/import/templates | proxy_to_fastapi | /api/v1/import/templates | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/features/route.ts | /api/licensing/current/features | proxy_to_fastapi | /api/v1/licensing/current/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/modules/route.ts | /api/licensing/current/modules | proxy_to_fastapi | /api/v1/licensing/current/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
-| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | no | Header matches visible FastAPI proxy behavior. |
+| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | api_contract | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/features/route.ts | /api/licensing/plans/{planId}/features | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/modules/route.ts | /api/licensing/plans/{planId}/modules | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/route.ts | /api/licensing/plans/{planId} | proxy_to_fastapi | /api/v1/licensing/plans/{planId} | no | no | no | Header matches visible FastAPI proxy behavior. |
@@ -183,7 +203,7 @@ Total: 152
 | --- | --- | --- | --- | --- |
 | P2 | keep_redirect | app/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals |
 | P2 | active_runtime_dependency | app/app/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
-| P2 | active_runtime_dependency | app/app/aboneligim/page.tsx | retain | release=release; implementation=planned; real UI signals present |
+| P2 | active_runtime_dependency | app/app/aboneligim/page.tsx | retain | release=release; implementation=implemented; real UI signals present |
 | P2 | active_runtime_dependency | app/app/ayarlar/bildirimler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/belgeler/page.tsx | retain | release=development_internal; implementation=blocked; real UI signals present |
 | P2 | active_runtime_dependency | app/app/crm/firsatlar/page.tsx | retain | release=development; implementation=planned; no real UI signals |
@@ -313,7 +333,7 @@ Total: 152
 | P2 | active_runtime_dependency | app/app/yardim/page.tsx | retain | release=development; implementation=blocked; real UI signals present |
 | P2 | keep_redirect | app/ayarlar/entegrasyon-ayarlari/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | keep_redirect | app/ik/personel/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
-| P2 | active_runtime_dependency | app/login/page.tsx | retain | release=release; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/login/page.tsx | retain | release=release; implementation=implemented; no real UI signals |
 | P2 | keep_redirect | app/muhasebe/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | keep_redirect | app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | keep_redirect | app/muhasebe/banka-kart-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
@@ -321,7 +341,7 @@ Total: 152
 | P2 | keep_redirect | app/muhasebe/cari-kartlar/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | keep_redirect | app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
 | P2 | keep_redirect | app/muhasebe/on-muhasebe-hareketleri/page.tsx | keep_redirect | release=hidden; implementation=hidden; redirect-only page; no real UI signals; legacy/deprecated signal |
-| P2 | active_runtime_dependency | app/offline/page.tsx | retain | release=release; implementation=planned; no real UI signals |
+| P2 | active_runtime_dependency | app/offline/page.tsx | retain | release=release; implementation=implemented; no real UI signals |
 | P2 | active_runtime_dependency | app/portal/page.tsx | retain | release=development_internal; implementation=blocked; redirect-only page; no real UI signals |
 | P2 | active_runtime_dependency | app/portal/dashboard/page.tsx | retain | release=development_internal; implementation=blocked; no real UI signals |
 | P2 | active_runtime_dependency | app/portal/documents/page.tsx | retain | release=development_internal; implementation=planned; no real UI signals |
@@ -1157,13 +1177,11 @@ Total: 194
 
 ## Generated/Blocked Contract Debt
 
-Total: 146
+Total: 140
 
 | Severity | Classification | File/Route | Decision | Evidence |
 | --- | --- | --- | --- | --- |
 | P2 | needs_manual_review | app/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/app/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
-| P1 | needs_manual_review | app/app/aboneligim/page.tsx | planned_page_has_real_ui_signals | implementation=planned; contractSource=generated_from_existing_page; release=release; real UI signals present |
 | P1 | needs_contractization | app/app/ayarlar/bildirimler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P1 | needs_contractization | app/app/belgeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P2 | needs_manual_review | app/app/crm/firsatlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
@@ -1216,7 +1234,6 @@ Total: 146
 | P1 | needs_contractization | app/app/muhasebe/projeler/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P2 | needs_manual_review | app/app/muhasebe/sermaye-mutabakati/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/onboarding/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/app/profil/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
 | P2 | needs_manual_review | app/app/raporlama/ozel-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/raporlama/zamanlanmis-raporlar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/app/satis-sonrasi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development; placeholder/minimal page signals |
@@ -1253,7 +1270,6 @@ Total: 146
 | P1 | needs_contractization | app/app/sistem/import/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P1 | needs_contractization | app/app/sistem/kullanici-talepleri/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P2 | needs_manual_review | app/app/sistem/kullanicilar/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/app/sistem/kurulum/page.tsx | manual_review | implementation=implemented; contractSource=generated_from_existing_page; release=release; real UI signals present |
 | P1 | needs_contractization | app/app/sistem/lisanslar/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
 | P2 | needs_manual_review | app/app/sistem/login-sayfasi/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=coming_soon; placeholder/minimal page signals |
 | P1 | needs_contractization | app/app/sistem/module-licenses/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present |
@@ -1287,7 +1303,6 @@ Total: 146
 | P1 | needs_contractization | app/app/yardim/page.tsx | contractize_real_ui_before_promotion | implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present |
 | P2 | needs_manual_review | app/ayarlar/entegrasyon-ayarlari/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/ik/personel/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/login/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=release; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/muhasebe/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/muhasebe/banka-kart-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
@@ -1295,7 +1310,6 @@ Total: 146
 | P2 | needs_manual_review | app/muhasebe/cari-kartlar/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/muhasebe/hesap-ve-kart-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/muhasebe/on-muhasebe-hareketleri/page.tsx | manual_review | implementation=hidden; contractSource=generated_from_existing_page; release=hidden; placeholder/minimal page signals |
-| P2 | needs_manual_review | app/offline/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=release; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/portal/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/portal/dashboard/page.tsx | manual_review | implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |
 | P2 | needs_manual_review | app/portal/documents/page.tsx | manual_review | implementation=planned; contractSource=generated_from_existing_page; release=development_internal; placeholder/minimal page signals |

@@ -1,7 +1,7 @@
 # Code Legacy Inventory
 
 Status: controlled cleanup sprint inventory
-Generated: 2026-06-13T19:04:54.945Z
+Generated: 2026-06-14T02:51:55.871Z
 
 This file is the concise AI-facing inventory for code legacy cleanup. Contracts and guards remain the executable source of truth; Markdown cannot override contracts.
 
@@ -37,12 +37,12 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 
 ## Counts
 
-- Scanned files: 2123
+- Scanned files: 2132
 - Legacy route inventory items: 152
 - Legacy service inventory items: 534
 - BFF/API route inventory items: 552
 - Supabase/Vercel/old runtime residue hits: 194
-- Generated/blocked contract debt items: 146
+- Generated/blocked contract debt items: 140
 - Orphan candidates: 0
 - P0 legacy issues: 0
 - P1 findings: 67
@@ -73,6 +73,26 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 - Company vehicle decision: retained as `keep_compatibility_adapter` under company vehicle/fleet contractization debt because the current BFF points to after-sales assets but frontend vehicle schema and reference semantics do not match installed asset backend DTOs.
 - New API contract entries in this sprint: none; no fake contracts were added for missing or schema-incompatible backend chains.
 - Inventory detector improvements: explicit legacy service adapter markers require allowed functions plus non-protected route evidence; blank marker parsing no longer consumes the next directive; generator self-references are excluded from usage literal counts.
+
+## Generated Contract Debt Sprint
+
+- Initial generated_from_existing_page debt count: 146
+- Selected routes: `/app`, `/app/aboneligim`, `/app/profil`, `/app/sistem/kurulum`, `/login`, `/offline`
+- Pages converted to manual_business_contract: 6
+- Pages downgraded/planned/hidden/blocked: 0
+- Pages intentionally retained as generated debt in selected batch: 0
+- Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
+- Remaining generated_from_existing_page debt backlog: 140
+
+| Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /app | app/app/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/aboneligim | app/app/aboneligim/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/profil | app/app/profil/page.tsx | release | implemented | manual_business_contract | form | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/sistem/kurulum | app/app/sistem/kurulum/page.tsx | release | implemented | manual_business_contract | wizard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /login | app/login/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+| /offline | app/offline/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+
 
 ## BFF Migration Header Sprint
 
@@ -144,7 +164,7 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 | app/api/import/templates/route.ts | /api/import/templates | proxy_to_fastapi | /api/v1/import/templates | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/features/route.ts | /api/licensing/current/features | proxy_to_fastapi | /api/v1/licensing/current/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/modules/route.ts | /api/licensing/current/modules | proxy_to_fastapi | /api/v1/licensing/current/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
-| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | no | Header matches visible FastAPI proxy behavior. |
+| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | api_contract | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/features/route.ts | /api/licensing/plans/{planId}/features | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/modules/route.ts | /api/licensing/plans/{planId}/modules | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/route.ts | /api/licensing/plans/{planId} | proxy_to_fastapi | /api/v1/licensing/plans/{planId} | no | no | no | Header matches visible FastAPI proxy behavior. |
@@ -238,6 +258,7 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 - P1: contractize_before_promotion (lib/services/importExport/bulkService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/importExport/exportService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/importExport/importService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/licensing/licensingService.ts) - missing API contract coverage; 1 API call(s)
 - P1: contractize_before_promotion (lib/services/licensing/licensingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/notifications/emailService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/notifications/notificationService.ts) - missing API contract coverage; 1 API call(s)
@@ -245,7 +266,6 @@ This file is the concise AI-facing inventory for code legacy cleanup. Contracts 
 - P1: contractize_before_promotion (lib/services/notifications/reminderService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/onboarding/onboardingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/search/commandPalette.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
-- P1: contractize_before_promotion (lib/services/search/searchService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 
 ## Retained Intentionally
 

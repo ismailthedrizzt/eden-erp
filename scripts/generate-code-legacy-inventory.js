@@ -152,6 +152,16 @@ const BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILES = [
 ]
 const BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILE_SET = new Set(BFF_MIGRATION_HEADER_SPRINT_ROUTE_FILES)
 
+const GENERATED_CONTRACT_DEBT_SPRINT_INITIAL_GENERATED_FROM_EXISTING_DEBT = 146
+const GENERATED_CONTRACT_DEBT_SPRINT_ROUTES = [
+  '/app',
+  '/app/aboneligim',
+  '/app/profil',
+  '/app/sistem/kurulum',
+  '/login',
+  '/offline',
+]
+
 function main() {
   const result = analyze()
   writeReports(result)
@@ -174,6 +184,7 @@ function analyze() {
   const bffInventory = buildBffInventory({ sourceByFile, apiContracts })
   const residueInventory = buildResidueInventory({ sourceByFile })
   const generatedContractInventory = buildGeneratedContractInventory({ pageRegistry, pageRoutes, releaseRoutes })
+  const generatedContractDebtSprintInventory = buildGeneratedContractDebtSprintInventory({ pageRegistry, pageRoutes, releaseRoutes })
   const orphanInventory = buildOrphanInventory({ sourceByFile, allSource })
   const p0Findings = buildP0Findings({ routeInventory, serviceInventory, bffInventory, residueInventory, generatedContractInventory })
   const p1Findings = buildP1Findings({ routeInventory, serviceInventory, bffInventory, residueInventory, generatedContractInventory })
@@ -203,6 +214,7 @@ function analyze() {
     bffInventory,
     residueInventory,
     generatedContractInventory,
+    generatedContractDebtSprintInventory,
     orphanInventory,
     apiContracts,
     p0Findings,
@@ -515,6 +527,14 @@ function buildGeneratedContractInventory({ pageRegistry, pageRoutes, releaseRout
         classification = 'needs_contractization'
         severity = 'P0'
         decision = 'replace_placeholder_before_release'
+      } else if (entry.contractSource === 'generated_from_existing_page' && entry.implementationStatus === 'implemented' && (entry.releaseStatus === 'release' || realUi)) {
+        classification = 'needs_contractization'
+        severity = 'P1'
+        decision = 'implemented_generated_page_requires_manual_business_contract'
+      } else if (entry.contractSource === 'generated_from_existing_page' && entry.releaseStatus === 'release' && realUi) {
+        classification = 'needs_contractization'
+        severity = 'P1'
+        decision = 'release_generated_real_ui_requires_manual_business_contract'
       } else if (entry.implementationStatus === 'blocked' && realUi) {
         classification = 'needs_contractization'
         severity = 'P1'
@@ -539,6 +559,56 @@ function buildGeneratedContractInventory({ pageRegistry, pageRoutes, releaseRout
         evidence: summarizeEvidence([`implementation=${entry.implementationStatus}`, `contractSource=${entry.contractSource}`, `release=${entry.releaseStatus || release?.releaseStatus || '<missing>'}`, realUi ? 'real UI signals present' : 'placeholder/minimal page signals']),
       }
     })
+}
+
+
+function buildGeneratedContractDebtSprintInventory({ pageRegistry, pageRoutes, releaseRoutes }) {
+  const pageByRoute = new Map(pageRoutes.map((entry) => [entry.route, entry]))
+  const releaseByRoute = new Map(releaseRoutes.map((entry) => [entry.route, entry]))
+  return GENERATED_CONTRACT_DEBT_SPRINT_ROUTES.map((route) => {
+    const entry = pageRegistry.find((item) => item.route === route) || {}
+    const page = pageByRoute.get(route)
+    const release = releaseByRoute.get(route)
+    const realUi = hasRealUi(page?.source || '')
+    const converted = entry.contractSource === 'manual_business_contract'
+    return {
+      route,
+      file: entry.sourcePagePath || page?.file || '',
+      releaseStatus: entry.releaseStatus || release?.releaseStatus || '<missing>',
+      implementationStatus: entry.implementationStatus || '<missing>',
+      contractSource: entry.contractSource || '<missing>',
+      pageKind: entry.pageKind || '<missing>',
+      realUi,
+      risk: route === '/login' || route === '/offline' ? 'release_shell_generated_debt' : 'release_real_ui_generated_debt',
+      decision: converted ? 'converted_to_manual_business_contract' : 'retained_as_generated_debt',
+      contractPath: entry.pageContractPath || '',
+    }
+  })
+}
+
+function renderGeneratedContractDebtSprintSection(result) {
+  const items = result.generatedContractDebtSprintInventory || []
+  const converted = items.filter((item) => item.decision === 'converted_to_manual_business_contract')
+  const downgraded = items.filter((item) => /planned|hidden|blocked/.test(item.decision))
+  const retained = items.filter((item) => item.decision === 'retained_as_generated_debt')
+  const remainingGeneratedDebt = result.generatedContractInventory.filter((item) => item.contractSource === 'generated_from_existing_page').length
+  const rows = items.map((item) => '| ' + escapeCell(item.route) + ' | ' + escapeCell(item.file) + ' | ' + escapeCell(item.releaseStatus) + ' | ' + escapeCell(item.implementationStatus) + ' | ' + escapeCell(item.contractSource) + ' | ' + escapeCell(item.pageKind) + ' | ' + (item.realUi ? 'yes' : 'no') + ' | ' + escapeCell(item.risk) + ' | ' + escapeCell(item.decision) + ' |')
+  return [
+    '## Generated Contract Debt Sprint',
+    '',
+    '- Initial generated_from_existing_page debt count: ' + GENERATED_CONTRACT_DEBT_SPRINT_INITIAL_GENERATED_FROM_EXISTING_DEBT,
+    '- Selected routes: ' + GENERATED_CONTRACT_DEBT_SPRINT_ROUTES.map((route) => '`' + route + '`').join(', '),
+    '- Pages converted to manual_business_contract: ' + converted.length,
+    '- Pages downgraded/planned/hidden/blocked: ' + downgraded.length,
+    '- Pages intentionally retained as generated debt in selected batch: ' + retained.length,
+    '- Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.',
+    '- Remaining generated_from_existing_page debt backlog: ' + remainingGeneratedDebt,
+    '',
+    '| Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...(rows.length ? rows : ['| - | - | - | - | - | - | - | - | - |']),
+    '',
+  ].join('\n')
 }
 
 function buildOrphanInventory({ sourceByFile, allSource }) {
@@ -685,6 +755,8 @@ function renderAiInventory(result) {
     '- New API contract entries in this sprint: none; no fake contracts were added for missing or schema-incompatible backend chains.',
     '- Inventory detector improvements: explicit legacy service adapter markers require allowed functions plus non-protected route evidence; blank marker parsing no longer consumes the next directive; generator self-references are excluded from usage literal counts.',
     '',
+    renderGeneratedContractDebtSprintSection(result),
+    '',
     renderBffMigrationHeaderSprintSection(result),
     '',
     '## P0 Findings',
@@ -786,6 +858,8 @@ function renderRawInventory(result) {
     '',
     codeBlock(JSON.stringify(result.counts, null, 2), 'json'),
     '',
+    renderGeneratedContractDebtSprintSection(result),
+    '',
     renderBffMigrationHeaderSprintSection(result),
     '',
     renderTableSection('Legacy Route Inventory', result.routeInventory),
@@ -838,6 +912,8 @@ function renderCleanupReport(result) {
     '9. Inventory detection improvements: explicit legacy service adapter markers, non-protected route evidence validation, safe blank directive parsing, and generator self-reference exclusion from usage literal counts.',
     '10. Remaining backlog: general non-target P1/P2 inventory remains in the P1/P2 sections below.',
     '',
+    renderGeneratedContractDebtSprintSection(result),
+    '',
     renderBffMigrationHeaderSprintSection(result),
     '',
     '## 2. P0 Findings',
@@ -854,6 +930,9 @@ function renderCleanupReport(result) {
     '',
     '## 5. Safe Cleanup Performed',
     '',
+    '- Converted 6 release-visible `generated_from_existing_page` routes to manual business contracts with runtime usage tied to render/action behavior.',
+    '- Added focused licensing API contract coverage for `licensingService.getCurrentEntitlements` because `/app/aboneligim` uses that service at runtime.',
+    '- Tightened contract usage guard against hidden/data-contract-only proof for manual business contract pages.',
     '- Added behavior-matched BFF migration headers to 124 `app/api/**/route.ts` files.',
     '- Tightened BFF inventory detection for proxy headers without visible FastAPI proxy calls and adapter/category misuse.',
     '- Regenerated concise AI context inventory and detailed archive reports; no route or service deletion performed.',
@@ -861,6 +940,10 @@ function renderCleanupReport(result) {
     '## 6. Files Changed',
     '',
     '- `app/api/**/route.ts` (124 BFF migration headers)',
+    '- `app/app/page.tsx`, `app/app/aboneligim/page.tsx`, `app/app/profil/page.tsx`, `app/app/sistem/kurulum/page.tsx`, `app/login/page.tsx`, `app/offline/page.tsx`',
+    '- `contracts/pages/home/home.page.contract.ts`, `contracts/pages/licensing/subscription.page.contract.ts`, `contracts/pages/security/profile.page.contract.ts`, `contracts/pages/system/setup-wizard.page.contract.ts`, `contracts/pages/auth/login.page.contract.ts`, `contracts/pages/system/offline.page.contract.ts`',
+    '- `contracts/forms/security/profile.form.contract.ts`, `contracts/wizards/system/setup-wizard.wizard.contract.ts`, `contracts/api/licensing.api.contract.ts`',
+    '- `scripts/check-contract-usage-guard.js`',
     '- `scripts/generate-code-legacy-inventory.js`',
     '- `docs/ai-context/code-legacy-inventory.md`',
     '- `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`',
@@ -916,6 +999,8 @@ function renderCleanupReport(result) {
     '## 13. Remaining Backlog',
     '',
     '- Remaining BFF migration header P1 backlog: 0.',
+    '- Remaining selected release-visible generated contract debt: ' + (result.generatedContractDebtSprintInventory || []).filter((item) => item.decision !== 'converted_to_manual_business_contract').length + '.',
+    '- Remaining generated_from_existing_page debt backlog: ' + result.generatedContractInventory.filter((item) => item.contractSource === 'generated_from_existing_page').length + '.',
     '- Overall inventory backlog after this sprint: P1 ' + result.counts.p1 + ' and P2 ' + result.counts.p2 + '.',
     '- Review P1 findings before promoting development/hidden routes.',
     '- Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.',
@@ -942,6 +1027,8 @@ function renderRiskRegister(result) {
     '',
     '- `scripts/check-code-legacy-inventory.js`',
     '- `npm run legacy:check`',
+    '',
+    renderGeneratedContractDebtSprintSection(result),
     '',
     '| Severity | Risk | File/Route | Classification | Mitigation |',
     '| --- | --- | --- | --- | --- |',

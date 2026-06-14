@@ -2,7 +2,7 @@
 
 <!-- source-of-truth-standard: contract overrides markdown -->
 
-Generated: 2026-06-13T19:04:54.945Z
+Generated: 2026-06-14T02:51:55.871Z
 
 ## Related Contracts
 
@@ -20,18 +20,18 @@ Generated: 2026-06-13T19:04:54.945Z
 
 ## 1. Inventory Counts
 
-- scannedFiles: 2123
+- scannedFiles: 2132
 - routes: 152
 - services: 534
 - bffRoutes: 552
 - residueHits: 194
-- generatedContractItems: 146
+- generatedContractItems: 140
 - orphanCandidates: 0
 - p0: 0
 - p1: 67
 - p2: 241
 - safeDeleteCandidates: 11
-- needsManualReview: 354
+- needsManualReview: 348
 - activeRuntimeDependency: 973
 
 ## API Contractization Sprint Delta
@@ -46,6 +46,26 @@ Generated: 2026-06-13T19:04:54.945Z
 8. Tests added: none; this pass added guard-visible adapter evidence and detector precision only.
 9. Inventory detection improvements: explicit legacy service adapter markers, non-protected route evidence validation, safe blank directive parsing, and generator self-reference exclusion from usage literal counts.
 10. Remaining backlog: general non-target P1/P2 inventory remains in the P1/P2 sections below.
+
+## Generated Contract Debt Sprint
+
+- Initial generated_from_existing_page debt count: 146
+- Selected routes: `/app`, `/app/aboneligim`, `/app/profil`, `/app/sistem/kurulum`, `/login`, `/offline`
+- Pages converted to manual_business_contract: 6
+- Pages downgraded/planned/hidden/blocked: 0
+- Pages intentionally retained as generated debt in selected batch: 0
+- Guard changes: manual business contract usage must affect render/action behavior; hidden data-contract-route markers are rejected for runtime contract pages; generated implemented release pages are P1 until converted.
+- Remaining generated_from_existing_page debt backlog: 140
+
+| Route | Page file | Release status | Implementation status | Contract source | Page kind | Real UI? | Risk | Decision |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| /app | app/app/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/aboneligim | app/app/aboneligim/page.tsx | release | implemented | manual_business_contract | dashboard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/profil | app/app/profil/page.tsx | release | implemented | manual_business_contract | form | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /app/sistem/kurulum | app/app/sistem/kurulum/page.tsx | release | implemented | manual_business_contract | wizard | yes | release_real_ui_generated_debt | converted_to_manual_business_contract |
+| /login | app/login/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+| /offline | app/offline/page.tsx | release | implemented | manual_business_contract | shell | no | release_shell_generated_debt | converted_to_manual_business_contract |
+
 
 ## BFF Migration Header Sprint
 
@@ -117,7 +137,7 @@ Generated: 2026-06-13T19:04:54.945Z
 | app/api/import/templates/route.ts | /api/import/templates | proxy_to_fastapi | /api/v1/import/templates | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/features/route.ts | /api/licensing/current/features | proxy_to_fastapi | /api/v1/licensing/current/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/current/modules/route.ts | /api/licensing/current/modules | proxy_to_fastapi | /api/v1/licensing/current/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
-| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | no | Header matches visible FastAPI proxy behavior. |
+| app/api/licensing/current/route.ts | /api/licensing/current | proxy_to_fastapi | /api/v1/licensing/current | no | no | api_contract | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/features/route.ts | /api/licensing/plans/{planId}/features | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/features | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/modules/route.ts | /api/licensing/plans/{planId}/modules | proxy_to_fastapi | /api/v1/licensing/plans/{planId}/modules | no | no | no | Header matches visible FastAPI proxy behavior. |
 | app/api/licensing/plans/[planId]/route.ts | /api/licensing/plans/{planId} | proxy_to_fastapi | /api/v1/licensing/plans/{planId} | no | no | no | Header matches visible FastAPI proxy behavior. |
@@ -211,6 +231,7 @@ Generated: 2026-06-13T19:04:54.945Z
 - P1: contractize_before_promotion (lib/services/importExport/bulkService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/importExport/exportService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/importExport/importService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
+- P1: contractize_before_promotion (lib/services/licensing/licensingService.ts) - missing API contract coverage; 1 API call(s)
 - P1: contractize_before_promotion (lib/services/licensing/licensingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/notifications/emailService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/notifications/notificationService.ts) - missing API contract coverage; 1 API call(s)
@@ -219,7 +240,6 @@ Generated: 2026-06-13T19:04:54.945Z
 - P1: contractize_before_promotion (lib/services/onboarding/onboardingService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/search/commandPalette.service.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
 - P1: contractize_before_promotion (lib/services/search/searchService.ts) - missing API contract coverage; 1 API call(s); API path not covered by contracts/api
-- P1: planned_page_has_real_ui_signals (app/app/aboneligim/page.tsx) - implementation=planned; contractSource=generated_from_existing_page; release=release; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/ayarlar/bildirimler/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/belgeler/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/ik/personel/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present
@@ -300,6 +320,9 @@ Generated: 2026-06-13T19:04:54.945Z
 
 ## 5. Safe Cleanup Performed
 
+- Converted 6 release-visible `generated_from_existing_page` routes to manual business contracts with runtime usage tied to render/action behavior.
+- Added focused licensing API contract coverage for `licensingService.getCurrentEntitlements` because `/app/aboneligim` uses that service at runtime.
+- Tightened contract usage guard against hidden/data-contract-only proof for manual business contract pages.
 - Added behavior-matched BFF migration headers to 124 `app/api/**/route.ts` files.
 - Tightened BFF inventory detection for proxy headers without visible FastAPI proxy calls and adapter/category misuse.
 - Regenerated concise AI context inventory and detailed archive reports; no route or service deletion performed.
@@ -307,6 +330,10 @@ Generated: 2026-06-13T19:04:54.945Z
 ## 6. Files Changed
 
 - `app/api/**/route.ts` (124 BFF migration headers)
+- `app/app/page.tsx`, `app/app/aboneligim/page.tsx`, `app/app/profil/page.tsx`, `app/app/sistem/kurulum/page.tsx`, `app/login/page.tsx`, `app/offline/page.tsx`
+- `contracts/pages/home/home.page.contract.ts`, `contracts/pages/licensing/subscription.page.contract.ts`, `contracts/pages/security/profile.page.contract.ts`, `contracts/pages/system/setup-wizard.page.contract.ts`, `contracts/pages/auth/login.page.contract.ts`, `contracts/pages/system/offline.page.contract.ts`
+- `contracts/forms/security/profile.form.contract.ts`, `contracts/wizards/system/setup-wizard.wizard.contract.ts`, `contracts/api/licensing.api.contract.ts`
+- `scripts/check-contract-usage-guard.js`
 - `scripts/generate-code-legacy-inventory.js`
 - `docs/ai-context/code-legacy-inventory.md`
 - `docs/archive/code-legacy-cleanup-2026-06-13/raw-code-legacy-inventory.md`
@@ -348,7 +375,6 @@ Generated: 2026-06-13T19:04:54.945Z
 
 ## 10. Generated/Blocked Contract Debt
 
-- P1: planned_page_has_real_ui_signals (app/app/aboneligim/page.tsx) - implementation=planned; contractSource=generated_from_existing_page; release=release; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/ayarlar/bildirimler/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/belgeler/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development_internal; real UI signals present
 - P1: contractize_real_ui_before_promotion (app/app/ik/personel/page.tsx) - implementation=blocked; contractSource=generated_from_existing_page; release=development; real UI signals present
@@ -417,6 +443,8 @@ Generated: 2026-06-13T19:04:54.945Z
 ## 13. Remaining Backlog
 
 - Remaining BFF migration header P1 backlog: 0.
+- Remaining selected release-visible generated contract debt: 0.
+- Remaining generated_from_existing_page debt backlog: 140.
 - Overall inventory backlog after this sprint: P1 67 and P2 241.
 - Review P1 findings before promoting development/hidden routes.
 - Contractize API-calling services that are used by implemented pages but not yet in `contracts/api`.

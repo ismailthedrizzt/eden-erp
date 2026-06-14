@@ -4,8 +4,12 @@
 import { useEffect, useState } from 'react'
 import { BadgeCheck, CreditCard, Database, ShieldCheck } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
+import { subscriptionPageContract } from '@/contracts/pages/licensing/subscription.page.contract'
 import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 import { getCurrentEntitlements } from '@/lib/services/licensing/licensingService'
+
+const SUBSCRIPTION_DASHBOARD = subscriptionPageContract.dashboard
+type SubscriptionSummaryCard = typeof SUBSCRIPTION_DASHBOARD.summaryCards[number]
 
 export default function MySubscriptionPage() {
   const [data, setData] = useState<TenantEntitlements | null>(null)
@@ -22,11 +26,11 @@ export default function MySubscriptionPage() {
   }, [])
 
   return (
-    <div>
+    <main data-contract-route={subscriptionPageContract.route}>
       <PageBanner
         mode="list"
-        title="Aboneliğim"
-        subtitle="Bu çalışma alanı için aktif ürün planı, lisans durumu ve kullanım limitleri."
+        title={SUBSCRIPTION_DASHBOARD.banner.title}
+        subtitle={SUBSCRIPTION_DASHBOARD.banner.subtitle}
         icon={<CreditCard size={24} />}
       />
 
@@ -34,14 +38,19 @@ export default function MySubscriptionPage() {
       {warnings.map((warning, index) => <div key={index} className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">{warning}</div>)}
 
       <section className="grid gap-4 md:grid-cols-3">
-        <InfoCard icon={<ShieldCheck size={18} />} label="Ürün" value={data?.product_key || 'eden_erp'} />
-        <InfoCard icon={<BadgeCheck size={18} />} label="Plan" value={data?.plan_key || '-'} />
-        <InfoCard icon={<CreditCard size={18} />} label="Durum" value={data?.license_status || '-'} />
+        {SUBSCRIPTION_DASHBOARD.summaryCards.map(card => (
+          <InfoCard
+            key={card.id}
+            icon={subscriptionCardIcon(card.id)}
+            label={card.label}
+            value={subscriptionCardValue(data, card)}
+          />
+        ))}
       </section>
 
       <section className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-eden-navy-2">
-          <h2 className="text-base font-semibold">Açık Modüller</h2>
+          <h2 className="text-base font-semibold">{SUBSCRIPTION_DASHBOARD.modulesSectionTitle}</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {(data?.enabled_modules || []).map(moduleKey => (
               <span key={moduleKey} className="rounded-full border border-gray-200 px-2.5 py-1 text-xs font-medium dark:border-gray-700">{moduleKey}</span>
@@ -52,7 +61,7 @@ export default function MySubscriptionPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-eden-navy-2">
           <div className="mb-3 flex items-center gap-2">
             <Database size={18} />
-            <h2 className="text-base font-semibold">Limitler</h2>
+            <h2 className="text-base font-semibold">{SUBSCRIPTION_DASHBOARD.limitsSectionTitle}</h2>
           </div>
           <dl className="space-y-2 text-sm">
             {Object.entries(data?.limits || {}).map(([key, value]) => (
@@ -64,8 +73,19 @@ export default function MySubscriptionPage() {
           </dl>
         </div>
       </section>
-    </div>
+    </main>
   )
+}
+
+function subscriptionCardValue(data: TenantEntitlements | null, card: SubscriptionSummaryCard) {
+  const value = data ? (data as unknown as Record<string, unknown>)[card.valueKey] : undefined
+  return typeof value === 'string' && value ? value : card.fallback
+}
+
+function subscriptionCardIcon(cardId: SubscriptionSummaryCard['id']) {
+  if (cardId === 'product') return <ShieldCheck size={18} />
+  if (cardId === 'plan') return <BadgeCheck size={18} />
+  return <CreditCard size={18} />
 }
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
